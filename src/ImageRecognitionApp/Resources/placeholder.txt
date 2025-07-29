@@ -1,0 +1,2 @@
+This directory stores application resources including images, icons and stylesheets.
+Do not delete this file as it maintains the directory structure.

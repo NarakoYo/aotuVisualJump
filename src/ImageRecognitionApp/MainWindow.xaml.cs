@@ -1,0 +1,275 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Controls;
+using System.Windows.Threading;
+using System.Text.Json;
+using System.Collections.Generic;
+using System.Windows.Media;
+
+namespace ImageRecognitionApp;
+
+/// <summary>
+/// Interaction logic for MainWindow.xaml
+/// </summary>
+public partial class MainWindow : Window
+{
+    // Python相关路径
+    private readonly string _pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\venv\\Scripts\\python.exe");
+    private readonly string _scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\image_recognition.py");
+    private readonly string _scriptSaveDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\scripts");
+
+    // 进程和状态变量
+    // 字段声明移至顶部
+    private Process? _pythonProcess = null; // 修复CS8618: 设为可空并初始化
+    private bool _isRecording = false;
+    private bool _isExecuting = false;
+    private List<object> _recordingCommands = new List<object>();
+    private DateTime _recordingStartTime;
+    private DispatcherTimer? _recordingTimer = null;
+    // 移除未使用的字段以修复CS0414
+    private List<object> _imageCache = new List<object>();
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        InitializeKeyboardShortcuts();
+        EnsureScriptDirectoryExists();
+    }
+
+    /// <summary>
+    /// 初始化键盘快捷键
+    /// </summary>
+    private void InitializeKeyboardShortcuts()
+    {
+        // F9: 开始/停止录制
+        InputBindings.Add(new InputBinding(
+            new RelayCommand(param => StartStopRecording(null, null)),
+            new KeyGesture(Key.F9, ModifierKeys.None)));
+
+        // F5: 执行脚本
+        InputBindings.Add(new InputBinding(
+            new RelayCommand(param => ExecuteScript(null, null)),
+            new KeyGesture(Key.F5, ModifierKeys.None)));
+
+        // F10: 暂停录制
+        InputBindings.Add(new InputBinding(
+            new RelayCommand(param => PauseRecording(null, null)),
+            new KeyGesture(Key.F10, ModifierKeys.None)));
+    }
+
+    /// <summary>
+    /// 确保脚本保存目录存在
+    /// </summary>
+    private void EnsureScriptDirectoryExists()
+    {
+        if (!Directory.Exists(_scriptSaveDir))
+        {
+            Directory.CreateDirectory(_scriptSaveDir);
+        }
+    }
+
+    /// <summary>
+    /// 开始/停止录制脚本
+    /// </summary>
+    private void StartStopRecording(object? sender, RoutedEventArgs? e)
+    {
+        if (_isRecording)
+        {
+            StopRecording();
+        }
+        else
+        {
+            StartRecording();
+        }
+    }
+
+    /// <summary>
+    /// 开始录制脚本
+    /// </summary>
+    private void StartRecording()
+    {
+        if (!_isRecording)
+        {
+            _isRecording = true;
+            _recordingStartTime = DateTime.Now;
+            
+            if (_recordingTimer == null)
+            {
+                _recordingTimer = new DispatcherTimer();
+            }
+            
+            _recordingTimer.Interval = TimeSpan.FromMilliseconds(50);
+            _recordingTimer.Tick += RecordingTimer_Tick;
+            _recordingTimer.Start();
+            
+            // Update UI
+            // UpdateRecordingButton();
+        }
+    }
+
+    private void RecordingTimer_Tick(object? sender, EventArgs e)
+    {
+        if (_recordingTimer == null || _recordingCommands == null) return;
+        var mouseState = new { X = Mouse.GetPosition(this).X, Y = Mouse.GetPosition(this).Y };
+        _recordingCommands.Add(new { Time = DateTime.Now - _recordingStartTime, action = "move", X = mouseState.X, Y = mouseState.Y });
+    }
+
+    private void StopRecording()
+    {
+        if (_isRecording)
+        {
+            _isRecording = false;
+            
+            if (_recordingTimer != null)
+            {
+                _recordingTimer.Stop();
+                _recordingTimer.Tick -= RecordingTimer_Tick;
+            }
+            
+            // Process recording
+            SaveScriptToFile();
+            
+            // Update UI
+            // UpdateRecordingButton();
+        }
+    }
+
+    private void PauseRecording(object? sender, RoutedEventArgs? e)
+    {
+        if (_isRecording && _recordingTimer != null)
+        {
+            _recordingTimer.IsEnabled = !_recordingTimer.IsEnabled;
+        }
+    }
+    private string? _latestScriptPath; // 重新添加脚本路径变量
+
+    private void SaveScriptToFile()
+    {
+        _latestScriptPath = Path.Combine(_scriptSaveDir, $"script_{DateTime.Now:yyyyMMddHHmmss}.json");
+        File.WriteAllText(_latestScriptPath, JsonSerializer.Serialize(_recordingCommands));
+    }
+
+    /// <summary>
+    /// 停止脚本执行
+    /// </summary>
+    private void StopScriptExecution()
+    {
+        if (_pythonProcess != null && !_pythonProcess.HasExited)
+        {
+            _pythonProcess.Kill();
+            _pythonProcess.Dispose();
+        }
+        _isExecuting = false;
+    }
+    private void MinimizeWindow(object sender, RoutedEventArgs e)
+    {
+        this.WindowState = WindowState.Minimized;
+    }
+
+    private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+
+    private void ExecuteScript(object? sender, RoutedEventArgs? e)
+    {
+        if (_isRecording)
+        {
+            return;
+        }
+
+        if (_isExecuting)
+        {
+            StopScriptExecution();
+            return;
+        }
+
+        _isExecuting = true;
+        _pythonProcess = new Process();
+        _pythonProcess.StartInfo.FileName = _pythonPath;
+        _pythonProcess.StartInfo.Arguments = $"\"{_scriptPath}\" run \"{_latestScriptPath}\"";
+        _pythonProcess.StartInfo.UseShellExecute = false;
+        _pythonProcess.StartInfo.RedirectStandardOutput = true;
+        _pythonProcess.StartInfo.RedirectStandardError = true;
+        _pythonProcess.Start();
+        _pythonProcess.BeginOutputReadLine();
+        _pythonProcess.BeginErrorReadLine();
+    }
+
+    private void CloseWindow(object sender, RoutedEventArgs e)
+    {
+        this.Close();
+    }
+
+    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // 释放Python进程
+        if (_pythonProcess != null)
+        {
+            _pythonProcess.Kill();
+            _pythonProcess.Dispose();
+            _pythonProcess = null;
+        }
+        
+        // 释放定时器
+        if (_recordingTimer != null)
+        {
+            _recordingTimer.Stop();
+            _recordingTimer.Tick -= RecordingTimer_Tick;
+            _recordingTimer = null;
+        }
+        
+        // 清除缓存
+        _imageCache.Clear();
+        
+        // 强制垃圾回收
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+    }
+
+    private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.LeftButton == MouseButtonState.Pressed)
+        {
+            DragMove();
+        }
+    }
+}
+
+/// <summary>
+/// 命令实现类
+/// </summary>
+public class RelayCommand : ICommand
+{
+    private readonly Action<object?> _execute; // 修复CS8767: 参数设为可空
+    private readonly Func<object?, bool> _canExecute;
+
+    public event EventHandler? CanExecuteChanged = delegate { };
+
+    public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null) // 修复CS1736: 默认值设为null
+    {
+        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+        _canExecute = canExecute ?? (param => true); // 在构造函数内设置默认值
+    }
+
+    public bool CanExecute(object? parameter) // 修复CS8767: 参数设为可空
+    {
+        return _canExecute?.Invoke(parameter) ?? true;
+    }
+
+    public void Execute(object? parameter) // 修复CS8767: 参数设为可空
+    {
+        _execute(parameter);
+    }
+
+    public void RaiseCanExecuteChanged()
+    {
+        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    }
+}
