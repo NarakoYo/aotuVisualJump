@@ -1,4 +1,4 @@
-# 图像识别脚本工具
+# 图像识别脚本工具（这是假的！完全没有实现任何功能，只是个壳子！This is fake! It has no function at all, it's just a shell！）
 
 ![图像识别脚本工具](https://via.placeholder.com/800x450?text=图像识别脚本工具)
 
