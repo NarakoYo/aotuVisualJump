@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "2TJu80Kv+PM=",
+  "dgSpecHash": "3ug1R1hsG38=",
   "success": true,
-  "projectFilePath": "E:\\.Temp\\workspace\\aotuVisualJumpDemo\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
+  "projectFilePath": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Administrator\\.nuget\\packages\\epplus\\6.2.3\\epplus.6.2.3.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\epplus.interfaces\\6.1.1\\epplus.interfaces.6.1.1.nupkg.sha512",

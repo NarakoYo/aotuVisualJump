@@ -1000,11 +1000,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\.Temp\\workspace\\aotuVisualJumpDemo\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
+      "projectUniqueName": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
       "projectName": "ImageRecognitionApp",
-      "projectPath": "E:\\.Temp\\workspace\\aotuVisualJumpDemo\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
+      "projectPath": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "E:\\.Temp\\workspace\\aotuVisualJumpDemo\\src\\ImageRecognitionApp\\obj\\",
+      "outputPath": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "E:\\VisualStudio\\Microsoft Visual Studio\\Shared\\NuGetPackages"

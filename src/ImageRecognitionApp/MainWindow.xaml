@@ -51,7 +51,7 @@
         <Border Background="#3C3C3C" CornerRadius="18">
             <Grid>
                 <!-- 毛玻璃背景层 -->
-                <Border Background="#3C3C3C" Opacity="0.9">
+                <Border Background="#3C3C3C" Opacity="0.9" CornerRadius="18">
                     <Border.Effect>
                         <BlurEffect Radius="15"/>
                     </Border.Effect>
@@ -62,10 +62,7 @@
                     <Border Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="18,18,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" HorizontalAlignment="Stretch">
                     <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                         <!-- 毛玻璃背景层 -->
-                        <Border Background="#1E1E1E" Opacity="0.95" CornerRadius="18,18,0,0">
-                            <Border.Effect>
-                                <BlurEffect Radius="10"/>
-                            </Border.Effect>
+                        <Border Background="#1E1E1E" Opacity="1" CornerRadius="18,18,0,0">
                         </Border>
                         <!-- 内容层 -->
                         <Grid>
@@ -78,8 +75,8 @@
                                 <TextBlock Text="{Binding Source={x:Static localization:LocalizationHelper.Strings}, Path=[window.title]}" Foreground="White" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
-                                <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}">—</Button>
-                                <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}">✕</Button>
+                                <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown">—</Button>
+                                <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown">✕</Button>
                             </StackPanel>
                         </Grid>
                     </Grid>

@@ -31,12 +31,16 @@ public partial class MainWindow : Window
     private DispatcherTimer? _recordingTimer = null;
     // 移除未使用的字段以修复CS0414
     private List<object> _imageCache = new List<object>();
+    private bool _isMaximized = false; // 新增：跟踪窗口是否最大化
+    private Point _restorePoint; // 新增：存储窗口还原位置
 
     public MainWindow()
     {
         InitializeComponent();
         InitializeKeyboardShortcuts();
         EnsureScriptDirectoryExists();
+        // 禁用窗口边缘拉伸
+        this.ResizeMode = ResizeMode.NoResize;
     }
 
     /// <summary>
@@ -173,7 +177,7 @@ public partial class MainWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
-            DragMove();
+            // 移除窗口拖动功能，仅保留标题栏拖动
         }
     }
 
@@ -237,8 +241,42 @@ public partial class MainWindow : Window
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
-            DragMove();
+            // 获取鼠标相对于屏幕的位置
+            Point screenPoint = Mouse.GetPosition(null);
+
+            // 检测是否拖动到屏幕顶部
+            if (screenPoint.Y <= 5)
+            {
+                if (!_isMaximized)
+                {
+                    // 保存当前窗口位置和大小
+                    _restorePoint = new Point(this.Left, this.Top);
+                    // 最大化窗口
+                    this.WindowState = WindowState.Maximized;
+                    _isMaximized = true;
+                }
+                else
+                {
+                    // 还原窗口
+                    this.WindowState = WindowState.Normal;
+                    this.Left = _restorePoint.X;
+                    this.Top = _restorePoint.Y;
+                    _isMaximized = false;
+                }
+            }
+            else
+            {
+                // 正常拖动窗口
+                DragMove();
+            }
         }
+    }
+
+    // 新增：标题栏按钮区域鼠标按下事件 - 不触发拖动
+    private void TitleBarButton_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // 这里不执行DragMove，仅标记事件已处理
+        e.Handled = true;
     }
 }
 

@@ -1,20 +1,20 @@
 ﻿ImageRecognitionApp
-1.0.0.0
+
 
 winexe
 C#
 .cs
-e:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\obj\Debug\net9.0-windows\
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\obj\Debug\net9.0-windows\
 ImageRecognitionApp
 none
 false
 TRACE;DEBUG;NET;NET9_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NET9_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
-e:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\App.xaml
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\App.xaml
 11407045341
 21114488663
-8-1574504813
+6-1813026939
 214720255552
 MainWindow.xaml;
 
-True
+False
 
