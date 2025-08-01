@@ -9,6 +9,8 @@
 
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("localization/b_%e6%9c%ac%e5%9c%b0%e5%8c%96.xlsx")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("localization/config/b_%e6%9c%ac%e5%9c%b0%e5%8c%96.config")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("localization/excelconfig/localization.csv")]
 [assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("localization/excelconfig/localization.json")]
+[assembly: System.Windows.Resources.AssemblyAssociatedContentFileAttribute("localization/excelconfig/localization.lua")]
 
 

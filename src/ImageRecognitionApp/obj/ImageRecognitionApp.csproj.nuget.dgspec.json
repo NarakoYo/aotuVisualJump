@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj": {}
+    "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj": {}
   },
   "projects": {
-    "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj": {
+    "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
+        "projectUniqueName": "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
         "projectName": "ImageRecognitionApp",
-        "projectPath": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
+        "projectPath": "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
         "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-        "outputPath": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\obj\\",
+        "outputPath": "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "E:\\VisualStudio\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -54,6 +54,10 @@
             "EPPlus": {
               "target": "Package",
               "version": "[6.2.3, )"
+            },
+            "NLua": {
+              "target": "Package",
+              "version": "[1.5.11, )"
             },
             "Newtonsoft.Json": {
               "target": "Package",

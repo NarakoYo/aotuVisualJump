@@ -13,8 +13,8 @@
 -- koKr: 韩语
 -- hiIn: 印地语
 -- ptBr: 葡萄牙语（巴西）
-LocalCfg={}
-local We=LocalCfg
+localization={}
+local We=localization
 We[1]={
     sign_id=10001,
     isEx=0,
