@@ -1,5 +1,6 @@
-
-
+-- -*- coding: utf-8 -*-
+-- ***************************************************************
+-- 本地化配置文件
 -- sign_id: 标识ID
 -- isEx: 是否扩展标识
 -- zhCn: 简体中文
@@ -13,6 +14,7 @@
 -- koKr: 韩语
 -- hiIn: 印地语
 -- ptBr: 葡萄牙语（巴西）
+-- ***************************************************************
 localization={}
 local We=localization
 We[1]={
@@ -29,4 +31,19 @@ We[1]={
     koKr="AI 시각 인식 조작",
     hiIn="AI दृश्य पहचान संचालन",
     ptBr="Operação de reconhecimento visual de IA"
+}
+We[2]={
+    sign_id=10002,
+    isEx=0,
+    zhCn="启动",
+    enUs="Launch",
+    frFr="Lancer",
+    ruRu="Launch",
+    esEs="Launch",
+    arSa="Launch",
+    deDe="Launch",
+    jaJp="Launch",
+    koKr="Launch",
+    hiIn="Launch",
+    ptBr="Launch"
 }
