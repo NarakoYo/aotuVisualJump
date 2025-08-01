@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ImageRecognitionApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fc5f0e6501c162c84e1d9cdaf33225610e06600f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+834707df4e32561348ff6dd4c7152ff06199395c")]
 [assembly: System.Reflection.AssemblyProductAttribute("ImageRecognitionApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ImageRecognitionApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
