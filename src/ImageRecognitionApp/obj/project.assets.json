@@ -45,7 +45,7 @@
           "lib/net7.0/EPPlus.System.Drawing.dll": {}
         }
       },
-      "KeraLua/1.2.15": {
+      "KeraLua/1.2.12": {
         "type": "package",
         "compile": {
           "lib/net5.0/KeraLua.dll": {
@@ -281,10 +281,10 @@
           }
         }
       },
-      "NLua/1.5.11": {
+      "NLua/1.5.7": {
         "type": "package",
         "dependencies": {
-          "KeraLua": "1.2.15"
+          "KeraLua": "1.2.12"
         },
         "compile": {
           "lib/net5.0/NLua.dll": {}
@@ -492,16 +492,16 @@
         "readme.md"
       ]
     },
-    "KeraLua/1.2.15": {
-      "sha512": "Jyodlxil/AgUcAVGfjhaKLQsLAtZPUUBf5/bSgb2hJBPf2bLCSZ94HFacPNyk/obxS1lPs7HV8Essuye8hpC0w==",
+    "KeraLua/1.2.12": {
+      "sha512": "+6EgHkYPTsSvAxEMWKmJIedTOiWEUo17xDlKPcAuEJnAgGnjyH7V0zM6pkhNiefBAH/6tcRLBT09XpOgSfVP0A==",
       "type": "package",
-      "path": "keralua/1.2.15",
+      "path": "keralua/1.2.12",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "LICENSE",
         "build/net46/KeraLua.targets",
-        "keralua.1.2.15.nupkg.sha512",
+        "keralua.1.2.12.nupkg.sha512",
         "keralua.nuspec",
         "lib/MonoAndroid/KeraLua.dll",
         "lib/MonoAndroid/KeraLua.xml",
@@ -511,8 +511,6 @@
         "lib/net5.0/KeraLua.xml",
         "lib/netcoreapp3.1/KeraLua.dll",
         "lib/netcoreapp3.1/KeraLua.xml",
-        "lib/netstandard2.0/KeraLua.dll",
-        "lib/netstandard2.0/KeraLua.xml",
         "lib/uap10.0/KeraLua.dll",
         "lib/uap10.0/KeraLua.pri",
         "lib/uap10.0/KeraLua.xml",
@@ -835,10 +833,10 @@
         "packageIcon.png"
       ]
     },
-    "NLua/1.5.11": {
-      "sha512": "4CFLOT78wn1HZlUZN050miVQON8YftnkdbmnlQpJB0vmSyFgi3VOzpL3fgA43LBdKh52O9J5MbIgHL/R3+Hu5w==",
+    "NLua/1.5.7": {
+      "sha512": "IVmoC5qi5eJjQRl0TMKoq43A5n4oMWWJO3G4oHAOVygERd/bKYiU4988gxIkOlGcWMngs1M3SI+how+R5xZ93Q==",
       "type": "package",
-      "path": "nlua/1.5.11",
+      "path": "nlua/1.5.7",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -847,14 +845,13 @@
         "lib/net46/NLua.dll",
         "lib/net5.0/NLua.dll",
         "lib/netcoreapp3.1/NLua.dll",
-        "lib/netstandard2.0/NLua.dll",
         "lib/uap10.0/NLua.dll",
         "lib/uap10.0/NLua.pri",
         "lib/xamarinios/NLua.dll",
         "lib/xamarinmac/NLua.dll",
         "lib/xamarintvos/NLua.dll",
         "lib/xamarinwatchos/NLua.dll",
-        "nlua.1.5.11.nupkg.sha512",
+        "nlua.1.5.7.nupkg.sha512",
         "nlua.nuspec"
       ]
     },
@@ -1098,7 +1095,7 @@
   "projectFileDependencyGroups": {
     "net9.0-windows7.0": [
       "EPPlus >= 6.2.3",
-      "NLua >= 1.5.11",
+      "NLua >= 1.5.7",
       "Newtonsoft.Json >= 13.0.3"
     ]
   },
@@ -1109,11 +1106,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
+      "projectUniqueName": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
       "projectName": "ImageRecognitionApp",
-      "projectPath": "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
+      "projectPath": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\ImageRecognitionApp.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "e:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\obj\\",
+      "outputPath": "E:\\.Temp\\workspace\\aotuVisualJump\\src\\ImageRecognitionApp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "E:\\VisualStudio\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -1159,7 +1156,7 @@
           },
           "NLua": {
             "target": "Package",
-            "version": "[1.5.11, )"
+            "version": "[1.5.7, )"
           },
           "Newtonsoft.Json": {
             "target": "Package",

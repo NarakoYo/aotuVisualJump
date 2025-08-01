@@ -5,17 +5,41 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using System.Text;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Windows.Media;
+using System.ComponentModel;
 
 namespace ImageRecognitionApp;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public partial class MainWindow : Window
+public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyChanged
 {
+    // 窗口标题属性
+    private string _titleText = string.Empty;
+    public string TitleText
+    {
+        get => _titleText;
+        set
+        {
+            if (_titleText != value)
+            {
+                _titleText = value;
+                OnPropertyChanged(nameof(TitleText));
+            }
+        }
+    }
+
+    // 实现INotifyPropertyChanged接口
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected virtual void OnPropertyChanged(string propertyName)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     // Python相关路径
     private readonly string _pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\venv\\Scripts\\python.exe");
     private readonly string _scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\image_recognition.py");
@@ -35,13 +59,80 @@ public partial class MainWindow : Window
     private Point _restorePoint; // 新增：存储窗口还原位置
 
     public MainWindow()
-    {
-        InitializeComponent();
+        {
+            InitializeComponent();
+            DataContext = this; // 设置数据上下文
+
+            // 直接设置标题以测试本地化
+            try
+            {
+                // 检查本地化助手是否初始化
+                // Console.WriteLine("检查本地化助手初始化状态...");
+                var helper = ImageRecognitionApp.unit.LuaLocalizationHelper.Instance;
+                helper.Initialize();
+                // Console.WriteLine("本地化助手已初始化");
+
+                // 获取当前语言
+                var currentLanguageField = helper.GetType().GetField(
+                    "_currentLanguage", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                string currentLanguage = currentLanguageField?.GetValue(helper) as string ?? "未知";
+                // Console.WriteLine($"当前语言: {currentLanguage}");
+
+                // 尝试获取标题文本
+                string title = helper.GetString(10001);
+                // Console.WriteLine($"获取到的标题文本: {title}");
+
+                // 检查本地化数据
+                var localizationDataField = helper.GetType().GetField(
+                    "_localizationData", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var localizationData = localizationDataField?.GetValue(helper) as Dictionary<int, Dictionary<string, string>>;
+                // Console.WriteLine($"本地化数据: {localizationData != null}");
+
+                if (localizationData != null)
+                {
+                    // Console.WriteLine($"本地化数据条目数: {localizationData.Count}");
+                    if (localizationData.ContainsKey(10001))
+                    {
+                        // Console.WriteLine($"找到signId=10001的翻译数据");
+                        var translations = localizationData[10001];
+                        // foreach (var lang in translations.Keys)
+                        // {
+                        //     Console.WriteLine($"{lang}: {translations[lang]}");
+                        // }
+                    }
+                    else
+                    {
+                        // Console.WriteLine("未找到signId=10001的翻译数据");
+                    }
+                }
+
+                // 设置标题
+                this.Title = title;
+                TitleText = title; // 更新绑定的属性
+                // Console.WriteLine($"标题已设置为: {title}");
+                (App.Current as App)?.LogMessage($"标题已设置为: {title}");
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"设置标题时出错: {ex.Message}");
+                (App.Current as App)?.LogMessage($"设置标题时出错: {ex.Message}");
+                this.Title = "图像识别应用";
+                TitleText = "图像识别应用"; // 更新绑定的属性
+            }
+
+
+
         InitializeKeyboardShortcuts();
         EnsureScriptDirectoryExists();
         // 禁用窗口边缘拉伸
         this.ResizeMode = ResizeMode.NoResize;
     }
+
+
 
     /// <summary>
     /// 初始化键盘快捷键

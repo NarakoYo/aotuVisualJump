@@ -62,7 +62,7 @@
 
 ### 3.4 目录结构
 ```
-demo/
+aotuVisualJump/
 ├── src/
 │   ├── ImageRecognitionApp/      # C# WPF应用程序
 │   └── PythonScripts/            # Python脚本和虚拟环境

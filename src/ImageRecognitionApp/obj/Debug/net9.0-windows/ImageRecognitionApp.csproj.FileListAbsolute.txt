@@ -102,3 +102,11 @@ E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\obj\Debug\net9.0-windo
 E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\obj\Debug\net9.0-windows\ImageRecognitionApp.pdb
 E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\obj\Debug\net9.0-windows\ImageRecognitionApp.genruntimeconfig.cache
 E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\obj\Debug\net9.0-windows\ref\ImageRecognitionApp.dll
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\Localization\ExcelConfig\localization.csv
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\Localization\ExcelConfig\localization.lua
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\KeraLua.dll
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\NLua.dll
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\runtimes\linux-x64\native\liblua54.so
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\runtimes\osx\native\liblua54.dylib
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\runtimes\win-x64\native\lua54.dll
+E:\.Temp\workspace\aotuVisualJump\src\ImageRecognitionApp\bin\Debug\net9.0-windows\runtimes\win-x86\native\lua54.dll

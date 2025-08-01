@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Windows;
 using System.IO;
+using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp;
 
@@ -11,11 +12,25 @@ namespace ImageRecognitionApp;
 public partial class App : Application
 {
     protected override void OnStartup(StartupEventArgs e)
-    {
-        base.OnStartup(e);
-        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-        this.DispatcherUnhandledException += App_DispatcherUnhandledException;
-    }
+        {
+            base.OnStartup(e);
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+
+            // 初始化本地化工具
+            try
+            {
+                LuaLocalizationHelper.Instance.Initialize();
+                Console.WriteLine("本地化工具初始化成功");
+                LogMessage("本地化工具初始化成功");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"本地化工具初始化失败: {ex.Message}");
+                LogMessage($"本地化工具初始化失败: {ex.Message}");
+                LogException(ex);
+            }
+        }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
@@ -36,5 +51,11 @@ public partial class App : Application
     {
         var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_error.log");
         File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n{ex.StackTrace}\n");
+    }
+
+    public void LogMessage(string message)
+    {
+        var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.log");
+        File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
     }
 }
