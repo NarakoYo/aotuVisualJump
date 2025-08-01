@@ -1,7 +1,7 @@
 # 图像识别脚本工具 - 需求文档
 
 ## 1. 项目概述
-本项目是一个企业级图像识别脚本工具，采用C#和Python混合编程模式，结合OpenCV和PyAutoGUI实现图像识别与自动化操作。工具提供现代化UI界面，支持脚本录制、执行、保存和加载功能，可通过自定义快捷键提高操作效率。
+本项目是一个企业级图像识别脚本工具，采用C#和Python混合编程模式，结合OpenCV和PyAutoGUI实现图像识别与自动化操作。工具提供现代化UI界面，支持脚本录制、执行、保存和加载功能，可通过自定义快捷键提高操作效率。该工具已实现多语言支持并修复了中文显示问题。
 
 ## 2. 功能需求
 
@@ -11,6 +11,7 @@
 - 提供多级UI结构，包括菜单栏、工具栏、标签页和状态栏
 - 实现三个主要功能标签页：脚本编辑器、执行日志和脚本库
 - 界面采用深色主题设计，确保长时间使用时的视觉舒适度
+- 支持多语言界面，已修复中文显示问题
 
 ### 2.2 脚本录制与执行
 - 支持通过鼠标操作录制用户交互过程
@@ -44,14 +45,17 @@
 ### 3.1 开发语言与框架
 - C#：使用WPF框架构建用户界面
 - Python：实现图像识别和自动化操作逻辑
-- .NET 6.0或更高版本
+- .NET 9.0或更高版本
 - Python 3.8或更高版本
+- Lua：用于本地化支持
 
 ### 3.2 第三方库与工具
 - OpenCV：用于图像识别和处理
 - PyAutoGUI：用于鼠标操作录制和回放
 - Newtonsoft.Json：用于JSON格式的脚本序列化/反序列化
 - Python.NET：实现C#与Python的交互
+- NLua：用于Lua脚本解析和本地化支持
+- Encoding.UTF8：确保中文等非ASCII字符正确显示
 
 ### 3.3 系统要求
 - Windows 10或更高版本操作系统
@@ -63,14 +67,38 @@
 ### 3.4 目录结构
 ```
 aotuVisualJump/
+├── .gitignore
+├── .vscode/
+│   ├── launch.json
+│   └── tasks.json
+├── LICENSE
+├── README.md
+├── docs/
+│   ├── compilation_guide.md
+│   ├── requirements.md
+│   └── user_manual.md
+├── scripts/
 ├── src/
-│   ├── ImageRecognitionApp/      # C# WPF应用程序
-│   └── PythonScripts/            # Python脚本和虚拟环境
-│       ├── venv/                 # Python虚拟环境
-│       └── image_recognition.py  # 核心图像识别脚本
-├── docs/                         # 文档目录
-├── scripts/                      # 脚本保存目录
-└── tests/                        # 测试文件
+│   ├── ImageRecognitionApp/
+│   │   ├── App.xaml
+│   │   ├── App.xaml.cs
+│   │   ├── AssemblyInfo.cs
+│   │   ├── ImageRecognitionApp.csproj
+│   │   ├── Localization/
+│   │   ├── MainWindow.xaml
+│   │   ├── MainWindow.xaml.cs
+│   │   ├── Resources/
+│   │   ├── bin/
+│   │   ├── obj/
+│   │   ├── packages.config
+│   │   └── unit/
+│   │       └── LuaLocalizationHelper.cs
+│   ├── PythonScripts/
+│   │   ├── image_recognition.py
+│   │   ├── requirements.txt
+│   │   └── venv/
+│   └── scripts/
+└── tests/
 ```
 
 ## 4. 接口设计
@@ -96,12 +124,19 @@ aotuVisualJump/
 ]
 ```
 
+### 4.3 本地化接口
+- 使用Lua脚本存储多语言文本
+- 通过LuaLocalizationHelper类实现语言切换和文本获取
+- 支持语言代码标准化处理
+- 确保所有文本使用UTF-8编码
+
 ## 5. 质量要求
 - 界面响应迅速，无明显卡顿
 - 脚本录制和执行准确，误差不超过5像素
 - 程序稳定性：连续运行24小时无崩溃
 - 兼容性：支持Windows 10及以上操作系统
 - 可维护性：代码注释完整，遵循命名规范
+- 国际化支持：确保中文等非ASCII字符正确显示
 
 ## 6. 交付物
 - 可执行程序及源代码

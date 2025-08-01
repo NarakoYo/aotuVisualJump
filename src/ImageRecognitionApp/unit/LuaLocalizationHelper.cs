@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using NLua;
 
 namespace ImageRecognitionApp.unit
@@ -11,11 +12,41 @@ namespace ImageRecognitionApp.unit
     {
         private static readonly Lazy<LuaLocalizationHelper> _instance = new Lazy<LuaLocalizationHelper>(() => new LuaLocalizationHelper());
         private readonly Dictionary<int, Dictionary<string, string>> _localizationData = new Dictionary<int, Dictionary<string, string>>();
-        private string _currentLanguage = System.Text.RegularExpressions.Regex.Replace(
-            CultureInfo.CurrentCulture.Name, 
-            "([a-z])([A-Z])", 
-            "$1-$2").ToLower();
+        private string _currentLanguage;
         private readonly string _defaultLanguage = "zh-cn";
+
+        /// <summary>
+        /// 标准化语言代码格式
+        /// </summary>
+        /// <param name="languageCode">原始语言代码</param>
+        /// <returns>标准化后的语言代码</returns>
+        private string NormalizeLanguageCode(string languageCode)
+        {
+            if (string.IsNullOrEmpty(languageCode))
+                return _defaultLanguage;
+
+            // 处理 CultureInfo.Name 格式 (如 zh-CN, en-US)
+            if (languageCode.Contains('-'))
+            {
+                var parts = languageCode.Split('-');
+                if (parts.Length >= 2)
+                    return $"{parts[0].ToLower()}-{parts[1].ToLower()}";
+                return parts[0].ToLower();
+            }
+            // 处理驼峰格式 (如 zhCn, enUs)
+            else if (System.Text.RegularExpressions.Regex.IsMatch(languageCode, @"[a-z][A-Z]"))
+            {
+                return System.Text.RegularExpressions.Regex.Replace(
+                    languageCode, 
+                    "([a-z])([A-Z])", 
+                    "$1-$2").ToLower();
+            }
+            // 处理其他格式
+            else
+            {
+                return languageCode.ToLower();
+            }
+        }
         private readonly string _luaFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Localization", "ExcelConfig", "localization.lua");
 
         public static LuaLocalizationHelper Instance => _instance.Value;
@@ -23,6 +54,7 @@ namespace ImageRecognitionApp.unit
         private LuaLocalizationHelper()
         {
             // 私有构造函数，防止外部实例化
+            _currentLanguage = NormalizeLanguageCode(CultureInfo.CurrentCulture.Name);
         }
 
         /// <summary>
@@ -30,10 +62,23 @@ namespace ImageRecognitionApp.unit
         /// </summary>
         public void Initialize()
         {
-            LoadLocalizationData();
-            // 确保当前语言有效，如果无效则使用默认语言
-            if (!IsLanguageSupported(_currentLanguage))
+            try
             {
+                LoadLocalizationData();
+                // 标准化当前语言代码
+                _currentLanguage = NormalizeLanguageCode(_currentLanguage);
+                // 确保当前语言有效，如果无效则使用默认语言
+                if (!IsLanguageSupported(_currentLanguage))
+                {
+                    _currentLanguage = _defaultLanguage;
+                    Console.WriteLine($"警告: 当前语言 '{_currentLanguage}' 不受支持，已切换到默认语言 '{_defaultLanguage}'");
+                }
+                Console.WriteLine($"已加载本地化数据，当前语言: {_currentLanguage}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"初始化本地化数据时出错: {ex.Message}");
+                // 在出错情况下确保使用默认语言
                 _currentLanguage = _defaultLanguage;
             }
         }
@@ -52,8 +97,13 @@ namespace ImageRecognitionApp.unit
             {
                 using (var lua = new Lua())
                 {
-                    // 加载并执行Lua文件
-                    lua.DoFile(_luaFilePath);
+                    // 设置Lua解析器编码为UTF-8
+                    lua.RegisterFunction("LoadFileWithEncoding", this, typeof(LuaLocalizationHelper).GetMethod("LoadFileWithEncoding"));
+                    
+                    
+                    // 使用UTF-8编码加载Lua文件
+                    string luaContent = LoadFileWithEncoding(_luaFilePath, Encoding.UTF8);
+                    lua.DoString(luaContent);
 
                     // 获取localization表
                     var localizationTable = lua.GetTable("localization");
@@ -79,14 +129,13 @@ namespace ImageRecognitionApp.unit
                                 {
                                     if (langKey is string langCode && langCode != "sign_id" && langCode != "isEx")
                                     {
-                                        // 将驼峰式语言代码转换为带有连字符的格式（如zhCn -> zh-cn）
-                                        var normalizedLangCode = System.Text.RegularExpressions.Regex.Replace(
-                                            langCode, 
-                                            "([a-z])([A-Z])", 
-                                            "$1-$2").ToLower();
+                                        // 使用标准化方法处理语言代码
+                                        var normalizedLangCode = NormalizeLanguageCode(langCode);
 
                                         object? value = itemTable[langKey];
-                                        translations[normalizedLangCode] = Convert.ToString(value) ?? string.Empty;
+                                        // 确保翻译文本是UTF-8编码
+                                        string translation = Convert.ToString(value) ?? string.Empty;
+                                        translations[normalizedLangCode] = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(translation));
                                     }
                                 }
 
@@ -162,33 +211,54 @@ namespace ImageRecognitionApp.unit
         /// <returns>本地化字符串</returns>
         public string GetString(int signId, string languageCode)
         {
-            if (string.IsNullOrEmpty(languageCode))
-                languageCode = _currentLanguage;
-
-            // 将驼峰式语言代码转换为带连字符的格式
-            string normalizedLangCode = System.Text.RegularExpressions.Regex.Replace(languageCode, @"([a-z])([A-Z])", "$1-$2").ToLower();
-
-            if (_localizationData.TryGetValue(signId, out var translations))
+            try
             {
-                if (translations.TryGetValue(normalizedLangCode, out var value) && !string.IsNullOrEmpty(value))
-                {
-                    return value;
-                }
+                if (string.IsNullOrEmpty(languageCode))
+                    languageCode = _currentLanguage;
 
-                // 如果当前语言没有找到或值为空，尝试使用默认语言
-                if (translations.TryGetValue(_defaultLanguage, out value) && !string.IsNullOrEmpty(value))
-                {
-                    return value;
-                }
+                // 使用标准化方法处理语言代码
+                string normalizedLangCode = NormalizeLanguageCode(languageCode);
 
-                // 如果没有找到当前语言和默认语言的翻译，返回sign_id+缺失语言标记
-                return $"{signId}_MISSING_{normalizedLangCode}";
+                if (_localizationData.TryGetValue(signId, out var translations))
+                {
+                    if (translations.TryGetValue(normalizedLangCode, out var value) && !string.IsNullOrEmpty(value))
+                    {
+                        // 确保返回的字符串是UTF-8编码
+                        return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(value));
+                    }
+
+                    // 如果当前语言没有找到或值为空，尝试使用默认语言
+                    if (translations.TryGetValue(_defaultLanguage, out value) && !string.IsNullOrEmpty(value))
+                    {
+                        // 确保返回的字符串是UTF-8编码
+                        return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(value));
+                    }
+
+                    // 如果没有找到当前语言和默认语言的翻译，返回sign_id+缺失语言标记
+                    return $"{signId}_MISSING_{normalizedLangCode}";
+                }
+                else
+                {
+                    // 如果未找到sign_id，返回错误码
+                    return "未找到本地化id";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                // 如果未找到sign_id，返回错误码
-                return "未找到本地化id";
+                Console.WriteLine($"获取本地化字符串时出错: {ex.Message}");
+                return $"ERROR_{signId}";
             }
+        }
+
+        /// <summary>
+        /// 使用指定编码加载文件内容
+        /// </summary>
+        /// <param name="filePath">文件路径</param>
+        /// <param name="encoding">编码</param>
+        /// <returns>文件内容</returns>
+        public string LoadFileWithEncoding(string filePath, Encoding encoding)
+        {
+            return File.ReadAllText(filePath, encoding);
         }
 
         /// <summary>
@@ -198,15 +268,32 @@ namespace ImageRecognitionApp.unit
         /// <returns>是否设置成功</returns>
         public bool SetCurrentLanguage(string languageCode)
         {
-            languageCode = languageCode.ToLower();
-
-            if (IsLanguageSupported(languageCode))
+            try
             {
-                _currentLanguage = languageCode;
+                if (string.IsNullOrEmpty(languageCode))
+                {
+                    Console.WriteLine("错误: 语言代码不能为空");
+                    return false;
+                }
+
+                // 标准化语言代码
+                var normalizedLanguage = NormalizeLanguageCode(languageCode);
+
+                if (!IsLanguageSupported(normalizedLanguage))
+                {
+                    Console.WriteLine($"错误: 语言 '{normalizedLanguage}' 不受支持");
+                    return false;
+                }
+
+                _currentLanguage = normalizedLanguage;
+                Console.WriteLine($"已切换到语言: {_currentLanguage}");
                 return true;
             }
-
-            return false;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"设置语言时出错: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
