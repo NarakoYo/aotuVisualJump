@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -108,10 +108,26 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                     }
                 }
 
+                // 调试信息：输出当前语言
+                (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
+
+                // 调试信息：检查本地化数据中的中文翻译
+                if (localizationData != null && localizationData.ContainsKey(10001))
+                {
+                    var translations = localizationData[10001];
+                    if (translations.ContainsKey("zh-cn"))
+                    {
+                        (App.Current as App)?.LogMessage($"本地化数据中的中文翻译: {translations["zh-cn"]}");
+                    }
+                    else
+                    {
+                        (App.Current as App)?.LogMessage("本地化数据中未找到zh-cn翻译");
+                    }
+                }
+
                 // 设置标题
                 this.Title = title;
                 TitleText = title; // 更新绑定的属性
-                // Console.WriteLine($"标题已设置为: {title}");
                 (App.Current as App)?.LogMessage($"标题已设置为: {title}");
 
 

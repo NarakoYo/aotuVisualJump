@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Windows;
 using System.IO;
+using System.Text;
 using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp;
@@ -16,6 +17,10 @@ public partial class App : Application
             base.OnStartup(e);
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+
+            // 设置当前线程的文化和UI文化为中文(中国)
+            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("zh-CN");
+            System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("zh-CN");
 
             // 初始化本地化工具
             try
@@ -48,14 +53,14 @@ public partial class App : Application
     }
 
     private void LogException(Exception ex)
-    {
-        var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_error.log");
-        File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n{ex.StackTrace}\n");
-    }
+        {
+            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_error.log");
+            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n{ex.StackTrace}\n", Encoding.UTF8);
+        }
 
-    public void LogMessage(string message)
-    {
-        var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.log");
-        File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
-    }
+        public void LogMessage(string message)
+        {
+            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.log");
+            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n", Encoding.UTF8);
+        }
 }

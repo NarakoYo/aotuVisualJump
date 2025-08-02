@@ -74,8 +74,7 @@ namespace ImageRecognitionApp.unit
                     Console.WriteLine($"警告: 当前语言 '{_currentLanguage}' 不受支持，已切换到默认语言 '{_defaultLanguage}'");
                 }
                 Console.WriteLine($"已加载本地化数据，当前语言: {_currentLanguage}");
-            }
-            catch (Exception ex)
+            }            catch (Exception ex)
             {
                 Console.WriteLine($"初始化本地化数据时出错: {ex.Message}");
                 // 在出错情况下确保使用默认语言
@@ -133,9 +132,9 @@ namespace ImageRecognitionApp.unit
                                         var normalizedLangCode = NormalizeLanguageCode(langCode);
 
                                         object? value = itemTable[langKey];
-                                        // 确保翻译文本是UTF-8编码
                                         string translation = Convert.ToString(value) ?? string.Empty;
-                                        translations[normalizedLangCode] = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(translation));
+                                        translations[normalizedLangCode] = translation;
+                                        // Console.WriteLine($"已加载翻译: sign_id={signId}, lang={normalizedLangCode}, translation={translation}");
                                     }
                                 }
 
@@ -219,19 +218,21 @@ namespace ImageRecognitionApp.unit
                 // 使用标准化方法处理语言代码
                 string normalizedLangCode = NormalizeLanguageCode(languageCode);
 
+                // 检查翻译数据是否存在
+
                 if (_localizationData.TryGetValue(signId, out var translations))
                 {
                     if (translations.TryGetValue(normalizedLangCode, out var value) && !string.IsNullOrEmpty(value))
                     {
-                        // 确保返回的字符串是UTF-8编码
-                        return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(value));
+                        Console.WriteLine($"找到翻译: {value}");
+                        return value;
                     }
 
                     // 如果当前语言没有找到或值为空，尝试使用默认语言
                     if (translations.TryGetValue(_defaultLanguage, out value) && !string.IsNullOrEmpty(value))
                     {
-                        // 确保返回的字符串是UTF-8编码
-                        return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(value));
+                        Console.WriteLine($"未找到当前语言翻译，使用默认语言翻译: {value}");
+                        return value;
                     }
 
                     // 如果没有找到当前语言和默认语言的翻译，返回sign_id+缺失语言标记
@@ -258,7 +259,90 @@ namespace ImageRecognitionApp.unit
         /// <returns>文件内容</returns>
         public string LoadFileWithEncoding(string filePath, Encoding encoding)
         {
-            return File.ReadAllText(filePath, encoding);
+            // 使用带BOM的UTF-8编码确保中文正确处理
+            encoding = new UTF8Encoding(true);
+            
+            // 读取文件内容并处理BOM
+            byte[] fileBytes = File.ReadAllBytes(filePath);
+            bool hasBom = fileBytes.Length >= 3 && fileBytes[0] == 0xEF && fileBytes[1] == 0xBB && fileBytes[2] == 0xBF;
+            int startIndex = hasBom ? 3 : 0;
+            string content = encoding.GetString(fileBytes, startIndex, fileBytes.Length - startIndex);
+            
+            return content;
+        }
+        
+        /// <summary>
+        /// 检测文件编码
+        /// </summary>
+        /// <param name="fileBytes">文件字节数组</param>
+        /// <returns>检测到的编码名称</returns>
+        private string DetectFileEncoding(byte[] fileBytes)
+        {
+            // 检查UTF-8 BOM
+            if (fileBytes.Length >= 3 && fileBytes[0] == 0xEF && fileBytes[1] == 0xBB && fileBytes[2] == 0xBF)
+            {
+                return "UTF-8 带BOM";
+            }
+            // 检查UTF-16 BE BOM
+            else if (fileBytes.Length >= 2 && fileBytes[0] == 0xFE && fileBytes[1] == 0xFF)
+            {
+                return "UTF-16 BE";
+            }
+            // 检查UTF-16 LE BOM
+            else if (fileBytes.Length >= 2 && fileBytes[0] == 0xFF && fileBytes[1] == 0xFE)
+            {
+                return "UTF-16 LE";
+            }
+            // 尝试检测是否为UTF-8
+            else if (IsUTF8(fileBytes))
+            {
+                return "UTF-8 无BOM";
+            }
+            // 默认假设为ANSI/GBK
+            else
+            {
+                return "ANSI/GBK";
+            }
+        }
+        
+        /// <summary>
+        /// 检查字节数组是否为UTF-8编码
+        /// </summary>
+        /// <param name="bytes">字节数组</param>
+        /// <returns>是否为UTF-8</returns>
+        private bool IsUTF8(byte[] bytes)
+        {
+            int i = 0;
+            while (i < bytes.Length)
+            {
+                if (bytes[i] <= 0x7F)
+                {
+                    i++;
+                }
+                else if (bytes[i] >= 0xC0 && bytes[i] <= 0xDF)
+                {
+                    if (i + 1 >= bytes.Length || bytes[i + 1] < 0x80 || bytes[i + 1] > 0xBF)
+                        return false;
+                    i += 2;
+                }
+                else if (bytes[i] >= 0xE0 && bytes[i] <= 0xEF)
+                {
+                    if (i + 2 >= bytes.Length || bytes[i + 1] < 0x80 || bytes[i + 1] > 0xBF || bytes[i + 2] < 0x80 || bytes[i + 2] > 0xBF)
+                        return false;
+                    i += 3;
+                }
+                else if (bytes[i] >= 0xF0 && bytes[i] <= 0xF7)
+                {
+                    if (i + 3 >= bytes.Length || bytes[i + 1] < 0x80 || bytes[i + 1] > 0xBF || bytes[i + 2] < 0x80 || bytes[i + 2] > 0xBF || bytes[i + 3] < 0x80 || bytes[i + 3] > 0xBF)
+                        return false;
+                    i += 4;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>
