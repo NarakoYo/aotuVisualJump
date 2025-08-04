@@ -5,6 +5,7 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\logo\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
