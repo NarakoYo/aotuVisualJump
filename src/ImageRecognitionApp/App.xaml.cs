@@ -18,10 +18,6 @@ public partial class App : Application
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
 
-            // 设置当前线程的文化和UI文化为中文(中国)
-            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("zh-CN");
-            System.Threading.Thread.CurrentThread.CurrentUICulture = new System.Globalization.CultureInfo("zh-CN");
-
             // 初始化本地化工具
             try
             {

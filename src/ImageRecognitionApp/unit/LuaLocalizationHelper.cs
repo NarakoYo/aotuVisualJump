@@ -25,6 +25,10 @@ namespace ImageRecognitionApp.unit
             if (string.IsNullOrEmpty(languageCode))
                 return _defaultLanguage;
 
+            // 特殊处理ghYh字段
+            if (languageCode.Equals("ghYh", StringComparison.OrdinalIgnoreCase))
+                return "gh-yh";
+
             // 处理 CultureInfo.Name 格式 (如 zh-CN, en-US)
             if (languageCode.Contains('-'))
             {
@@ -67,12 +71,6 @@ namespace ImageRecognitionApp.unit
                 LoadLocalizationData();
                 // 标准化当前语言代码
                 _currentLanguage = NormalizeLanguageCode(_currentLanguage);
-                // 确保当前语言有效，如果无效则使用默认语言
-                if (!IsLanguageSupported(_currentLanguage))
-                {
-                    _currentLanguage = _defaultLanguage;
-                    Console.WriteLine($"警告: 当前语言 '{_currentLanguage}' 不受支持，已切换到默认语言 '{_defaultLanguage}'");
-                }
                 Console.WriteLine($"已加载本地化数据，当前语言: {_currentLanguage}");
             }            catch (Exception ex)
             {
@@ -94,14 +92,12 @@ namespace ImageRecognitionApp.unit
 
             try
             {
+                // 确保文件以UTF-8编码读取
+                string luaContent = File.ReadAllText(_luaFilePath, Encoding.UTF8);
+                
                 using (var lua = new Lua())
                 {
                     // 设置Lua解析器编码为UTF-8
-                    lua.RegisterFunction("LoadFileWithEncoding", this, typeof(LuaLocalizationHelper).GetMethod("LoadFileWithEncoding"));
-                    
-                    
-                    // 使用UTF-8编码加载Lua文件
-                    string luaContent = LoadFileWithEncoding(_luaFilePath, Encoding.UTF8);
                     lua.DoString(luaContent);
 
                     // 获取localization表
@@ -128,8 +124,20 @@ namespace ImageRecognitionApp.unit
                                 {
                                     if (langKey is string langCode && langCode != "sign_id" && langCode != "isEx")
                                     {
-                                        // 使用标准化方法处理语言代码
-                                        var normalizedLangCode = NormalizeLanguageCode(langCode);
+                                        // 特殊处理中文和ghYh字段
+                                        string normalizedLangCode;
+                                        if (langCode.Equals("zhCn", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            normalizedLangCode = "zh-cn";
+                                        }
+                                        else if (langCode.Equals("ghYh", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            normalizedLangCode = "gh-yh";
+                                        }
+                                        else
+                                        {
+                                            normalizedLangCode = NormalizeLanguageCode(langCode);
+                                        }
 
                                         object? value = itemTable[langKey];
                                         string translation = Convert.ToString(value) ?? string.Empty;
@@ -228,14 +236,14 @@ namespace ImageRecognitionApp.unit
                         return value;
                     }
 
-                    // 如果当前语言没有找到或值为空，尝试使用默认语言
-                    if (translations.TryGetValue(_defaultLanguage, out value) && !string.IsNullOrEmpty(value))
+                    // 如果当前语言没有找到或值为空，尝试使用ghYh字段
+                    if (translations.TryGetValue("gh-yh", out value) && !string.IsNullOrEmpty(value))
                     {
-                        Console.WriteLine($"未找到当前语言翻译，使用默认语言翻译: {value}");
+                        Console.WriteLine($"未找到当前语言翻译，使用ghYh字段值: {value}");
                         return value;
                     }
 
-                    // 如果没有找到当前语言和默认语言的翻译，返回sign_id+缺失语言标记
+                    // 如果没有找到当前语言和ghYh字段的翻译，返回sign_id+缺失语言标记
                     return $"{signId}_MISSING_{normalizedLangCode}";
                 }
                 else
@@ -259,14 +267,11 @@ namespace ImageRecognitionApp.unit
         /// <returns>文件内容</returns>
         public string LoadFileWithEncoding(string filePath, Encoding encoding)
         {
-            // 使用带BOM的UTF-8编码确保中文正确处理
+            // 强制使用UTF-8编码（带BOM）确保中文正确处理
             encoding = new UTF8Encoding(true);
             
-            // 读取文件内容并处理BOM
-            byte[] fileBytes = File.ReadAllBytes(filePath);
-            bool hasBom = fileBytes.Length >= 3 && fileBytes[0] == 0xEF && fileBytes[1] == 0xBB && fileBytes[2] == 0xBF;
-            int startIndex = hasBom ? 3 : 0;
-            string content = encoding.GetString(fileBytes, startIndex, fileBytes.Length - startIndex);
+            // 直接使用File.ReadAllText并指定编码
+            string content = File.ReadAllText(filePath, encoding);
             
             return content;
         }

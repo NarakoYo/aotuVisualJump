@@ -111,17 +111,37 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 // 调试信息：输出当前语言
                 (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
 
-                // 调试信息：检查本地化数据中的中文翻译
+                // 调试信息：检查本地化数据中的翻译
                 if (localizationData != null && localizationData.ContainsKey(10001))
                 {
                     var translations = localizationData[10001];
+                    
+                    // 输出所有可用的翻译
+                    foreach (var lang in translations.Keys)
+                    {
+                        Console.WriteLine($"[调试] 语言: {lang}, 翻译: {translations[lang]}");
+                    }
+                    
+                    // 直接测试中文输出
+                    Console.WriteLine($"[调试] 直接输出中文: 测试中文显示");
+                    
+                    // 优先使用中文翻译
                     if (translations.ContainsKey("zh-cn"))
                     {
-                        (App.Current as App)?.LogMessage($"本地化数据中的中文翻译: {translations["zh-cn"]}");
+                        string zhTranslation = translations["zh-cn"];
+                        (App.Current as App)?.LogMessage($"本地化数据中的中文翻译: {zhTranslation}");
+                        title = zhTranslation;
+                    }
+                    // 如果没有中文翻译，尝试使用ghYh字段
+                    else if (translations.ContainsKey("gh-yh"))
+                    {
+                        string ghTranslation = translations["gh-yh"];
+                        (App.Current as App)?.LogMessage($"未找到中文翻译，使用ghYh字段: {ghTranslation}");
+                        title = ghTranslation;
                     }
                     else
                     {
-                        (App.Current as App)?.LogMessage("本地化数据中未找到zh-cn翻译");
+                        (App.Current as App)?.LogMessage("本地化数据中未找到zh-cn翻译和gh-yh字段");
                     }
                 }
 
