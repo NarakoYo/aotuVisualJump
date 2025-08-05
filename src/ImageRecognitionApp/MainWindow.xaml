@@ -4,7 +4,11 @@
         xmlns:local="clr-namespace:ImageRecognitionApp"
         xmlns:unit="clr-namespace:ImageRecognitionApp.unit"
         Title="{Binding TitleText}" Height="720" Width="1050"
-        AllowsTransparency="True" WindowStyle="None" Background="Transparent" Closing="Window_Closing" WindowStartupLocation="CenterScreen"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        Background="Transparent"
+        Closing="Window_Closing"
+        WindowStartupLocation="CenterScreen"
         Icon="pack://application:,,,/Resources/logo/logo.ico">
     <Window.Resources>
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
@@ -32,6 +36,15 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="CloseButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="0,18,0,0" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#E81123"/>
@@ -39,6 +52,15 @@
             </Style.Triggers>
         </Style>
         <Style x:Key="MinimizeButtonStyle" BasedOn="{StaticResource TitleBarButtonStyle}" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="0" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#565656"/>
@@ -52,14 +74,12 @@
             <Grid>
                 <!-- 毛玻璃背景层 -->
                 <Border Background="#3C3C3C" Opacity="0.9" CornerRadius="18">
-                    <Border.Effect>
-                        <BlurEffect Radius="15"/>
-                    </Border.Effect>
+
                 </Border>
                 <!-- 内容层 -->
                 <Grid>
                     <!-- 自定义标题栏 - 置顶 -->
-                    <Border Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="18,18,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" HorizontalAlignment="Stretch">
+                    <Border Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="0,18,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" HorizontalAlignment="Stretch">
                     <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                         <!-- 毛玻璃背景层 -->
                         <Border Background="#1E1E1E" Opacity="1" CornerRadius="18,18,0,0">
@@ -74,9 +94,9 @@
                             </Image>
                             <TextBlock Text="{Binding TitleText}" Foreground="White" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" FontFamily="Microsoft YaHei, SimHei, Arial Unicode MS"/>
                         </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0">
-                                <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown">—</Button>
-                                <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown">✕</Button>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
+                                <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0">—</Button>
+                                <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,0,0">✕</Button>
                             </StackPanel>
                         </Grid>
                     </Grid>
