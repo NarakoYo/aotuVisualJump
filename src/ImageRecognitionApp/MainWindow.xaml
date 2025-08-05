@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ImageRecognitionApp"
         xmlns:unit="clr-namespace:ImageRecognitionApp.unit"
+        xmlns:converters="clr-namespace:ImageRecognitionApp.Converters"
         Title="{Binding TitleText}" Height="720" Width="1050"
         AllowsTransparency="True"
         WindowStyle="None"
@@ -11,6 +12,7 @@
         WindowStartupLocation="CenterScreen"
         Icon="pack://application:,,,/Resources/logo/logo.ico">
     <Window.Resources>
+        <converters:SubtractConverter x:Key="SubtractConverter"/>
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -102,6 +104,31 @@
                     </Grid>
                 </Border>
                 </Grid>
+                <!-- 内容框 - 标题栏下方4px，左右边距4px -->
+                <!-- Panel.ZIndex设置为2确保内容框位于标题栏之上但不会遮挡其他关键UI元素 -->
+                <Border Margin="4,54,4,4" 
+                        BorderThickness="1" 
+                        BorderBrush="#FFFFFF" 
+                        CornerRadius="10" 
+                        HorizontalAlignment="Stretch" 
+                        VerticalAlignment="Stretch" 
+                        Panel.ZIndex="2">
+                    <!-- 宽度设置为窗口宽度减去8px (左右边距各4px) -->
+                    <Border.Width>
+                        <MultiBinding Converter="{StaticResource SubtractConverter}">
+                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                            <Binding Source="8"/>
+                        </MultiBinding>
+                    </Border.Width>
+                    <!-- 高度设置为窗口高度减去58px (标题栏高度50px + 上下边距各4px) -->
+                    <Border.Height>
+                        <MultiBinding Converter="{StaticResource SubtractConverter}">
+                            <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                            <Binding Source="58"/>
+                        </MultiBinding>
+                    </Border.Height>
+                    <!-- 内容框内部可以添加其他控件 -->
+                </Border>
             </Grid>
         </Border>
     </Grid>

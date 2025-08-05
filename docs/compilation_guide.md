@@ -3,7 +3,7 @@
 ## 1. 环境准备
 
 ### 1.1 安装必要工具
-- .NET SDK 8.0 或更高版本
+- .NET SDK 9.0 或更高版本 (项目基于.NET 9.0开发)
 - Python 3.8 或更高版本
 - PowerShell 5.1 或更高版本
 
@@ -38,11 +38,12 @@ python -m pip install -r requirements.txt
 ```powershell
 dotnet build src/ImageRecognitionApp/ImageRecognitionApp.csproj -c Release
 ```
+> 注意：编译前建议清除缓存目录，可执行 `dotnet clean` 命令
 
 ### 3.2 验证编译结果
 编译成功后，检查输出目录：
 ```powershell
-dir src/ImageRecognitionApp/bin/Release/net6.0/
+dir src/ImageRecognitionApp/bin/Release/net9.0/
 ```
 应能看到生成的ImageRecognitionApp.dll文件
 
@@ -52,6 +53,7 @@ dir src/ImageRecognitionApp/bin/Release/net6.0/
 ```powershell
 dotnet publish src/ImageRecognitionApp/ImageRecognitionApp.csproj -c Release -r win-x64 --self-contained true -o publish/ImageRecognitionApp
 ```
+> 此命令会将应用发布为独立可执行文件，包含所有必要的依赖项
 
 ### 4.2 复制Python脚本
 ```powershell
