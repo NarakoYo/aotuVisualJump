@@ -81,11 +81,10 @@
                 <!-- 内容层 -->
                 <Grid>
                     <!-- 自定义标题栏 - 置顶 -->
-                    <Border Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="0,18,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" HorizontalAlignment="Stretch">
+                    <Border Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="0,18,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" HorizontalAlignment="Stretch" Background="#3C3C3C" BorderThickness="0,0,0,1" BorderBrush="#FFFFFF">
                     <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                         <!-- 毛玻璃背景层 -->
-                        <Border Background="#1E1E1E" Opacity="1" CornerRadius="18,18,0,0">
-                        </Border>
+                        <!-- <Border Background="#1E1E1E" Opacity="1" CornerRadius="18,18,0,0"></Border> -->
                         <!-- 内容层 -->
                         <Grid>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,0">
@@ -106,12 +105,10 @@
                 </Grid>
                 <!-- 内容框 - 标题栏下方4px，左右边距4px -->
                 <!-- Panel.ZIndex设置为2确保内容框位于标题栏之上但不会遮挡其他关键UI元素 -->
-                <Border Margin="4,54,4,4" 
-                        BorderThickness="1" 
-                        BorderBrush="#FFFFFF" 
-                        CornerRadius="10" 
-                        HorizontalAlignment="Stretch" 
-                        VerticalAlignment="Stretch" 
+                <Border Margin="4,54,4,4"
+                        CornerRadius="10"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
                         Panel.ZIndex="2">
                     <!-- 宽度设置为窗口宽度减去8px (左右边距各4px) -->
                     <Border.Width>
@@ -127,7 +124,31 @@
                             <Binding Source="58"/>
                         </MultiBinding>
                     </Border.Height>
-                    <!-- 内容框内部可以添加其他控件 -->
+                    <!-- 内容框内部布局 -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="3*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- 自定义菜单栏 -->
+                        <Border Grid.Column="0"
+                                Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Border}}"
+                                Background="#1E1E1E"
+                                CornerRadius="10"
+                                Margin="0">
+                            <!-- 侧边栏内容可以在这里添加 -->
+                        </Border>
+                        <!-- 主内容区域 - 宽度为内容框的3/4-2px - 高度为内容框的高度 - 背景色#1E1E1E - 10px圆角 -->
+                        <Border Grid.Column="1"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Border}}"
+                                Background="#1E1E1E"
+                                CornerRadius="10"
+                                Margin="5,0,2,0">
+                            <!-- 主内容区域内容可以在这里添加 -->
+                        </Border>
+                    </Grid>
                 </Border>
             </Grid>
         </Border>
