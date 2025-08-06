@@ -97,6 +97,8 @@ namespace ImageRecognitionApp.unit
                 
                 using (var lua = new Lua())
                 {
+                    // 设置Lua编码
+                    lua["LUA_ENCODING"] = "UTF-8";
                     // 设置Lua解析器编码为UTF-8
                     lua.DoString(luaContent);
 
@@ -140,7 +142,13 @@ namespace ImageRecognitionApp.unit
                                         }
 
                                         object? value = itemTable[langKey];
-                                        string translation = Convert.ToString(value) ?? string.Empty;
+                                        // 替换原代码
+                                        string translation = value switch
+                                        {
+                                            string str => str,
+                                            _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty
+                                        };
+                                        // string translation = Convert.ToString(value) ?? string.Empty;
                                         translations[normalizedLangCode] = translation;
                                         // Console.WriteLine($"已加载翻译: sign_id={signId}, lang={normalizedLangCode}, translation={translation}");
                                     }
