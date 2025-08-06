@@ -49,3 +49,36 @@ We[2]={
     hiIn="Launch",
     ptBr="Launch"
 }
+We[3]={
+    sign_id=10003,
+    isEx=0,
+    ghYh="占位10003",
+    zhCn="设置",
+    enUs="Setting",
+    frFr="Setting",
+    ruRu="Setting",
+    esEs="Setting",
+    arSa="Setting",
+    deDe="Setting",
+    jaJp="Setting",
+    koKr="Setting",
+    hiIn="Setting",
+    ptBr="Setting"
+}
+We[4]={
+    sign_id=10004,
+    isEx=0,
+    ghYh="占位10004",
+    zhCn="关于",
+    enUs="About",
+    frFr="About",
+    ruRu="About",
+    esEs="About",
+    arSa="About",
+    deDe="About",
+    jaJp="About",
+    koKr="About",
+    hiIn="About",
+    ptBr="About"
+}
+
