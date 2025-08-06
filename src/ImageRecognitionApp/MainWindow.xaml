@@ -41,7 +41,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="0,18,0,0" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="0,14,0,0" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -71,8 +71,8 @@
         </Style>
     </Window.Resources>
     <Grid>
-        <!-- 主背景边框 - 实现18px圆角效果 -->
-        <Border Background="#3C3C3C" CornerRadius="18">
+        <!-- 主背景边框 - 实现14px圆角效果 -->
+        <Border Background="#3C3C3C" CornerRadius="14,14,14,14">
             <Grid>
                 <!-- 毛玻璃背景层 -->
                 <Border Background="#3C3C3C" Opacity="0.9" CornerRadius="18">
@@ -81,7 +81,7 @@
                 <!-- 内容层 -->
                 <Grid>
                     <!-- 自定义标题栏 - 置顶 -->
-                    <Border Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="0,18,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" HorizontalAlignment="Stretch" Background="#3C3C3C" BorderThickness="0,0,0,1" BorderBrush="#FFFFFF">
+                    <Border Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="14,14,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" HorizontalAlignment="Stretch" Background="#3C3C3C" BorderThickness="0,0,0,1" BorderBrush="#FFFFFF">
                     <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                         <!-- 毛玻璃背景层 -->
                         <!-- <Border Background="#1E1E1E" Opacity="1" CornerRadius="18,18,0,0"></Border> -->
