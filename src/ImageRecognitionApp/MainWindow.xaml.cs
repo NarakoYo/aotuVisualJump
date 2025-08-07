@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -29,6 +29,21 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             {
                 _titleText = value;
                 OnPropertyChanged(nameof(TitleText));
+            }
+        }
+    }
+
+    // 设置按钮文本属性
+    private string _settingButtonText = string.Empty;
+    public string SettingButtonText
+    {
+        get => _settingButtonText;
+        set
+        {
+            if (_settingButtonText != value)
+            {
+                _settingButtonText = value;
+                OnPropertyChanged(nameof(SettingButtonText));
             }
         }
     }
@@ -67,35 +82,41 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             try
             {
                 // 检查本地化助手是否初始化
-                // Console.WriteLine("检查本地化助手初始化状态...");
+                Console.WriteLine("检查本地化助手初始化状态...");
                 var helper = ImageRecognitionApp.unit.LuaLocalizationHelper.Instance;
                 helper.Initialize();
-                // Console.WriteLine("本地化助手已初始化");
+                Console.WriteLine("本地化助手已初始化");
 
                 // 获取当前语言
                 var currentLanguageField = helper.GetType().GetField(
                     "_currentLanguage", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 string currentLanguage = currentLanguageField?.GetValue(helper) as string ?? "未知";
-                // Console.WriteLine($"当前语言: {currentLanguage}");
+                Console.WriteLine($"当前语言: {currentLanguage}");
 
                 // 尝试获取标题文本
                 string title = helper.GetString(10001);
-                // Console.WriteLine($"获取到的标题文本: {title}");
+                Console.WriteLine($"获取到的标题文本: {title}");
+                TitleText = title;
+
+                // 获取设置按钮文本
+                string settingButtonText = helper.GetString(10003);
+                Console.WriteLine($"获取到的设置按钮文本: {settingButtonText}");
+                SettingButtonText = settingButtonText;
 
                 // 检查本地化数据
                 var localizationDataField = helper.GetType().GetField(
                     "_localizationData", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var localizationData = localizationDataField?.GetValue(helper) as Dictionary<int, Dictionary<string, string>>;
-                // Console.WriteLine($"本地化数据: {localizationData != null}");
+                Console.WriteLine($"本地化数据: {localizationData != null}");
 
                 if (localizationData != null)
                 {
-                    // Console.WriteLine($"本地化数据条目数: {localizationData.Count}");
+                    Console.WriteLine($"本地化数据条目数: {localizationData.Count}");
                     if (localizationData.ContainsKey(10001))
                     {
-                        // Console.WriteLine($"找到signId=10001的翻译数据");
+                        Console.WriteLine($"找到signId=10001的翻译数据");
                         var translations = localizationData[10001];
                         // foreach (var lang in translations.Keys)
                         // {
