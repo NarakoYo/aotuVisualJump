@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
@@ -55,8 +55,39 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
+    // 跟踪设置按钮是否被点击
+    private bool _isSettingButtonClicked = false;
+
     // Python相关路径
     private readonly string _pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\venv\\Scripts\\python.exe");
+
+    // 设置按钮点击事件处理程序
+    private void SettingButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 设置按钮被点击状态
+        _isSettingButtonClicked = true;
+        UpdateSettingButtonBackground();
+    }
+
+    // 更新设置按钮背景色
+    private void UpdateSettingButtonBackground()
+    {
+        if (SettingButton != null && SettingButton.Template != null)
+        {
+            var border = SettingButton.Template.FindName("border", SettingButton) as Border;
+            if (border != null)
+            {
+                border.Background = _isSettingButtonClicked ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D")) : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E1E1E"));
+            }
+        }
+    }
+
+    // 重置设置按钮状态（供其他按钮点击事件调用）
+    public void ResetSettingButtonState()
+    {
+        _isSettingButtonClicked = false;
+        UpdateSettingButtonBackground();
+    }
     private readonly string _scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\image_recognition.py");
     private readonly string _scriptSaveDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\scripts");
 
@@ -78,107 +109,62 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             InitializeComponent();
             DataContext = this; // 设置数据上下文
 
-            // 直接设置标题以测试本地化
+            // 初始化设置按钮状态
+            _isSettingButtonClicked = false;
+
+            // 初始化本地化
             try
             {
-                // 检查本地化助手是否初始化
-                Console.WriteLine("检查本地化助手初始化状态...");
+                // 初始化本地化助手
                 var helper = ImageRecognitionApp.unit.LuaLocalizationHelper.Instance;
                 helper.Initialize();
-                Console.WriteLine("本地化助手已初始化");
+
+                // 获取标题文本和设置按钮文本
+                TitleText = helper.GetString(10001);
+                SettingButtonText = helper.GetString(10003);
 
                 // 获取当前语言
                 var currentLanguageField = helper.GetType().GetField(
                     "_currentLanguage", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 string currentLanguage = currentLanguageField?.GetValue(helper) as string ?? "未知";
-                Console.WriteLine($"当前语言: {currentLanguage}");
-
-                // 尝试获取标题文本
-                string title = helper.GetString(10001);
-                Console.WriteLine($"获取到的标题文本: {title}");
-                TitleText = title;
-
-                // 获取设置按钮文本
-                string settingButtonText = helper.GetString(10003);
-                Console.WriteLine($"获取到的设置按钮文本: {settingButtonText}");
-                SettingButtonText = settingButtonText;
 
                 // 检查本地化数据
                 var localizationDataField = helper.GetType().GetField(
                     "_localizationData", 
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var localizationData = localizationDataField?.GetValue(helper) as Dictionary<int, Dictionary<string, string>>;
-                Console.WriteLine($"本地化数据: {localizationData != null}");
 
-                if (localizationData != null)
-                {
-                    Console.WriteLine($"本地化数据条目数: {localizationData.Count}");
-                    if (localizationData.ContainsKey(10001))
-                    {
-                        Console.WriteLine($"找到signId=10001的翻译数据");
-                        var translations = localizationData[10001];
-                        // foreach (var lang in translations.Keys)
-                        // {
-                        //     Console.WriteLine($"{lang}: {translations[lang]}");
-                        // }
-                    }
-                    else
-                    {
-                        // Console.WriteLine("未找到signId=10001的翻译数据");
-                    }
-                }
-
-                // 调试信息：输出当前语言
-                (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
-
-                // 调试信息：检查本地化数据中的翻译
+                // 优先使用中文翻译
                 if (localizationData != null && localizationData.ContainsKey(10001))
                 {
                     var translations = localizationData[10001];
-                    
-                    // 输出所有可用的翻译
-                    foreach (var lang in translations.Keys)
-                    {
-                        Console.WriteLine($"[调试] 语言: {lang}, 翻译: {translations[lang]}");
-                    }
-                    
-                    // 直接测试中文输出
-                    Console.WriteLine($"[调试] 直接输出中文: 测试中文显示");
-                    
+                       
                     // 优先使用中文翻译
                     if (translations.ContainsKey("zh-cn"))
                     {
-                        string zhTranslation = translations["zh-cn"];
-                        (App.Current as App)?.LogMessage($"本地化数据中的中文翻译: {zhTranslation}");
-                        title = zhTranslation;
+                        TitleText = translations["zh-cn"];
                     }
                     // 如果没有中文翻译，尝试使用ghYh字段
                     else if (translations.ContainsKey("gh-yh"))
                     {
-                        string ghTranslation = translations["gh-yh"];
-                        (App.Current as App)?.LogMessage($"未找到中文翻译，使用ghYh字段: {ghTranslation}");
-                        title = ghTranslation;
-                    }
-                    else
-                    {
-                        (App.Current as App)?.LogMessage("本地化数据中未找到zh-cn翻译和gh-yh字段");
+                        TitleText = translations["gh-yh"];
                     }
                 }
 
-                // 设置标题
-                this.Title = title;
-                TitleText = title; // 更新绑定的属性
-                (App.Current as App)?.LogMessage($"标题已设置为: {title}");
+                // 设置窗口标题
+                this.Title = TitleText;
 
+                // 记录当前语言
+                (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
+                (App.Current as App)?.LogMessage($"标题已设置为: {TitleText}");
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"设置标题时出错: {ex.Message}");
                 (App.Current as App)?.LogMessage($"设置标题时出错: {ex.Message}");
                 this.Title = "图像识别应用";
-                TitleText = "图像识别应用"; // 更新绑定的属性
+                TitleText = "图像识别应用";
             }
 
 
@@ -309,12 +295,25 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     /// </summary>
     private void StopScriptExecution()
     {
-        if (_pythonProcess != null && !_pythonProcess.HasExited)
+        try
         {
-            _pythonProcess.Kill();
-            _pythonProcess.Dispose();
+            if (_pythonProcess != null && !_pythonProcess.HasExited)
+            {
+                _pythonProcess.Kill();
+                _pythonProcess.Dispose();
+                _pythonProcess = null;
+                (App.Current as App)?.LogMessage("Python进程已停止并释放");
+            }
         }
-        _isExecuting = false;
+        catch (Exception ex)
+        {
+            (App.Current as App)?.LogMessage($"停止Python进程时出错: {ex.Message}");
+        }
+        finally
+        {
+            _isExecuting = false;
+            _pythonProcess = null;
+        }
     }
     private void MinimizeWindow(object sender, RoutedEventArgs e)
     {
@@ -333,6 +332,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     {
         if (_isRecording)
         {
+            (App.Current as App)?.LogMessage("录制中，无法执行脚本");
             return;
         }
 
@@ -342,16 +342,81 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             return;
         }
 
-        _isExecuting = true;
-        _pythonProcess = new Process();
-        _pythonProcess.StartInfo.FileName = _pythonPath;
-        _pythonProcess.StartInfo.Arguments = $"\"{_scriptPath}\" run \"{_latestScriptPath}\"";
-        _pythonProcess.StartInfo.UseShellExecute = false;
-        _pythonProcess.StartInfo.RedirectStandardOutput = true;
-        _pythonProcess.StartInfo.RedirectStandardError = true;
-        _pythonProcess.Start();
-        _pythonProcess.BeginOutputReadLine();
-        _pythonProcess.BeginErrorReadLine();
+        try
+        {
+            // 检查Python路径和脚本路径是否有效
+            if (string.IsNullOrEmpty(_pythonPath) || !File.Exists(_pythonPath))
+            {
+                (App.Current as App)?.LogMessage("Python路径无效或未设置");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_scriptPath) || !File.Exists(_scriptPath))
+            {
+                (App.Current as App)?.LogMessage("脚本路径无效或未设置");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_latestScriptPath) || !File.Exists(_latestScriptPath))
+            {
+                (App.Current as App)?.LogMessage("未找到录制的脚本文件，请先录制脚本");
+                return;
+            }
+
+            _isExecuting = true;
+            _pythonProcess = new Process();
+            _pythonProcess.StartInfo.FileName = _pythonPath;
+            _pythonProcess.StartInfo.Arguments = $"\"{_scriptPath}\" run \"{_latestScriptPath}\"";
+            _pythonProcess.StartInfo.UseShellExecute = false;
+            _pythonProcess.StartInfo.RedirectStandardOutput = true;
+            _pythonProcess.StartInfo.RedirectStandardError = true;
+            _pythonProcess.EnableRaisingEvents = true; // 启用进程事件
+
+            // 添加输出和错误处理事件
+            _pythonProcess.OutputDataReceived += (s, args) =>
+            {
+                if (!string.IsNullOrEmpty(args.Data))
+                {
+                    (App.Current as App)?.LogMessage($"Python输出: {args.Data}");
+                }
+            };
+
+            _pythonProcess.ErrorDataReceived += (s, args) =>
+            {
+                if (!string.IsNullOrEmpty(args.Data))
+                {
+                    (App.Current as App)?.LogMessage($"Python错误: {args.Data}");
+                }
+            };
+
+            // 添加进程退出事件处理
+            _pythonProcess.Exited += (s, args) =>
+            {
+                (App.Current as App)?.LogMessage($"Python进程已退出，退出代码: {_pythonProcess?.ExitCode}");
+                _isExecuting = false;
+                if (_pythonProcess != null)
+                {
+                    _pythonProcess.Dispose();
+                    _pythonProcess = null;
+                }
+            };
+
+            _pythonProcess.Start();
+            _pythonProcess.BeginOutputReadLine();
+            _pythonProcess.BeginErrorReadLine();
+
+            (App.Current as App)?.LogMessage("Python脚本已启动执行");
+        }
+        catch (Exception ex)
+        {
+            (App.Current as App)?.LogMessage($"执行脚本时出错: {ex.Message}");
+            _isExecuting = false;
+            if (_pythonProcess != null)
+            {
+                _pythonProcess.Dispose();
+                _pythonProcess = null;
+            }
+        }
     }
 
     private void CloseWindow(object sender, RoutedEventArgs e)
@@ -361,28 +426,36 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
-        // 释放Python进程
-        if (_pythonProcess != null)
+        try
         {
-            _pythonProcess.Kill();
-            _pythonProcess.Dispose();
-            _pythonProcess = null;
+            // 停止脚本执行
+            if (_isExecuting)
+            {
+                StopScriptExecution();
+            }
+
+            // 释放定时器
+            if (_recordingTimer != null)
+            {
+                _recordingTimer.Stop();
+                _recordingTimer.Tick -= RecordingTimer_Tick;
+                _recordingTimer = null;
+                (App.Current as App)?.LogMessage("定时器已释放");
+            }
+
+            // 清除缓存
+            _imageCache.Clear();
+            (App.Current as App)?.LogMessage("缓存已清除");
+
+            // 强制垃圾回收
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            (App.Current as App)?.LogMessage("垃圾回收已执行");
         }
-        
-        // 释放定时器
-        if (_recordingTimer != null)
+        catch (Exception ex)
         {
-            _recordingTimer.Stop();
-            _recordingTimer.Tick -= RecordingTimer_Tick;
-            _recordingTimer = null;
+            (App.Current as App)?.LogMessage($"窗口关闭时出错: {ex.Message}");
         }
-        
-        // 清除缓存
-        _imageCache.Clear();
-        
-        // 强制垃圾回收
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
     }
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
