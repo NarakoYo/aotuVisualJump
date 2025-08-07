@@ -13,6 +13,7 @@
         Icon="pack://application:,,,/Resources/logo/logo.ico">
     <Window.Resources>
         <converters:SubtractConverter x:Key="SubtractConverter"/>
+        <converters:MultiplyConverter x:Key="MultiplyConverter"/>
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -148,16 +149,32 @@
                                 Margin="0,0,0,0">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
-                                    <Border Background="#2D2D2D"
-                                            CornerRadius="5"
-                                            Width="{TemplateBinding Width}"
-                                            Height="{TemplateBinding Height}"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Bottom">
-                                        <StackPanel Orientation="Horizontal"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Margin="10,0,10,0">
+                                    <Border CornerRadius="5"
+                                                Width="{TemplateBinding Width}"
+                                                Height="{TemplateBinding Height}"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Bottom">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#1E1E1E"/>
+                                                    <Style.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#2A2D2E"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线 - 宽度为按钮的一半，水平居中 -->
+                                                <Border Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}, Converter={StaticResource MultiplyConverter}, ConverterParameter=0.5}"
+                                                        Height="2"
+                                                        Background="#2A2D2E"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Top"/>
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            Margin="10,0,10,0">
                                             <!-- 图标 -->
                                             <Image Source="pack://application:,,,/Resources/Icons/igoutu/setting-gear.png"
                                                    Width="32"
@@ -171,6 +188,7 @@
                                                        Margin="5,0,0,0"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
+                                    </Grid>
                                     </Border>
                                 </ControlTemplate>
                             </Button.Template>
