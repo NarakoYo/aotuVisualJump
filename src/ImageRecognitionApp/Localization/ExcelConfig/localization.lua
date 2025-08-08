@@ -82,3 +82,53 @@ We[4]={
     ptBr="About"
 }
 
+
+
+We[5]={
+    sign_id=20001,
+    isEx=0,
+    ghYh="占位20001",
+    zhCn="程序已经在运行，请勿重复启动！",
+    enUs="Program is already running, please do not start it repeatedly",
+    frFr="Programme déjà en cours d'exécution, veuillez ne pas lancer le programme à nouveau",
+    ruRu="Программа уже запущена, пожалуйста, не запускайте ее повторно",
+    esEs="El programa ya está en ejecución, por favor, no lo inicie de nuevo",
+    arSa="البرنامج يعمل بالفعل، فضلاً لا تبدأه بشكل متكرر",
+    deDe="Das Programm wird bereits ausgeführt. Starten Sie es bitte nicht erneut.",
+    jaJp="プログラムは既に実行中です。再度起動しないでください！",
+    koKr="프로그램이 이미 실행 중입니다. 다시 시작하지 마세요!",
+    hiIn="프로그램 पहले से ही चल रहा है, कृपया इसे दोहरा कर न запустाएँ!",
+    ptBr="Programa já está em execução, por favor, não inicie-o novamente"
+}
+We[6]={
+    sign_id=20002,
+    isEx=0,
+    ghYh="占位20002",
+    zhCn="警告",
+    enUs="Warning",
+    frFr="Avertissement",
+    ruRu="Предупреждение",
+    esEs="Advertencia",
+    arSa="تحذير",
+    deDe="Warnung",
+    jaJp="警告",
+    koKr="경고",
+    hiIn="चेतावनी",
+    ptBr="Aviso"
+}
+We[7]={
+    sign_id=20003,
+    isEx=0,
+    ghYh="占位20003",
+    zhCn="确认",
+    enUs="Confirm",
+    frFr="Confirmer",
+    ruRu="Подтвердить",
+    esEs="Confirmar",
+    arSa="تأكيد",
+    deDe="Bestätigen",
+    jaJp="確認",
+    koKr="확인",
+    hiIn="पुष्टि करें",
+    ptBr="Confirmar"
+}

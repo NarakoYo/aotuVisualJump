@@ -503,6 +503,22 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             _imageCache.Clear();
             (App.Current as App)?.LogMessage("缓存已清除");
 
+            // 释放任务栏管理器资源
+            if (_taskbarManager != null)
+            {
+                _taskbarManager.Dispose();
+                _taskbarManager = null;
+                (App.Current as App)?.LogMessage("任务栏管理器已释放");
+            }
+
+            // 释放任务栏动画资源
+            if (_taskbarAnimation != null)
+            {
+                _taskbarAnimation.Dispose();
+                _taskbarAnimation = null;
+                (App.Current as App)?.LogMessage("任务栏动画已释放");
+            }
+
             // 强制垃圾回收
             GC.Collect();
             GC.WaitForPendingFinalizers();

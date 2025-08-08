@@ -92,14 +92,14 @@ namespace ImageRecognitionApp.unit
 
             try
             {
-                // 确保文件以UTF-8编码读取
-                string luaContent = File.ReadAllText(_luaFilePath, Encoding.UTF8);
+                // 使用LoadFileWithEncoding方法读取文件，确保正确处理编码
+                string luaContent = LoadFileWithEncoding(_luaFilePath, Encoding.UTF8);
                 
                 using (var lua = new Lua())
                 {
-                    // 设置Lua编码
-                    lua["LUA_ENCODING"] = "UTF-8";
                     // 设置Lua解析器编码为UTF-8
+                    lua.DoString("package.cpath = package.cpath .. ';./?.dll;./?.so'");
+                    lua.DoString("LUA_ENCODING = 'UTF-8'");
                     lua.DoString(luaContent);
 
                     // 获取localization表
@@ -275,10 +275,11 @@ namespace ImageRecognitionApp.unit
         /// <returns>文件内容</returns>
         public string LoadFileWithEncoding(string filePath, Encoding encoding)
         {
-            // 强制使用UTF-8编码（带BOM）确保中文正确处理
-            encoding = new UTF8Encoding(true);
+            // 如果未指定编码，默认使用UTF-8编码（带BOM）
+            if (encoding == null)
+                encoding = new UTF8Encoding(true);
             
-            // 直接使用File.ReadAllText并指定编码
+            // 使用指定编码读取文件
             string content = File.ReadAllText(filePath, encoding);
             
             return content;

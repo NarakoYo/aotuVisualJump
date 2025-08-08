@@ -16,11 +16,11 @@ namespace ImageRecognitionApp.WinFun
     {
         #region 字段定义
 
-    private readonly IntPtr _windowHandle;
+    private IntPtr _windowHandle;
     private readonly uint _taskbarIconId = 1001; // 设置默认图标ID
     private NOTIFYICONDATA _notifyIconData;
     private IntPtr _iconHandle = IntPtr.Zero; // 存储图标句柄以便释放
-    private readonly TaskbarAnimation _taskbarAnimation; // 任务栏动画引用
+    private TaskbarAnimation? _taskbarAnimation; // 任务栏动画引用
 
     #endregion
 
@@ -35,8 +35,20 @@ namespace ImageRecognitionApp.WinFun
         [DllImport("shell32.dll")]
         private static extern int Shell_NotifyIcon(uint dwMessage, ref NOTIFYICONDATA lpData);
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr lpdwProcessId);
+
+        [DllImport("kernel32.dll")]
+        private static extern uint GetCurrentThreadId();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
 
         [DllImport("user32.dll")]
         private static extern int FlashWindowEx(ref FLASHWINFO pwfi);
@@ -111,12 +123,44 @@ namespace ImageRecognitionApp.WinFun
         /// <param name="window">WPF窗口</param>
         public TaskbarManager(Window window)
         {
-            _windowHandle = new WindowInteropHelper(window).Handle;
-            _taskbarAnimation = new TaskbarAnimation(window);
-            InitializeTaskbarIcon();
+            if (window == null)
+            {
+                throw new ArgumentNullException(nameof(window), "窗口不能为空");
+            }
+            
+            // 延迟获取窗口句柄，确保窗口已加载
+            window.Loaded += (sender, e) =>
+            {
+                _windowHandle = new WindowInteropHelper(window).Handle;
+                if (_windowHandle == IntPtr.Zero)
+                {
+                    (App.Current as App)?.LogMessage("TaskbarManager: 窗口句柄获取失败");
+                    // 尝试使用主窗口
+                    if (System.Windows.Application.Current.MainWindow != null)
+                    {
+                        _windowHandle = new WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
+                        (App.Current as App)?.LogMessage($"TaskbarManager: 使用主窗口句柄: {_windowHandle}");
+                    }
+                }
+                else
+                {
+                    (App.Current as App)?.LogMessage($"TaskbarManager: 窗口句柄已设置: {_windowHandle}");
+                }
+                
+                // 确保窗口句柄有效后再初始化任务栏图标
+                if (_windowHandle != IntPtr.Zero)
+                {
+                    _taskbarAnimation = new TaskbarAnimation(window);
+                    InitializeTaskbarIcon();
 
-            // 注册窗口消息处理
-            HwndSource.FromHwnd(_windowHandle)?.AddHook(WndProc);
+                    // 注册窗口消息处理
+                    HwndSource.FromHwnd(_windowHandle)?.AddHook(WndProc);
+                }
+                else
+                {
+                    (App.Current as App)?.LogMessage("TaskbarManager: 无法初始化，窗口句柄无效");
+                }
+            };
         }
 
         /// <summary>
@@ -170,6 +214,7 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
+                (App.Current as App)?.LogMessage("开始初始化任务栏图标");
                 _notifyIconData = new NOTIFYICONDATA
                 {
                     cbSize = (uint)Marshal.SizeOf(typeof(NOTIFYICONDATA)),
@@ -180,6 +225,7 @@ namespace ImageRecognitionApp.WinFun
                     hIcon = GetWindowIconHandle(),
                     szTip = System.Windows.Application.Current.MainWindow?.Title ?? "Image Recognition App"
                 };
+                (App.Current as App)?.LogMessage($"任务栏图标配置: hWnd={_windowHandle}, uCallbackMessage={WM_NOTIFYICON}");
 
                 // 添加任务栏图标
                 int addResult = Shell_NotifyIcon(NIM_ADD, ref _notifyIconData);
@@ -190,6 +236,8 @@ namespace ImageRecognitionApp.WinFun
                 else
                 {
                     (App.Current as App)?.LogMessage("任务栏图标添加失败");
+                    int errorCode = Marshal.GetLastWin32Error();
+                    (App.Current as App)?.LogMessage($"Win32错误代码: {errorCode}");
                 }
 
                 // 设置版本
@@ -221,11 +269,13 @@ namespace ImageRecognitionApp.WinFun
                 {
                     // 处理任务栏图标消息
                     uint message = (uint)lParam;
-                    (App.Current as App)?.LogMessage($"接收到任务栏消息: {message}");
+                    uint iconId = (uint)wParam;
+                    (App.Current as App)?.LogMessage($"接收到任务栏消息: 类型={message}, 图标ID={iconId}");
 
                     switch (message)
                     {
                         case 0x0201:  // 鼠标左键点击
+                            (App.Current as App)?.LogMessage("处理鼠标左键点击");
                             OnLeftClick();
                             handled = true;
                             break;
@@ -255,23 +305,67 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                // 切换窗口显示/隐藏
+                (App.Current as App)?.LogMessage("执行OnLeftClick方法");
+                // 切换窗口激活/最小化
                 if (System.Windows.Application.Current.MainWindow != null)
                 {
-                    if (System.Windows.Application.Current.MainWindow.IsVisible)
+                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                    (App.Current as App)?.LogMessage($"窗口当前状态: {mainWindow.WindowState}, 是否激活: {mainWindow.IsActive}, 窗口句柄: {_windowHandle}");
+                    
+                    // 无论窗口是否激活，只要不是最小化状态就最小化它
+                    if (mainWindow.WindowState != WindowState.Minimized)
                     {
-                        // 窗口可见，隐藏窗口并播放向下跳跃动画
-                        System.Windows.Application.Current.MainWindow.Hide();
-                        _taskbarAnimation.JumpDownAnimation();
-                        (App.Current as App)?.LogMessage("窗口已隐藏，播放向下跳跃动画");
+                        mainWindow.WindowState = WindowState.Minimized;
+                        if (_taskbarAnimation != null)
+                        {
+                            _taskbarAnimation.JumpDownAnimation();
+                            (App.Current as App)?.LogMessage("窗口已最小化，播放向下跳跃动画");
+                        }
+                        else
+                        {
+                            (App.Current as App)?.LogMessage("窗口已最小化，但_taskbarAnimation为null，无法播放动画");
+                        }
                     }
                     else
                     {
-                        // 窗口不可见，显示窗口并播放向上跳跃动画
-                        System.Windows.Application.Current.MainWindow.Show();
-                        SetForegroundWindow(_windowHandle);
-                        _taskbarAnimation.JumpUpAnimation();
-                        (App.Current as App)?.LogMessage("窗口已显示，播放向上跳跃动画");
+                        // 窗口处于最小化状态，恢复并激活
+                        mainWindow.WindowState = WindowState.Normal;
+                        (App.Current as App)?.LogMessage("窗口已恢复为正常状态");
+                        mainWindow.Show();
+                        (App.Current as App)?.LogMessage("窗口已显示");
+                        mainWindow.Activate();
+                        (App.Current as App)?.LogMessage("窗口已激活");
+                        // 确保窗口前置
+                        bool setForegroundResult = SetForegroundWindow(_windowHandle);
+                        (App.Current as App)?.LogMessage($"SetForegroundWindow结果: {setForegroundResult}");
+                        if (!setForegroundResult)
+                        {
+                            (App.Current as App)?.LogMessage("SetForegroundWindow调用失败，尝试其他方法激活窗口");
+                            // 尝试通过用户32 API强制激活
+                            IntPtr currentForeground = GetForegroundWindow();
+                            uint currentThreadId = GetWindowThreadProcessId(currentForeground, IntPtr.Zero);
+                            uint ourThreadId = GetCurrentThreadId();
+                            
+                            (App.Current as App)?.LogMessage($"当前前景窗口: {currentForeground}, 当前线程ID: {currentThreadId}, 我们的线程ID: {ourThreadId}");
+                            if (currentThreadId != ourThreadId)
+                            {
+                                (App.Current as App)?.LogMessage("附加线程输入");
+                                AttachThreadInput(currentThreadId, ourThreadId, true);
+                                setForegroundResult = SetForegroundWindow(_windowHandle);
+                                (App.Current as App)?.LogMessage($"附加线程后SetForegroundWindow结果: {setForegroundResult}");
+                                AttachThreadInput(currentThreadId, ourThreadId, false);
+                                (App.Current as App)?.LogMessage("分离线程输入");
+                            }
+                        }
+                        if (_taskbarAnimation != null)
+                        {
+                            _taskbarAnimation.JumpUpAnimation();
+                            (App.Current as App)?.LogMessage("窗口已激活，播放向上跳跃动画");
+                        }
+                        else
+                        {
+                            (App.Current as App)?.LogMessage("窗口已激活，但_taskbarAnimation为null，无法播放动画");
+                        }
                     }
                 }
                 else

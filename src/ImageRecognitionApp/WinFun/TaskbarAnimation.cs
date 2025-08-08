@@ -12,7 +12,7 @@ namespace ImageRecognitionApp.WinFun
     /// <summary>
     /// 任务栏动画类，负责处理任务栏图标的动画效果
     /// </summary>
-    public class TaskbarAnimation
+    public class TaskbarAnimation : IDisposable
     {
         #region Win32 API 导入
 
@@ -373,5 +373,29 @@ namespace ImageRecognitionApp.WinFun
         // 记录日志，表示图标移动
         (App.Current as App)?.LogMessage($"图标移动到位置: X={position.X}, Y={position.Y}");
     }
+
+    /// <summary>
+    /// 释放资源
+    /// </summary>
+    public void Dispose()
+    {
+        // 停止动画
+        if (_isAnimating && _animationTask != null)
+        {
+            _isAnimating = false;
+            if (!_animationTask.IsCompleted)
+            {
+                try
+                {
+                    _animationTask.Wait(1000); // 等待最多1秒
+                }
+                catch (Exception ex)
+                {
+                    (App.Current as App)?.LogMessage($"等待动画任务完成时出错: {ex.Message}");
+                }
+                _animationTask = null;
+            }
+        }
     }
+}
 }
