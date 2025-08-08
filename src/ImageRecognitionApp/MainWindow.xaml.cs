@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Collections.Generic;
 using System.Windows.Media;
 using System.ComponentModel;
+using ImageRecognitionApp.WinFun;  // 导入WinFun命名空间
 
 namespace ImageRecognitionApp;
 
@@ -18,6 +19,10 @@ namespace ImageRecognitionApp;
 /// </summary>
 public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyChanged
 {
+    // 任务栏管理器和动画
+    private TaskbarManager? _taskbarManager = null;
+    private TaskbarAnimation? _taskbarAnimation = null;
+
     // 窗口标题属性
     private string _titleText = string.Empty;
     public string TitleText
@@ -109,6 +114,22 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             InitializeComponent();
             DataContext = this; // 设置数据上下文
 
+            // 初始化任务栏管理器和动画
+            try
+            {
+                _taskbarManager = new TaskbarManager(this);
+                _taskbarAnimation = new TaskbarAnimation(this);
+                (App.Current as App)?.LogMessage("任务栏管理器和动画初始化成功");
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"任务栏初始化错误: {ex.Message}");
+                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+            }
+
+            // 注册窗口关闭事件以释放资源
+            this.Closed += MainWindow_Closed;
+
             // 初始化设置按钮状态
             _isSettingButtonClicked = false;
 
@@ -173,9 +194,20 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         EnsureScriptDirectoryExists();
         // 禁用窗口边缘拉伸
         this.ResizeMode = ResizeMode.NoResize;
+
+        // 显示任务栏通知
+        _taskbarManager?.ShowNotification("应用已启动", "图像识别应用已成功启动");
     }
 
 
+
+    // 窗口关闭事件处理程序
+    private void MainWindow_Closed(object? sender, EventArgs e)
+    {
+        // 释放任务栏资源
+        _taskbarManager?.Dispose();
+        _taskbarAnimation?.StopFlashAnimation();
+    }
 
     /// <summary>
     /// 初始化键盘快捷键
@@ -233,6 +265,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             _isRecording = true;
             _recordingStartTime = DateTime.Now;
+
+            // 任务栏通知和动画
+            _taskbarManager?.ShowNotification("开始录制", "脚本录制已开始");
+            _taskbarAnimation?.StartFlashAnimation(0, 1000);  // 无限闪烁，间隔1秒
             
             if (_recordingTimer == null)
             {
@@ -260,6 +296,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         if (_isRecording)
         {
             _isRecording = false;
+
+            // 停止任务栏动画并显示通知
+            _taskbarAnimation?.StopFlashAnimation();
+            _taskbarManager?.ShowNotification("录制完成", "脚本已录制完成并保存");
             
             if (_recordingTimer != null)
             {
@@ -297,6 +337,9 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     {
         try
         {
+            // 停止任务栏动画
+            _taskbarAnimation?.StopFlashAnimation();
+
             if (_pythonProcess != null && !_pythonProcess.HasExited)
             {
                 _pythonProcess.Kill();
@@ -333,6 +376,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         if (_isRecording)
         {
             (App.Current as App)?.LogMessage("录制中，无法执行脚本");
+            _taskbarManager?.ShowNotification("无法执行", "录制中，无法执行脚本");
             return;
         }
 
@@ -341,6 +385,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             StopScriptExecution();
             return;
         }
+
+        // 显示执行开始通知
+        _taskbarManager?.ShowNotification("开始执行", "脚本执行已开始");
+        _taskbarAnimation?.StartFlashAnimation(0, 500);  // 快速闪烁
 
         try
         {
@@ -392,6 +440,14 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             // 添加进程退出事件处理
             _pythonProcess.Exited += (s, args) =>
             {
+                string title = _pythonProcess?.ExitCode == 0 ? "执行成功" : "执行失败";
+                string message = _pythonProcess?.ExitCode == 0 ? "脚本执行成功完成" : "脚本执行失败，请查看日志";
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _taskbarManager?.ShowNotification(title, message);
+                    _taskbarAnimation?.StopFlashAnimation();
+                });
+
                 (App.Current as App)?.LogMessage($"Python进程已退出，退出代码: {_pythonProcess?.ExitCode}");
                 _isExecuting = false;
                 if (_pythonProcess != null)
