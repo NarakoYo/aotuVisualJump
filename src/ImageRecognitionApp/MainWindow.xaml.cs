@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using System.ComponentModel;
 using ImageRecognitionApp.WinFun;  // 导入WinFun命名空间
+using ImageRecognitionApp.unit;     // 导入unit命名空间
 
 namespace ImageRecognitionApp;
 
@@ -137,7 +138,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             try
             {
                 // 初始化本地化助手
-                var helper = ImageRecognitionApp.unit.LuaLocalizationHelper.Instance;
+                var helper = ImageRecognitionApp.unit.JsonLocalizationHelper.Instance;
                 helper.Initialize();
 
                 // 获取标题文本和设置按钮文本

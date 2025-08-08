@@ -265,9 +265,12 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
+                (App.Current as App)?.LogMessage($"收到窗口消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
+                
                 if (msg == WM_NOTIFYICON)
                 {
                     // 处理任务栏图标消息
+                    (App.Current as App)?.LogMessage($"确认是任务栏图标消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
                     uint message = (uint)lParam;
                     uint iconId = (uint)wParam;
                     (App.Current as App)?.LogMessage($"接收到任务栏消息: 类型={message}, 图标ID={iconId}");
@@ -275,16 +278,22 @@ namespace ImageRecognitionApp.WinFun
                     switch (message)
                     {
                         case 0x0201:  // 鼠标左键点击
-                            (App.Current as App)?.LogMessage("处理鼠标左键点击");
+                            (App.Current as App)?.LogMessage("确认是鼠标左键点击");
                             OnLeftClick();
                             handled = true;
                             break;
+                        case 0x0202:  // 鼠标左键释放
+                            (App.Current as App)?.LogMessage("收到鼠标左键释放消息");
+                            handled = true;
+                            break;
                         case 0x0204:  // 鼠标右键点击
+                            (App.Current as App)?.LogMessage("收到鼠标右键点击消息");
                             OnRightClick();
                             handled = true;
                             break;
                         default:
                             (App.Current as App)?.LogMessage($"未知的任务栏消息: {message}");
+                            (App.Current as App)?.LogMessage($"收到未知的任务栏图标消息类型: lParam={lParam}, wParam={wParam}");
                             break;
                     }
                 }
@@ -315,7 +324,9 @@ namespace ImageRecognitionApp.WinFun
                     // 无论窗口是否激活，只要不是最小化状态就最小化它
                     if (mainWindow.WindowState != WindowState.Minimized)
                     {
+                        (App.Current as App)?.LogMessage("窗口不是最小化状态，准备最小化");
                         mainWindow.WindowState = WindowState.Minimized;
+                        (App.Current as App)?.LogMessage("窗口已设置为最小化状态");
                         if (_taskbarAnimation != null)
                         {
                             _taskbarAnimation.JumpDownAnimation();
@@ -329,6 +340,7 @@ namespace ImageRecognitionApp.WinFun
                     else
                     {
                         // 窗口处于最小化状态，恢复并激活
+                        (App.Current as App)?.LogMessage("窗口处于最小化状态，准备恢复");
                         mainWindow.WindowState = WindowState.Normal;
                         (App.Current as App)?.LogMessage("窗口已恢复为正常状态");
                         mainWindow.Show();

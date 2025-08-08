@@ -22,7 +22,7 @@ public partial class App : Application
             // 初始化本地化工具
             try
             {
-                LuaLocalizationHelper.Instance.Initialize();
+                JsonLocalizationHelper.Instance.Initialize();
                 Console.WriteLine("本地化工具初始化成功");
                 LogMessage("本地化工具初始化成功");
             }

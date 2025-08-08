@@ -304,8 +304,8 @@ namespace ImageRecognitionApp.WinFun
                     return null;
                 }
 
-                // 使用LuaLocalizationHelper获取本地化文本
-                string result = LuaLocalizationHelper.Instance.GetString(id);
+                // 使用JsonLocalizationHelper获取本地化文本
+            string result = JsonLocalizationHelper.Instance.GetString(id);
                 (App.Current as App)?.LogMessage($"获取本地化字符串结果: id={id}, result={result ?? "null"}");
 
                 // 检查是否找到本地化文本
