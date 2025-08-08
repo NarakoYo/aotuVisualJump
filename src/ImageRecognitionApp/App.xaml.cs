@@ -4,6 +4,7 @@ using System.Windows;
 using System.IO;
 using System.Text;
 using ImageRecognitionApp.unit;
+using ImageRecognitionApp.WinFun;
 
 namespace ImageRecognitionApp;
 
@@ -31,6 +32,18 @@ public partial class App : Application
                 LogMessage($"本地化工具初始化失败: {ex.Message}");
                 LogException(ex);
             }
+
+            // 单实例检查
+            if (SingleInstanceChecker.CheckIfAlreadyRunning())
+            {
+                // 已有实例运行，显示警告并退出
+                SingleInstanceChecker.ShowDuplicateInstanceWarning();
+                this.Shutdown();
+                return;
+            }
+
+            // 注册退出事件，释放互斥锁
+            this.Exit += (sender, args) => SingleInstanceChecker.ReleaseMutex();
         }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
