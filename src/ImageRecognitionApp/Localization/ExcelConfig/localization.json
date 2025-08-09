@@ -1,8 +1,8 @@
 {
   "localization": [
     {
-      "sign_id": "标识ID",
-      "isEx":"是否扩展标识",
+      "sign_id": 1,
+      "isEx": 0,
       "zhCn": "简体中文",
       "enUs": "美式英语",
       "frFr": "法语",

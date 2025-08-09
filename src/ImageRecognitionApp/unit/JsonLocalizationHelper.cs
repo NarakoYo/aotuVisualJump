@@ -106,7 +106,30 @@ namespace ImageRecognitionApp.unit
                         {
                             if (item.TryGetProperty("sign_id", out var signIdElement))
                             {
-                                int signId = signIdElement.GetInt32();
+                                // 尝试获取sign_id的整数值
+                                if (!signIdElement.TryGetInt32(out int signId))
+                                {
+                                    Console.WriteLine($"警告: 跳过非数值类型的sign_id: {signIdElement.ToString()}");
+                                    continue;
+                                }
+
+                                // 检查isEx字段是否存在且为数值类型
+                                bool isExValid = true;
+                                if (item.TryGetProperty("isEx", out var isExElement))
+                                {
+                                    // 检查isEx是否为数值类型或布尔类型
+                                    if (isExElement.ValueKind != JsonValueKind.Number && isExElement.ValueKind != JsonValueKind.True && isExElement.ValueKind != JsonValueKind.False)
+                                    {
+                                        Console.WriteLine($"警告: 跳过isEx为非数值类型的条目，sign_id: {signId}");
+                                        isExValid = false;
+                                    }
+                                }
+
+                                if (!isExValid)
+                                {
+                                    continue;
+                                }
+
                                 var translations = new Dictionary<string, string>();
 
                                 // 遍历所有属性
