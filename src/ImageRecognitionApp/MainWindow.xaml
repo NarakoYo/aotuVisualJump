@@ -99,13 +99,13 @@
                             <TextBlock Text="{Binding TitleText}" Foreground="White" FontSize="14" FontWeight="Medium" VerticalAlignment="Center" FontFamily="Microsoft YaHei, SimHei, Arial Unicode MS"/>
                         </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
-                                <Button Click="HideToTray" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" ToolTip="{Binding Source={x:Static unit:JsonLocalizationHelper.Instance}, Path=GetString(20006)}">
+                                <Button Click="HideToTray" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" Loaded="HideToTrayButton_Loaded">
                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/hide-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Button>
-                                <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" ToolTip="{Binding Source={x:Static unit:JsonLocalizationHelper.Instance}, Path=GetString(20005)}">
+                                <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" Loaded="MinimizeWindowButton_Loaded">
                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/minimize-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Button>
-                                <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,0,0" ToolTip="{Binding Source={x:Static unit:JsonLocalizationHelper.Instance}, Path=GetString(20004)}">
+                                <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,0,0" Loaded="CloseWindowButton_Loaded">
                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/close-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Button>
                             </StackPanel>

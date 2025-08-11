@@ -128,6 +128,9 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
             }
 
+            // 订阅属性变化事件以更新任务栏提示
+            this.PropertyChanged += MainWindow_PropertyChanged;
+
             // 注册窗口关闭事件以释放资源
             this.Closed += MainWindow_Closed;
 
@@ -204,11 +207,23 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
     // 窗口关闭事件处理程序
     private void MainWindow_Closed(object? sender, EventArgs e)
-    {
-        // 释放任务栏资源
-        _taskbarManager?.Dispose();
-        _taskbarAnimation?.StopFlashAnimation();
-    }
+        {
+            // 释放任务栏资源
+            _taskbarManager?.Dispose();
+            _taskbarAnimation?.StopFlashAnimation();
+        }
+
+        /// <summary>
+        /// 属性变化事件处理程序
+        /// </summary>
+        private void MainWindow_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(TitleText) && _taskbarManager != null)
+            {
+                _taskbarManager.UpdateTooltip(TitleText);
+                (App.Current as App)?.LogMessage($"任务栏提示文本已更新为: {TitleText}");
+            }
+        }
 
     /// <summary>
     /// 初始化键盘快捷键
@@ -493,6 +508,66 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     {
         this.Close();
     }
+
+    private void HideToTrayButton_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                // 创建ToolTip对象
+                ToolTip tooltip = new ToolTip();
+                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20006);
+                
+                // 设置ToolTip样式
+                Style tooltipStyle = new Style(typeof(ToolTip));
+                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+                tooltip.Style = tooltipStyle;
+                
+                // 设置显示时长并应用到按钮
+                ToolTipService.SetShowDuration(button, 30000);
+                button.ToolTip = tooltip;
+            }
+        }
+
+    private void MinimizeWindowButton_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                // 创建ToolTip对象
+                ToolTip tooltip = new ToolTip();
+                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20005);
+                
+                // 设置ToolTip样式
+                Style tooltipStyle = new Style(typeof(ToolTip));
+                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+                tooltip.Style = tooltipStyle;
+                
+                // 设置显示时长并应用到按钮
+                ToolTipService.SetShowDuration(button, 30000);
+                button.ToolTip = tooltip;
+            }
+        }
+
+    private void CloseWindowButton_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                // 创建ToolTip对象
+                ToolTip tooltip = new ToolTip();
+                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20004);
+                
+                // 设置ToolTip样式
+                Style tooltipStyle = new Style(typeof(ToolTip));
+                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+                tooltip.Style = tooltipStyle;
+                
+                // 设置显示时长并应用到按钮
+                ToolTipService.SetShowDuration(button, 30000);
+                button.ToolTip = tooltip;
+            }
+        }
 
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {

@@ -215,6 +215,18 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 (App.Current as App)?.LogMessage("开始初始化任务栏图标");
+                
+                // 获取应用程序标题
+                string appTitle = "Image Recognition App";
+                if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
+                {
+                    appTitle = mainWindow.TitleText;
+                }
+                else if (System.Windows.Application.Current.MainWindow != null)
+                {
+                    appTitle = System.Windows.Application.Current.MainWindow.Title;
+                }
+                
                 _notifyIconData = new NOTIFYICONDATA
                 {
                     cbSize = (uint)Marshal.SizeOf(typeof(NOTIFYICONDATA)),
@@ -223,9 +235,9 @@ namespace ImageRecognitionApp.WinFun
                     uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE,
                     uCallbackMessage = WM_NOTIFYICON,
                     hIcon = GetWindowIconHandle(),
-                    szTip = System.Windows.Application.Current.MainWindow?.Title ?? "Image Recognition App"
+                    szTip = appTitle
                 };
-                (App.Current as App)?.LogMessage($"任务栏图标配置: hWnd={_windowHandle}, uCallbackMessage={WM_NOTIFYICON}");
+                (App.Current as App)?.LogMessage($"任务栏图标配置: hWnd={_windowHandle}, uCallbackMessage={WM_NOTIFYICON}, szTip={appTitle}");
 
                 // 添加任务栏图标
                 int addResult = Shell_NotifyIcon(NIM_ADD, ref _notifyIconData);
@@ -419,6 +431,22 @@ namespace ImageRecognitionApp.WinFun
             _notifyIconData.uTimeoutOrVersion = 5000; // 5秒后自动消失
 
             Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
+        }
+
+        /// <summary>
+        /// 更新任务栏图标的鼠标悬停提示文本
+        /// </summary>
+        /// <param name="tooltipText">新的提示文本</param>
+        public void UpdateTooltip(string tooltipText)
+        {
+            if (_notifyIconData.szTip != tooltipText)
+            {
+                _notifyIconData.szTip = tooltipText;
+                _notifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
+                
+                Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
+                (App.Current as App)?.LogMessage($"任务栏图标提示文本已更新: {tooltipText}");
+            }
         }
 
         /// <summary>
