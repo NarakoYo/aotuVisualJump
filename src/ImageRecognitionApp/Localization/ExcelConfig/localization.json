@@ -80,6 +80,22 @@
       "ptBr": "About"
     },
     {
+      "sign_id": 10005,
+      "isEx": 0,
+      "ghYh": "占位10005",
+      "zhCn": "系统信息",
+      "enUs": "System Information",
+      "frFr": "Information système",
+      "ruRu": "Системная информация",
+      "esEs": "Información del sistema",
+      "arSa": "معلومات النظام",
+      "deDe": "Systeminformationen",
+      "jaJp": "システム情報",
+      "koKr": "시스템 정보",
+      "hiIn": "सिस्टम जानकारी",
+      "ptBr": "Informações do sistema"
+    },
+    {
       "sign_id": 20001,
       "isEx": 0,
       "ghYh": "占位20001",
@@ -126,6 +142,54 @@
       "koKr": "확인",
       "hiIn": "पुष्टि करें",
       "ptBr": "Confirmar"
+    },
+    {
+      "sign_id": 20004,
+      "isEx": 0,
+      "ghYh": "占位20004",
+      "zhCn": "关闭",
+      "enUs": "Close",
+      "frFr": "Fermer",
+      "ruRu": "Закрыть",
+      "esEs": "Cerrar",
+      "arSa": "إغلاق",
+      "deDe": "Schließen",
+      "jaJp": "閉じる",
+      "koKr": "닫기",
+      "hiIn": "बंद करें",
+      "ptBr": "Fechar"
+    },
+    {
+      "sign_id": 20005,
+      "isEx": 0,
+      "ghYh": "占位20005",
+      "zhCn": "最小化",
+      "enUs": "Minimize",
+      "frFr": "Réduire",
+      "ruRu": "Свернуть",
+      "esEs": "Reducir",
+      "arSa": "تصغير",
+      "deDe": "Minimieren",
+      "jaJp": "最小化",
+      "koKr": "최소화",
+      "hiIn": "न्यूनतमीकरण",
+      "ptBr": "Minimizar"
+    },
+    {
+      "sign_id": 20006,
+      "isEx": 0,
+      "ghYh": "占位20006",
+      "zhCn": "隐藏至托盘/菜单栏",
+      "enUs": "Hide to tray/menu bar",
+      "frFr": "Cacher dans la barre d'outils",
+      "ruRu": "Скрыть в трее",
+      "esEs": "Ocultar en la barra de tareas",
+      "arSa": "إخفاء في الصينية أو شريط القائمة",
+      "deDe": "In die Taskleiste/ Menüleiste ausblenden",
+      "jaJp": "トレイ/メニューバーに隠す",
+      "koKr": "트레이/메뉴 모음에 숨기기",
+      "hiIn": "ट्रे/मेनू बार में छिपाएँ",
+      "ptBr": "Ocultar na bandeja/barra de menu"
     }
   ]
 }
