@@ -315,16 +315,16 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 (App.Current as App)?.LogMessage("执行OnLeftClick方法");
-                // 切换窗口激活/最小化
+                // 切换窗口激活/最小化/隐藏
                 if (System.Windows.Application.Current.MainWindow != null)
                 {
                     var mainWindow = System.Windows.Application.Current.MainWindow;
-                    (App.Current as App)?.LogMessage($"窗口当前状态: {mainWindow.WindowState}, 是否激活: {mainWindow.IsActive}, 窗口句柄: {_windowHandle}");
+                    (App.Current as App)?.LogMessage($"窗口当前状态: {mainWindow.WindowState}, 是否激活: {mainWindow.IsActive}, 是否可见: {mainWindow.Visibility}, 窗口句柄: {_windowHandle}");
                     
-                    // 无论窗口是否激活，只要不是最小化状态就最小化它
-                    if (mainWindow.WindowState != WindowState.Minimized)
+                    // 如果窗口可见且不是最小化状态，则将其最小化
+                    if (mainWindow.Visibility == Visibility.Visible && mainWindow.WindowState != WindowState.Minimized)
                     {
-                        (App.Current as App)?.LogMessage("窗口不是最小化状态，准备最小化");
+                        (App.Current as App)?.LogMessage("窗口可见且不是最小化状态，准备最小化");
                         mainWindow.WindowState = WindowState.Minimized;
                         (App.Current as App)?.LogMessage("窗口已设置为最小化状态");
                         if (_taskbarAnimation != null)
@@ -339,10 +339,14 @@ namespace ImageRecognitionApp.WinFun
                     }
                     else
                     {
-                        // 窗口处于最小化状态，恢复并激活
-                        (App.Current as App)?.LogMessage("窗口处于最小化状态，准备恢复");
+                        // 窗口处于最小化状态或隐藏状态，恢复并激活
+                        (App.Current as App)?.LogMessage("窗口处于最小化或隐藏状态，准备恢复");
                         mainWindow.WindowState = WindowState.Normal;
                         (App.Current as App)?.LogMessage("窗口已恢复为正常状态");
+                        mainWindow.Visibility = Visibility.Visible;
+                        (App.Current as App)?.LogMessage("窗口已设置为可见");
+                        mainWindow.ShowInTaskbar = true;
+                        (App.Current as App)?.LogMessage("窗口已设置为在任务栏显示");
                         mainWindow.Show();
                         (App.Current as App)?.LogMessage("窗口已显示");
                         mainWindow.Activate();

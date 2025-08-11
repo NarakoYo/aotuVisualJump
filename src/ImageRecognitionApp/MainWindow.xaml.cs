@@ -359,9 +359,22 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             _pythonProcess = null;
         }
     }
+
+    // 最小化窗口
     private void MinimizeWindow(object sender, RoutedEventArgs e)
     {
         this.WindowState = WindowState.Minimized;
+    }
+
+    // 隐藏至托盘
+    private void HideToTray(object sender, RoutedEventArgs e)
+    {
+        // 隐藏窗口
+        this.Visibility = Visibility.Hidden;
+        // 从任务栏中移除
+        this.ShowInTaskbar = false;
+        // 显示托盘通知
+        _taskbarManager?.ShowNotification("应用已最小化到托盘", "点击托盘图标可恢复窗口");
     }
 
     private void Window_MouseDown(object sender, MouseButtonEventArgs e)
