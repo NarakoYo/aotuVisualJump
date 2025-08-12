@@ -166,14 +166,14 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                     var translations = localizationData[10001];
                        
                     // 优先使用中文翻译
-                    if (translations.ContainsKey("zh-cn"))
+                    if (translations.ContainsKey("zhCn"))
                     {
-                        TitleText = translations["zh-cn"];
+                        TitleText = translations["zhCn"];
                     }
                     // 如果没有中文翻译，尝试使用ghYh字段
-                    else if (translations.ContainsKey("gh-yh"))
+                    else if (translations.ContainsKey("ghYh"))
                     {
-                        TitleText = translations["gh-yh"];
+                        TitleText = translations["ghYh"];
                     }
                 }
 

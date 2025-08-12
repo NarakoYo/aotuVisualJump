@@ -100,14 +100,14 @@
                         </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,0">
                                 <Button Click="HideToTray" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" Loaded="HideToTrayButton_Loaded">
-                                    <Image Source="pack://application:,,,/Resources/Icons/igoutu/hide-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Button>
-                                <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" Loaded="MinimizeWindowButton_Loaded">
-                                    <Image Source="pack://application:,,,/Resources/Icons/igoutu/minimize-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Button>
-                                <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,0,0" Loaded="CloseWindowButton_Loaded">
-                                    <Image Source="pack://application:,,,/Resources/Icons/igoutu/close-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Button>
+                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/hide-window.png" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                  </Button>
+                                  <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" Loaded="MinimizeWindowButton_Loaded">
+                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/minimize-window.png" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                  </Button>
+                                  <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,0,0" Loaded="CloseWindowButton_Loaded">
+                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/close-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                  </Button>
                             </StackPanel>
                         </Grid>
                     </Grid>

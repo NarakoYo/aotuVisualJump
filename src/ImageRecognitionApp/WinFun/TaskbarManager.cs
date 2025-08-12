@@ -277,15 +277,15 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                (App.Current as App)?.LogMessage($"收到窗口消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
+                // (App.Current as App)?.LogMessage($"收到窗口消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
                 
                 if (msg == WM_NOTIFYICON)
                 {
                     // 处理任务栏图标消息
-                    (App.Current as App)?.LogMessage($"确认是任务栏图标消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
+                    // (App.Current as App)?.LogMessage($"确认是任务栏图标消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
                     uint message = (uint)lParam;
                     uint iconId = (uint)wParam;
-                    (App.Current as App)?.LogMessage($"接收到任务栏消息: 类型={message}, 图标ID={iconId}");
+                    // (App.Current as App)?.LogMessage($"接收到任务栏消息: 类型={message}, 图标ID={iconId}");
 
                     switch (message)
                     {
