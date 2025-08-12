@@ -439,13 +439,29 @@ namespace ImageRecognitionApp.WinFun
         /// <param name="tooltipText">新的提示文本</param>
         public void UpdateTooltip(string tooltipText)
         {
+            if (string.IsNullOrEmpty(tooltipText))
+            {
+                (App.Current as App)?.LogMessage("警告: 尝试设置空的任务栏提示文本");
+                return;
+            }
+
             if (_notifyIconData.szTip != tooltipText)
             {
-                _notifyIconData.szTip = tooltipText;
+                // 确保字符串不超过Windows限制的128个字符
+                string truncatedTooltip = tooltipText.Length > 127 ? tooltipText.Substring(0, 127) : tooltipText;
+                _notifyIconData.szTip = truncatedTooltip;
                 _notifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
                 
-                Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
-                (App.Current as App)?.LogMessage($"任务栏图标提示文本已更新: {tooltipText}");
+                int result = Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
+                if (result != 0)
+                {
+                    (App.Current as App)?.LogMessage($"任务栏图标提示文本已更新: {truncatedTooltip}");
+                }
+                else
+                {
+                    int errorCode = Marshal.GetLastWin32Error();
+                    (App.Current as App)?.LogMessage($"更新任务栏提示文本失败，错误代码: {errorCode}");
+                }
             }
         }
 
