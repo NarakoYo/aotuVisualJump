@@ -1,8 +1,6 @@
 using System;
-using System.Data;
 using System.Windows;
 using System.IO;
-using System.Text;
 using ImageRecognitionApp.unit;
 using ImageRecognitionApp.WinFun;
 
@@ -18,6 +16,9 @@ public partial class App : Application
             base.OnStartup(e);
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+
+            // 初始化日志管理器
+            LogManager.Instance.Initialize();
 
             // 初始化本地化工具
             try
@@ -63,13 +64,11 @@ public partial class App : Application
 
     private void LogException(Exception ex)
         {
-            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_error.log");
-            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n{ex.StackTrace}\n", Encoding.UTF8);
+            LogManager.Instance.WriteLog(LogManager.LogLevel.Error, $"异常: {ex.Message}\n{ex.StackTrace}");
         }
 
         public void LogMessage(string message)
         {
-            var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.log");
-            File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n", Encoding.UTF8);
+            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, message);
         }
 }
