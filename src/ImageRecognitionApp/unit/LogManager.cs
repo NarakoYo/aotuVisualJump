@@ -1,18 +1,85 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
-
+using System.Threading;
+using System.Threading.Tasks;
+using System.Configuration;
+using System.Linq;
 namespace ImageRecognitionApp.unit
 {
     /// <summary>
     /// 日志管理器 - 负责日志的创建、管理和写入
+    /// 提供单例访问模式，支持异步写入、日志滚动和级别过滤
     /// </summary>
     public class LogManager
     {
-        private static LogManager _instance;
+        #region 私有字段
+        private static LogManager? _instance;
         private static readonly object _lock = new object();
         private string _logDirectory;
         private TimeZoneInfo _timeZone;
+        private int _maxFileSizeKB = 1024; // 默认最大文件大小1MB
+        private int _maxFilesPerDay = 10;  // 默认每天最多10个文件
+        private LogLevel _minLogLevel = LogLevel.Info; // 默认日志级别
+        private string _fileNameFormat = "yyyy-MM-dd-HH"; // 默认文件名格式
+        private readonly object _fileLock = new object(); // 文件写入锁
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        #endregion
+
+        #region 配置属性
+        /// <summary>
+        /// 最大文件大小(KB)
+        /// </summary>
+        public int MaxFileSizeKB
+        {
+            get => _maxFileSizeKB;
+            set => _maxFileSizeKB = value > 0 ? value : 1024;
+        }
+
+        /// <summary>
+        /// 每天最多文件数
+        /// </summary>
+        public int MaxFilesPerDay
+        {
+            get => _maxFilesPerDay;
+            set => _maxFilesPerDay = value > 0 ? value : 10;
+        }
+
+        /// <summary>
+        /// 最小日志级别
+        /// </summary>
+        public LogLevel MinLogLevel
+        {
+            get => _minLogLevel;
+            set => _minLogLevel = value;
+        }
+
+        /// <summary>
+        /// 日志文件名格式
+        /// </summary>
+        public string FileNameFormat
+        {
+            get => _fileNameFormat;
+            set => _fileNameFormat = !string.IsNullOrEmpty(value) ? value : "yyyy-MM-dd-HH";
+        }
+
+        /// <summary>
+        /// 日志目录
+        /// </summary>
+        public string LogDirectory
+        {
+            get => _logDirectory;
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _logDirectory = value;
+                    EnsureDirectoryExists();
+                }
+            }
+        }
+        #endregion
 
         /// <summary>
         /// 日志严重类型枚举
@@ -30,12 +97,12 @@ namespace ImageRecognitionApp.unit
         /// </summary>
         private LogManager()
         {
+            // 从配置文件加载设置
+            LoadConfiguration();
+
             // 初始化日志目录
             _logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
-            if (!Directory.Exists(_logDirectory))
-            {
-                Directory.CreateDirectory(_logDirectory);
-            }
+            EnsureDirectoryExists();
 
             // 初始化时区 - 优先使用系统时区，否则使用UTC
             try
@@ -45,6 +112,66 @@ namespace ImageRecognitionApp.unit
             catch
             {
                 _timeZone = TimeZoneInfo.Utc;
+            }
+        }
+
+        /// <summary>
+        /// 确保日志目录存在
+        /// </summary>
+        private void EnsureDirectoryExists()
+        {
+            try
+            {
+                if (!Directory.Exists(_logDirectory))
+                {
+                    Directory.CreateDirectory(_logDirectory);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"创建日志目录失败: {ex.Message}");
+                // 回退到应用程序基目录
+                _logDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                EnsureDirectoryExists();
+            }
+        }
+
+        /// <summary>
+        /// 从配置文件加载设置
+        /// </summary>
+        private void LoadConfiguration()
+        {
+            try
+            {
+                // 从app.config加载配置
+                string maxFileSize = ConfigurationManager.AppSettings["Log.MaxFileSizeKB"];
+                if (!string.IsNullOrEmpty(maxFileSize) && int.TryParse(maxFileSize, out int size))
+                {
+                    MaxFileSizeKB = size;
+                }
+
+                string maxFiles = ConfigurationManager.AppSettings["Log.MaxFilesPerDay"];
+                if (!string.IsNullOrEmpty(maxFiles) && int.TryParse(maxFiles, out int files))
+                {
+                    MaxFilesPerDay = files;
+                }
+
+                string minLevel = ConfigurationManager.AppSettings["Log.MinLevel"];
+                if (!string.IsNullOrEmpty(minLevel) && Enum.TryParse(minLevel, out LogLevel level))
+                {
+                    MinLogLevel = level;
+                }
+
+                string fileNameFormat = ConfigurationManager.AppSettings["Log.FileNameFormat"];
+                if (!string.IsNullOrEmpty(fileNameFormat))
+                {
+                    FileNameFormat = fileNameFormat;
+                }
+            }
+            catch (Exception ex)
+            {
+                // 配置加载失败，使用默认值
+                Console.WriteLine($"日志配置加载失败: {ex.Message}");
             }
         }
 
@@ -74,8 +201,21 @@ namespace ImageRecognitionApp.unit
         /// </summary>
         public void Initialize()
         {
-            // 初始化逻辑已在构造函数中完成
-            // 此方法留空，以满足调用要求
+            // 验证日志目录
+            EnsureDirectoryExists();
+
+            // 记录初始化信息
+            WriteLog(LogLevel.Info, "日志管理器初始化完成");
+        }
+
+        /// <summary>
+        /// 异步初始化日志管理器
+        /// </summary>
+        /// <returns>初始化任务</returns>
+        public async Task InitializeAsync()
+        {
+            EnsureDirectoryExists();
+            await WriteLogAsync(LogLevel.Info, "日志管理器异步初始化完成");
         }
 
         /// <summary>
@@ -85,6 +225,10 @@ namespace ImageRecognitionApp.unit
         /// <param name="message">日志内容</param>
         public void WriteLog(LogLevel level, string message)
         {
+            // 检查日志级别
+            if (level < _minLogLevel)
+                return;
+
             if (string.IsNullOrEmpty(message))
                 return;
 
@@ -98,13 +242,19 @@ namespace ImageRecognitionApp.unit
                 string fileName = GenerateLogFileName(now);
                 string filePath = Path.Combine(_logDirectory, fileName);
 
+                // 检查文件大小并滚动
+                CheckAndRollLogFile(filePath);
+
                 // 格式化日志内容
                 string logContent = FormatLogContent(now, timeZoneName, level, message);
 
                 // 写入日志
-                using (StreamWriter writer = new StreamWriter(filePath, true, Encoding.UTF8))
+                lock (_fileLock)
                 {
-                    writer.Write(logContent);
+                    using (StreamWriter writer = new StreamWriter(filePath, true, Encoding.UTF8))
+                    {
+                        writer.Write(logContent);
+                    }
                 }
             }
             catch (Exception ex)
@@ -115,18 +265,122 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 异步写入日志
+        /// </summary>
+        /// <param name="level">日志严重类型</param>
+        /// <param name="message">日志内容</param>
+        /// <returns>写入任务</returns>
+        public async Task WriteLogAsync(LogLevel level, string message)
+        {
+            // 检查日志级别
+            if (level < _minLogLevel)
+                return;
+
+            if (string.IsNullOrEmpty(message))
+                return;
+
+            try
+            {
+                // 获取当前时间（根据时区）
+                DateTime now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timeZone);
+                string timeZoneName = _timeZone.Id;
+
+                // 生成日志文件名
+                string fileName = GenerateLogFileName(now);
+                string filePath = Path.Combine(_logDirectory, fileName);
+
+                // 检查文件大小并滚动
+                CheckAndRollLogFile(filePath);
+
+                // 格式化日志内容
+                string logContent = FormatLogContent(now, timeZoneName, level, message);
+
+                // 异步写入日志
+                await WriteToFileAsync(filePath, logContent);
+            }
+            catch (Exception ex)
+            {
+                // 处理日志写入异常
+                Console.WriteLine($"异步日志写入失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 异步写入文件
+        /// </summary>
+        /// <param name="filePath">文件路径</param>
+        /// <param name="content">要写入的内容</param>
+        /// <returns>异步任务</returns>
+        private async Task WriteToFileAsync(string filePath, string content)
+        {
+            // 使用异步锁
+            await _semaphore.WaitAsync();
+            try
+            {
+                using (StreamWriter writer = new StreamWriter(filePath, true, Encoding.UTF8))
+                {
+                    await writer.WriteAsync(content);
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        /// <summary>
+        /// 检查文件大小并滚动日志
+        /// </summary>
+        /// <param name="filePath">文件路径</param>
+        private void CheckAndRollLogFile(string filePath)
+        {
+            if (!File.Exists(filePath))
+                return;
+
+            FileInfo fileInfo = new FileInfo(filePath);
+            if (fileInfo.Length > _maxFileSizeKB * 1024)
+            {
+                // 文件超过最大大小，需要滚动
+                string directory = Path.GetDirectoryName(filePath) ?? string.Empty;
+                string fileName = Path.GetFileNameWithoutExtension(filePath) ?? "log";
+                string extension = Path.GetExtension(filePath) ?? ".log";
+
+                // 确保目录存在
+                if (!Directory.Exists(directory))
+                    directory = LogDirectory;
+
+                // 查找可用的滚动文件名
+                int counter = 1;
+                string rolledFilePath;
+                do
+                {
+                    rolledFilePath = Path.Combine(directory, $"{fileName}.{counter}{extension}");
+                    counter++;
+                } while (File.Exists(rolledFilePath) && counter < 1000); // 防止无限循环
+
+                try
+                {
+                    // 重命名文件
+                    File.Move(filePath, rolledFilePath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"日志文件滚动失败: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
         /// 生成日志文件名
         /// </summary>
         /// <param name="now">当前时间</param>
         /// <returns>日志文件名</returns>
-        private string GenerateLogFileName(DateTime now)
+        public string GenerateLogFileName(DateTime now)
         {
-            // 基础文件名格式: 年-月-日-时
-            string baseName = $"{now:yyyy-MM-dd-HH}";
+            // 使用配置的文件名格式
+            string baseName = now.ToString(_fileNameFormat);
             string extension = ".log";
-            string fileName = baseName + extension;
-
-            return fileName;
+            return baseName + extension;
         }
 
         /// <summary>
@@ -161,7 +415,61 @@ namespace ImageRecognitionApp.unit
                 }
             }
 
+            // 添加换行符分隔不同日志条目
+            sb.AppendLine();
+
             return sb.ToString();
         }
+
+        #region 辅助方法
+        /// <summary>
+        /// 清理过期日志文件
+        /// </summary>
+        /// <param name="daysToKeep">保留天数</param>
+        public void CleanupOldLogs(int daysToKeep)
+        {
+            try
+            {
+                if (!Directory.Exists(_logDirectory))
+                    return;
+
+                DateTime cutoffDate = DateTime.Now.AddDays(-daysToKeep);
+                foreach (string file in Directory.GetFiles(_logDirectory, "*.log"))
+                {
+                    FileInfo fileInfo = new FileInfo(file);
+                    if (fileInfo.LastWriteTime < cutoffDate)
+                    {
+                        File.Delete(file);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"清理过期日志失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 获取当前日志目录大小
+        /// </summary>
+        /// <returns>目录大小(MB)</returns>
+        public double GetLogDirectorySize()
+        {
+            try
+            {
+                if (!Directory.Exists(_logDirectory))
+                    return 0;
+
+                DirectoryInfo dirInfo = new DirectoryInfo(_logDirectory);
+                long size = dirInfo.EnumerateFiles("*.log", SearchOption.AllDirectories).Sum(f => f.Length);
+                return size / (1024.0 * 1024.0); // 转换为MB
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"获取日志目录大小失败: {ex.Message}");
+                return -1;
+            }
+        }
+        #endregion
     }
 }
