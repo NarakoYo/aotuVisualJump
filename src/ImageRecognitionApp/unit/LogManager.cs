@@ -416,7 +416,7 @@ namespace ImageRecognitionApp.unit
             }
 
             // 添加换行符分隔不同日志条目
-            sb.AppendLine();
+            // sb.AppendLine();
 
             return sb.ToString();
         }
