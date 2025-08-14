@@ -306,6 +306,33 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 记录程序启动或关闭的标记日志
+        /// </summary>
+        /// <param name="isStartup">是否为启动标记</param>
+        public void WriteStartupShutdownLog(bool isStartup)
+        {
+            try
+            {
+                // 获取当前时间
+                DateTime now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timeZone);
+                string formattedTime = now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                // 获取本地化文本
+                string localizedText = JsonLocalizationHelper.Instance.GetString(10001);
+
+                // 生成日志内容
+                string logContent = $"[{formattedTime}]+{localizedText}+{(isStartup ? "Start" : "Close"+"\n")}";
+
+                // 写入日志
+                WriteLog(LogLevel.Info, logContent);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"写入启动/关闭日志失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// 异步写入文件
         /// </summary>
         /// <param name="filePath">文件路径</param>

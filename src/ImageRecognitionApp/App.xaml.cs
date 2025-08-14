@@ -34,6 +34,23 @@ public partial class App : Application
                 LogException(ex);
             }
 
+            // 记录程序启动标记
+            LogManager.Instance.WriteStartupShutdownLog(true);
+
+            // 单实例检查
+            try
+            {
+                JsonLocalizationHelper.Instance.Initialize();
+                Console.WriteLine("本地化工具初始化成功");
+                LogMessage("本地化工具初始化成功");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"本地化工具初始化失败: {ex.Message}");
+                LogMessage($"本地化工具初始化失败: {ex.Message}");
+                LogException(ex);
+            }
+
             // 单实例检查
             if (SingleInstanceChecker.CheckIfAlreadyRunning())
             {
@@ -43,8 +60,13 @@ public partial class App : Application
                 return;
             }
 
-            // 注册退出事件，释放互斥锁
-            this.Exit += (sender, args) => SingleInstanceChecker.ReleaseMutex();
+            // 注册退出事件，释放互斥锁并记录关闭标记
+            this.Exit += (sender, args) =>
+            {
+                // 记录程序关闭标记
+                LogManager.Instance.WriteStartupShutdownLog(false);
+                SingleInstanceChecker.ReleaseMutex();
+            };
         }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
