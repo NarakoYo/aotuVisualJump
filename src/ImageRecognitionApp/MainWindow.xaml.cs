@@ -208,6 +208,8 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // 窗口关闭事件处理程序
     private void MainWindow_Closed(object? sender, EventArgs e)
         {
+            // 停止脚本执行
+            StopScriptExecution();
             // 释放任务栏资源
             _taskbarManager?.Dispose();
             _taskbarAnimation?.StopFlashAnimation();

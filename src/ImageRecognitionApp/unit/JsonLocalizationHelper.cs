@@ -15,8 +15,14 @@ namespace ImageRecognitionApp.unit
         private string _currentLanguage;
         private readonly string _defaultLanguage = "zh-cn";
         private readonly string _jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Localization", "ExcelConfig", "localization.json");
+        private bool _isInitialized = false;
 
         public static JsonLocalizationHelper Instance => _instance.Value;
+
+        /// <summary>
+        /// 获取本地化工具是否已初始化
+        /// </summary>
+        public bool IsInitialized => _isInitialized;
 
         private JsonLocalizationHelper()
         {
@@ -68,10 +74,14 @@ namespace ImageRecognitionApp.unit
         {
             try
             {
-                LoadLocalizationData();
-                // 标准化当前语言代码
-                _currentLanguage = NormalizeLanguageCode(_currentLanguage);
-                Console.WriteLine($"已加载本地化数据，当前语言: {_currentLanguage}");
+                if (!_isInitialized)
+                {
+                    LoadLocalizationData();
+                    // 标准化当前语言代码
+                    _currentLanguage = NormalizeLanguageCode(_currentLanguage);
+                    Console.WriteLine($"已加载本地化数据，当前语言: {_currentLanguage}");
+                    _isInitialized = true;
+                }
             }
             catch (Exception ex)
             {

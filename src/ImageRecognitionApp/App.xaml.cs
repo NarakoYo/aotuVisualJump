@@ -24,14 +24,14 @@ public partial class App : Application
             try
             {
                 JsonLocalizationHelper.Instance.Initialize();
-                Console.WriteLine("本地化工具初始化成功");
-                LogMessage("本地化工具初始化成功");
+                // Console.WriteLine("本地化工具初始化成功");
+                // LogMessage("本地化工具初始化成功");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"本地化工具初始化失败: {ex.Message}");
-                LogMessage($"本地化工具初始化失败: {ex.Message}");
-                LogException(ex);
+                // LogMessage($"本地化工具初始化失败: {ex.Message}");
+                // LogException(ex);
             }
 
             // 记录程序启动标记
@@ -41,12 +41,12 @@ public partial class App : Application
             try
             {
                 JsonLocalizationHelper.Instance.Initialize();
-                Console.WriteLine("本地化工具初始化成功");
-                LogMessage("本地化工具初始化成功");
+                // Console.WriteLine("本地化工具初始化成功");
+                // LogMessage("本地化工具初始化成功");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"本地化工具初始化失败: {ex.Message}");
+                // Console.WriteLine($"本地化工具初始化失败: {ex.Message}");
                 LogMessage($"本地化工具初始化失败: {ex.Message}");
                 LogException(ex);
             }
@@ -67,6 +67,17 @@ public partial class App : Application
                 LogManager.Instance.WriteStartupShutdownLog(false);
                 SingleInstanceChecker.ReleaseMutex();
             };
+
+            // 初始化进程（设置进程名称和图标）
+            try
+            {
+                ProcessHelper.InitializeProcess();
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"初始化进程时出错: {ex.Message}");
+                LogException(ex);
+            };
         }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
@@ -85,12 +96,22 @@ public partial class App : Application
     }
 
     private void LogException(Exception ex)
-        {
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Error, $"异常: {ex.Message}\n{ex.StackTrace}");
-        }
+    {
+        LogManager.Instance.WriteLog(LogManager.LogLevel.Error, $"异常: {ex.Message}\n{ex.StackTrace}");
+    }
 
-        public void LogMessage(string message)
-        {
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, message);
-        }
+    public void LogMessage(string message)
+    {
+        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, message);
+    }
+
+    // 主窗口加载完成事件
+    private event EventHandler? MainWindowLoaded;
+
+    // 在应用程序中重写OnActivated方法，确保主窗口激活时设置图标
+    protected override void OnActivated(EventArgs e)
+    {
+        base.OnActivated(e);
+        MainWindowLoaded?.Invoke(this, EventArgs.Empty);
+    }
 }
