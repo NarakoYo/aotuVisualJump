@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.IO;
-using NLua;
+// using NLua;
 using System.Windows.Input;
 using System.Windows.Media;
 

@@ -5,6 +5,8 @@ using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.IO;
 using System.Drawing; // 添加对System.Drawing的引用
+using System.Windows.Controls;
+using System.Windows.Input;
 using ImageRecognitionApp.WinFun;
 
 namespace ImageRecognitionApp.WinFun
@@ -77,6 +79,11 @@ namespace ImageRecognitionApp.WinFun
         private const uint NOTIFYICON_VERSION_4 = 0x00000004;
         private const uint WM_USER = 0x00000400;
         private const uint WM_NOTIFYICON = WM_USER + 1024;
+        private const uint WM_SYSCOMMAND = 0x0112;
+        private const uint SC_MINIMIZE = 0xF020;
+        private const uint SC_MAXIMIZE = 0xF030;
+        private const uint SC_RESTORE = 0xF120;
+        private const uint WM_LBUTTONDOWN = 0x00000201;
         private const int IDI_APPLICATION = 0x7F00;
 
         #endregion
@@ -309,6 +316,21 @@ namespace ImageRecognitionApp.WinFun
                             break;
                     }
                 }
+                else if (msg == WM_SYSCOMMAND)
+                {
+                    // 处理系统命令消息
+                    uint command = (uint)wParam & 0xFFF0; // 获取命令类型
+                    if (command == SC_MINIMIZE)
+                    {
+                        // 最小化窗口时的处理
+                        (App.Current as App)?.LogMessage("收到窗口最小化命令");
+                        if (_taskbarAnimation != null)
+                        {
+                            _taskbarAnimation.JumpDownAnimation();
+                            (App.Current as App)?.LogMessage("窗口最小化，播放向下跳跃动画");
+                        }
+                    }
+                }
                 return IntPtr.Zero;
             }
             catch (Exception ex)
@@ -333,17 +355,17 @@ namespace ImageRecognitionApp.WinFun
                     var mainWindow = System.Windows.Application.Current.MainWindow;
                     (App.Current as App)?.LogMessage($"窗口当前状态: {mainWindow.WindowState}, 是否激活: {mainWindow.IsActive}, 是否可见: {mainWindow.Visibility}, 窗口句柄: {_windowHandle}");
                     
-                    // 如果窗口可见且不是最小化状态，则将其最小化
-                    if (mainWindow.Visibility == Visibility.Visible && mainWindow.WindowState != WindowState.Minimized)
+                    // 如果窗口已激活（处于前台并聚焦），则将其最小化
+                    if (mainWindow.IsActive)
                     {
-                        (App.Current as App)?.LogMessage("窗口可见且不是最小化状态，准备最小化");
+                        (App.Current as App)?.LogMessage("窗口已激活，准备最小化");
                         mainWindow.WindowState = WindowState.Minimized;
-                        (App.Current as App)?.LogMessage("窗口已设置为最小化状态");
-                        if (_taskbarAnimation != null)
-                        {
-                            _taskbarAnimation.JumpDownAnimation();
-                            (App.Current as App)?.LogMessage("窗口已最小化，播放向下跳跃动画");
-                        }
+                    (App.Current as App)?.LogMessage("窗口已设置为最小化状态");
+                    if (_taskbarAnimation != null)
+                    {
+                        // 不需要在这里再次调用，避免重复播放动画
+                        (App.Current as App)?.LogMessage("窗口已最小化，动画将由系统命令消息处理");
+                    }
                         else
                         {
                             (App.Current as App)?.LogMessage("窗口已最小化，但_taskbarAnimation为null，无法播放动画");
@@ -351,8 +373,8 @@ namespace ImageRecognitionApp.WinFun
                     }
                     else
                     {
-                        // 窗口处于最小化状态或隐藏状态，恢复并激活
-                        (App.Current as App)?.LogMessage("窗口处于最小化或隐藏状态，准备恢复");
+                        // 窗口未激活，恢复并激活
+                        (App.Current as App)?.LogMessage("窗口未激活，准备恢复");
                         mainWindow.WindowState = WindowState.Normal;
                         (App.Current as App)?.LogMessage("窗口已恢复为正常状态");
                         mainWindow.Visibility = Visibility.Visible;
@@ -409,12 +431,112 @@ namespace ImageRecognitionApp.WinFun
         }
 
         /// <summary>
+        /// 上下文菜单
+        /// </summary>
+        private ContextMenu? _contextMenu;
+
+        /// <summary>
+        /// 初始化上下文菜单
+        /// </summary>
+        private void InitializeContextMenu()
+        {
+            if (_contextMenu != null)
+                return;
+
+            _contextMenu = new ContextMenu
+            {
+                // 确保点击菜单外部时关闭菜单
+                StaysOpen = false
+            };
+
+            // 添加菜单关闭事件处理
+            _contextMenu.Closed += (sender, e) =>
+            {
+                (App.Current as App)?.LogMessage("右键菜单已关闭");
+            };
+
+        //     // 显示窗口菜单项
+        //     MenuItem showWindowItem = new MenuItem();
+        //     showWindowItem.Header = "显示窗口";
+        //     showWindowItem.Click += (sender, e) =>
+        //     {
+        //         if (System.Windows.Application.Current.MainWindow != null)
+        //         {
+        //             var mainWindow = System.Windows.Application.Current.MainWindow;
+        //             mainWindow.WindowState = WindowState.Normal;
+        //             mainWindow.Visibility = Visibility.Visible;
+        //             mainWindow.ShowInTaskbar = true;
+        //             mainWindow.Show();
+        //             mainWindow.Activate();
+        //             SetForegroundWindow(_windowHandle);
+                    
+        //             if (_taskbarAnimation != null)
+        //             {
+        //                 _taskbarAnimation.JumpUpAnimation();
+        //             }
+        //         }
+        //     };
+        //     _contextMenu.Items.Add(showWindowItem);
+
+        //     // 最小化窗口菜单项
+        //     MenuItem minimizeWindowItem = new MenuItem();
+        //     minimizeWindowItem.Header = "最小化";
+        //     minimizeWindowItem.Click += (sender, e) =>
+        //     {
+        //         if (System.Windows.Application.Current.MainWindow != null)
+        //         {
+        //             var mainWindow = System.Windows.Application.Current.MainWindow;
+        //             mainWindow.WindowState = WindowState.Minimized;
+                    
+        //             if (_taskbarAnimation != null)
+        //             {
+        //                 _taskbarAnimation.JumpDownAnimation();
+        //             }
+        //         }
+        //     };
+        //     _contextMenu.Items.Add(minimizeWindowItem);
+
+        //     // 分隔线
+        //     _contextMenu.Items.Add(new Separator());
+
+        //     // 退出应用菜单项
+        //     MenuItem exitItem = new MenuItem();
+        //     exitItem.Header = "退出";
+        //     exitItem.Click += (sender, e) =>
+        //     {
+        //         System.Windows.Application.Current.Shutdown();
+        //     };
+            // _contextMenu.Items.Add(exitItem);
+        }
+
+        /// <summary>
         /// 鼠标右键点击事件
         /// </summary>
         private void OnRightClick()
         {
-            // 可以在这里显示上下文菜单
-            // 例如：显示"显示窗口"、"退出"等选项
+            try
+            {
+                (App.Current as App)?.LogMessage("执行OnRightClick方法");
+
+                // 初始化上下文菜单
+                InitializeContextMenu();
+
+                if (_contextMenu != null)
+                {
+                    // 获取鼠标位置
+                    System.Windows.Point mousePos = System.Windows.Input.Mouse.GetPosition(null);
+                    
+                    // 在鼠标位置显示菜单
+                    _contextMenu.IsOpen = true;
+                    
+                    (App.Current as App)?.LogMessage("右键菜单已显示");
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"右键点击处理错误: {ex.Message}");
+                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+            }
         }
 
         /// <summary>
