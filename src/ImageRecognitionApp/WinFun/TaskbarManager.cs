@@ -26,7 +26,27 @@ namespace ImageRecognitionApp.WinFun
 
     #endregion
 
+        #region 结构体定义
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int x;
+            public int y;
+        }
+
+        #endregion
+
         #region Win32 API 导入
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern int TrackPopupMenu(IntPtr hMenu, uint uFlags, int x, int y, int nReserved, IntPtr hWnd, IntPtr prcRect);
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetActiveWindow();
@@ -77,12 +97,14 @@ namespace ImageRecognitionApp.WinFun
         private const uint NIF_INFO = 0x00000010;
         private const uint NIM_SETVERSION = 0x00000004;
         private const uint NOTIFYICON_VERSION_4 = 0x00000004;
-        private const uint WM_USER = 0x00000400;
-        private const uint WM_NOTIFYICON = WM_USER + 1024;
-        private const uint WM_SYSCOMMAND = 0x0112;
+        private const int WM_USER = 0x0400;
+        private const int WM_RBUTTONDOWN = 0x0204;
+        private const int WM_CONTEXTMENU = 0x007B;
+        private const int WM_NOTIFYICON = WM_USER + 1;
+        private const int WM_SYSCOMMAND = 0x0112;
+        private const uint SC_RESTORE = 0xF120;
         private const uint SC_MINIMIZE = 0xF020;
         private const uint SC_MAXIMIZE = 0xF030;
-        private const uint SC_RESTORE = 0xF120;
         private const uint WM_LBUTTONDOWN = 0x00000201;
         private const int IDI_APPLICATION = 0x7F00;
 
@@ -135,9 +157,14 @@ namespace ImageRecognitionApp.WinFun
                 throw new ArgumentNullException(nameof(window), "窗口不能为空");
             }
             
+            // 创建初始化标记文件
+            System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_manager_initialized.txt", DateTime.Now.ToString());
+            (App.Current as App)?.LogMessage("TaskbarManager: 构造函数被调用，已创建初始化标记文件");
+            
             // 延迟获取窗口句柄，确保窗口已加载
             window.Loaded += (sender, e) =>
             {
+                (App.Current as App)?.LogMessage("TaskbarManager: 窗口Loaded事件被触发");
                 _windowHandle = new WindowInteropHelper(window).Handle;
                 if (_windowHandle == IntPtr.Zero)
                 {
@@ -148,6 +175,12 @@ namespace ImageRecognitionApp.WinFun
                         _windowHandle = new WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
                         (App.Current as App)?.LogMessage($"TaskbarManager: 使用主窗口句柄: {_windowHandle}");
                     }
+                else
+                {
+                    (App.Current as App)?.LogMessage("主窗口为空，调用原有处理逻辑");
+                    // 显示消息框，确认左键点击被触发
+                    // System.Windows.MessageBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
                 }
                 else
                 {
@@ -158,10 +191,20 @@ namespace ImageRecognitionApp.WinFun
                 if (_windowHandle != IntPtr.Zero)
                 {
                     _taskbarAnimation = new TaskbarAnimation(window);
+                    (App.Current as App)?.LogMessage("TaskbarManager: 初始化任务栏图标");
                     InitializeTaskbarIcon();
 
                     // 注册窗口消息处理
-                    HwndSource.FromHwnd(_windowHandle)?.AddHook(WndProc);
+                    var hwndSource = HwndSource.FromHwnd(_windowHandle);
+                    if (hwndSource != null)
+                    {
+                        hwndSource.AddHook(WndProc);
+                        (App.Current as App)?.LogMessage("TaskbarManager: 窗口消息钩子已注册");
+                    }
+                    else
+                    {
+                        (App.Current as App)?.LogMessage("TaskbarManager: 无法获取HwndSource，消息钩子注册失败");
+                    }
                 }
                 else
                 {
@@ -223,6 +266,9 @@ namespace ImageRecognitionApp.WinFun
             {
                 (App.Current as App)?.LogMessage("开始初始化任务栏图标");
                 
+                // 创建初始化标记文件
+                System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_initializing.txt", DateTime.Now.ToString());
+                
                 // 获取应用程序标题
                 string appTitle = "Image Recognition App";
                 if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
@@ -251,12 +297,14 @@ namespace ImageRecognitionApp.WinFun
                 if (addResult != 0)
                 {
                     (App.Current as App)?.LogMessage("任务栏图标添加成功");
+                    System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_added.txt", DateTime.Now.ToString());
                 }
                 else
                 {
                     (App.Current as App)?.LogMessage("任务栏图标添加失败");
                     int errorCode = Marshal.GetLastWin32Error();
                     (App.Current as App)?.LogMessage($"Win32错误代码: {errorCode}");
+                    System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_add_failed.txt", $"错误代码: {errorCode}");
                 }
 
                 // 设置版本
@@ -274,6 +322,7 @@ namespace ImageRecognitionApp.WinFun
             {
                 (App.Current as App)?.LogMessage($"初始化任务栏图标错误: {ex.Message}");
                 (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+                System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_init_error.txt", $"错误: {ex.Message}");
             }
         }
 
@@ -284,19 +333,19 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                // (App.Current as App)?.LogMessage($"收到窗口消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
+                (App.Current as App)?.LogMessage($"收到窗口消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
                 
                 if (msg == WM_NOTIFYICON)
                 {
                     // 处理任务栏图标消息
-                    // (App.Current as App)?.LogMessage($"确认是任务栏图标消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
+                    (App.Current as App)?.LogMessage($"确认是任务栏图标消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
                     uint message = (uint)lParam;
                     uint iconId = (uint)wParam;
-                    // (App.Current as App)?.LogMessage($"接收到任务栏消息: 类型={message}, 图标ID={iconId}");
+                    (App.Current as App)?.LogMessage($"接收到任务栏消息: 类型={message}, 图标ID={iconId}");
 
                     switch (message)
                     {
-                        case 0x0201:  // 鼠标左键点击
+                        case 0x0201:  // 鼠标左键点击(托盘)
                             (App.Current as App)?.LogMessage("确认是鼠标左键点击");
                             OnLeftClick();
                             handled = true;
@@ -310,6 +359,11 @@ namespace ImageRecognitionApp.WinFun
                             OnRightClick();
                             handled = true;
                             break;
+                        case 0x0112:  // 鼠标左键点击(任务栏)
+                            (App.Current as App)?.LogMessage("确认是鼠标左键点击");
+                            OnTaskbarShortcutLeftClick();
+                            handled = true;
+                            break;
                         default:
                             (App.Current as App)?.LogMessage($"未知的任务栏消息: {message}");
                             (App.Current as App)?.LogMessage($"收到未知的任务栏图标消息类型: lParam={lParam}, wParam={wParam}");
@@ -320,6 +374,8 @@ namespace ImageRecognitionApp.WinFun
                 {
                     // 处理系统命令消息
                     uint command = (uint)wParam & 0xFFF0; // 获取命令类型
+                    (App.Current as App)?.LogMessage($"收到系统命令: {command}");
+                    
                     if (command == SC_MINIMIZE)
                     {
                         // 最小化窗口时的处理
@@ -330,6 +386,41 @@ namespace ImageRecognitionApp.WinFun
                             (App.Current as App)?.LogMessage("窗口最小化，播放向下跳跃动画");
                         }
                     }
+                    // 任务栏快捷方式左键点击通常会触发SC_RESTORE或SC_MINIMIZE
+                    else if (command == SC_RESTORE)
+                    {
+                        (App.Current as App)?.LogMessage("收到窗口恢复命令");
+                        // 显示消息框，确认左键点击被触发
+                        // System.Windows.MessageBox.Show("任务栏快捷方式左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        
+                        if (System.Windows.Application.Current.MainWindow != null)
+                        {
+                            var mainWindow = System.Windows.Application.Current.MainWindow;
+                            // 无论窗口当前状态如何，都确保它被激活
+                            if (mainWindow.WindowState == WindowState.Minimized)
+                            {
+                                mainWindow.WindowState = WindowState.Normal;
+                            }
+                            mainWindow.Activate();
+                            if (_taskbarAnimation != null)
+                            {
+                                _taskbarAnimation.JumpUpAnimation();
+                                (App.Current as App)?.LogMessage("窗口恢复，播放向上跳跃动画");
+                            }
+                        }
+                    }
+                }
+                else if (msg == WM_CONTEXTMENU)
+                {
+                    // 处理右键上下文菜单消息
+                    (App.Current as App)?.LogMessage("收到上下文菜单消息");
+                    
+                    // 显示消息框，确认右键点击被触发
+                    // System.Windows.MessageBox.Show("任务栏快捷方式右键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    
+                    // 显示系统菜单
+                    ShowSystemMenu();
+                    handled = true;
                 }
                 return IntPtr.Zero;
             }
@@ -348,7 +439,11 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                (App.Current as App)?.LogMessage("执行OnLeftClick方法");
+                // 创建一个标记文件，确认方法被调用
+                System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\left_click_triggered.txt", DateTime.Now.ToString());
+                (App.Current as App)?.LogMessage("执行OnLeftClick方法，已创建标记文件");
+                // 显示消息框，确认左键点击被触发
+                // System.Windows.MessageBox.Show("任务栏快捷方式左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 // 切换窗口激活/最小化/隐藏
                 if (System.Windows.Application.Current.MainWindow != null)
                 {
@@ -510,6 +605,100 @@ namespace ImageRecognitionApp.WinFun
         }
 
         /// <summary>
+        /// 任务栏快捷方式左键点击事件
+        /// </summary>
+        private void OnTaskbarShortcutLeftClick()
+        {
+            try
+            {
+                (App.Current as App)?.LogMessage("执行OnTaskbarShortcutLeftClick方法");
+                // 显示消息框，确认左键点击被触发
+                // System.Windows.MessageBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                
+                if (System.Windows.Application.Current.MainWindow != null)
+                {
+                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                    // 检查窗口是否未处于最小化状态
+                    if (mainWindow.WindowState != WindowState.Minimized)
+                    {
+                        (App.Current as App)?.LogMessage("窗口未最小化，触发最小化功能");
+                        // 触发自定义标题栏的最小化按钮功能
+                        mainWindow.WindowState = WindowState.Minimized;
+                        if (_taskbarAnimation != null)
+                        {
+                            _taskbarAnimation.JumpDownAnimation();
+                            (App.Current as App)?.LogMessage("窗口最小化，播放向下跳跃动画");
+                        }
+                    }
+                    else
+                    {
+                        (App.Current as App)?.LogMessage("窗口处于最小化或未聚焦状态，调用原有处理逻辑");
+                        // 保持原有处理逻辑
+                        // System.Windows.MessaeBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    }
+                }
+                else
+                {
+                    (App.Current as App)?.LogMessage("主窗口为空，调用原有处理逻辑");
+                    // System.Windows.MessageBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"任务栏快捷方式左键点击处理错误: {ex.Message}");
+                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// 任务栏快捷方式右键点击事件
+        /// </summary>
+        private void OnTaskbarShortcutRightClick()
+        {
+            try
+            {
+                (App.Current as App)?.LogMessage("执行OnTaskbarShortcutRightClick方法");
+                // 显示消息框，确认右键点击被触发
+                // System.Windows.MessageBox.Show("任务栏快捷方式右键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                
+                // 显示系统菜单
+                ShowSystemMenu();
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"任务栏快捷方式右键点击处理错误: {ex.Message}");
+                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// 显示系统菜单
+        /// </summary>
+        private void ShowSystemMenu()
+        {
+            try
+            {
+                (App.Current as App)?.LogMessage("执行ShowSystemMenu方法");
+                // 获取系统菜单
+                IntPtr hMenu = GetSystemMenu(_windowHandle, false);
+                if (hMenu != IntPtr.Zero)
+                {
+                    // 获取鼠标位置
+                    POINT mousePos = new POINT();
+                    GetCursorPos(out mousePos);
+                    
+                    // 显示菜单
+                    TrackPopupMenu(hMenu, 0x00000010 | 0x00000020, mousePos.x, mousePos.y, 0, _windowHandle, IntPtr.Zero);
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"显示系统菜单错误: {ex.Message}");
+                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
         /// 鼠标右键点击事件
         /// </summary>
         private void OnRightClick()
@@ -517,6 +706,8 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 (App.Current as App)?.LogMessage("执行OnRightClick方法");
+                // 显示消息框，确认右键点击被触发
+                // System.Windows.MessageBox.Show("任务栏快捷方式右键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
 
                 // 初始化上下文菜单
                 InitializeContextMenu();
