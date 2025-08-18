@@ -382,17 +382,14 @@ namespace ImageRecognitionApp.WinFun
                         (App.Current as App)?.LogMessage("收到窗口最小化命令");
                         if (_taskbarAnimation != null)
                         {
-                            _taskbarAnimation.JumpDownAnimation();
-                            (App.Current as App)?.LogMessage("窗口最小化，播放向下跳跃动画");
+                            _taskbarAnimation.MinimizeAnimation();
+                            (App.Current as App)?.LogMessage("窗口最小化，播放缩放并向任务栏中央移动的动画");
                         }
                     }
                     // 任务栏快捷方式左键点击通常会触发SC_RESTORE或SC_MINIMIZE
                     else if (command == SC_RESTORE)
                     {
-                        (App.Current as App)?.LogMessage("收到窗口恢复命令");
-                        // 显示消息框，确认左键点击被触发
-                        // System.Windows.MessageBox.Show("任务栏快捷方式左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                        
+                        (App.Current as App)?.LogMessage("[TaskbarManager] 收到恢复命令");
                         if (System.Windows.Application.Current.MainWindow != null)
                         {
                             var mainWindow = System.Windows.Application.Current.MainWindow;
@@ -404,8 +401,7 @@ namespace ImageRecognitionApp.WinFun
                             mainWindow.Activate();
                             if (_taskbarAnimation != null)
                             {
-                                _taskbarAnimation.JumpUpAnimation();
-                            // (App.Current as App)?.LogMessage("窗口恢复，播放向上跳跃动画");
+                                _taskbarAnimation.RestoreAnimation();
                             }
                         }
                     }
@@ -644,36 +640,33 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                // (App.Current as App)?.LogMessage("执行OnTaskbarShortcutLeftClick方法");
-                // 显示消息框，确认左键点击被触发
-                // System.Windows.MessageBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                
                 if (System.Windows.Application.Current.MainWindow != null)
                 {
                     var mainWindow = System.Windows.Application.Current.MainWindow;
                     // 检查窗口是否未处于最小化状态
                     if (mainWindow.WindowState != WindowState.Minimized)
                     {
-                        // (App.Current as App)?.LogMessage("窗口未最小化，触发最小化功能");
                         // 触发自定义标题栏的最小化按钮功能
                         mainWindow.WindowState = WindowState.Minimized;
                         if (_taskbarAnimation != null)
                         {
                             _taskbarAnimation.JumpDownAnimation();
-                            // (App.Current as App)?.LogMessage("窗口最小化，播放向下跳跃动画");
                         }
                     }
                     else
                     {
-                        // (App.Current as App)?.LogMessage("窗口处于最小化或未聚焦状态，调用原有处理逻辑");
-                        // 保持原有处理逻辑
-                        // System.Windows.MessaeBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        // 窗口处于最小化状态，恢复窗口并播放恢复动画
+                        if (_taskbarAnimation != null)
+                        {
+                            _taskbarAnimation.RestoreAnimation();
+                        }
+                        else
+                        {
+                            // 如果动画不可用，直接恢复窗口
+                            mainWindow.WindowState = WindowState.Normal;
+                            mainWindow.Activate();
+                        }
                     }
-                }
-                else
-                {
-                    // (App.Current as App)?.LogMessage("主窗口为空，调用原有处理逻辑");
-                    // System.Windows.MessageBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)

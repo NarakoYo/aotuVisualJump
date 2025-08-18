@@ -409,7 +409,8 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // 最小化窗口
     private void MinimizeWindow(object sender, RoutedEventArgs e)
     {
-        this.WindowState = WindowState.Minimized;
+        // 先播放最小化动画，然后再设置窗口状态
+        _taskbarAnimation?.MinimizeAnimation();
     }
 
     // 隐藏至托盘
