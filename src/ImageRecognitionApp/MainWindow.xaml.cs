@@ -19,46 +19,71 @@ namespace ImageRecognitionApp;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyChanged
-{
-    // 任务栏管理器和动画
-    private TaskbarManager? _taskbarManager = null;
-    private TaskbarAnimation? _taskbarAnimation = null;
-
-    // 窗口标题属性
-    private string _titleText = string.Empty;
-    public string TitleText
     {
-        get => _titleText;
-        set
+        // 任务栏管理器和动画
+        private TaskbarManager? _taskbarManager = null;
+        private TaskbarAnimation? _taskbarAnimation = null;
+
+        // 窗口标题属性
+        private string _titleText = string.Empty;
+        public string TitleText
         {
-            if (_titleText != value)
+            get => _titleText;
+            set
             {
-                _titleText = value;
-                OnPropertyChanged(nameof(TitleText));
+                if (_titleText != value)
+                {
+                    _titleText = value;
+                    OnPropertyChanged(nameof(TitleText));
+                }
             }
         }
-    }
 
-    // 设置按钮文本属性
-    private string _settingButtonText = string.Empty;
-    public string SettingButtonText
-    {
-        get => _settingButtonText;
-        set
+        // 设置按钮文本属性
+        private string _settingButtonText = string.Empty;
+        public string SettingButtonText
         {
-            if (_settingButtonText != value)
+            get => _settingButtonText;
+            set
             {
-                _settingButtonText = value;
-                OnPropertyChanged(nameof(SettingButtonText));
+                if (_settingButtonText != value)
+                {
+                    _settingButtonText = value;
+                    OnPropertyChanged(nameof(SettingButtonText));
+                }
             }
         }
-    }
+
+        // 本地化工具
+        private JsonLocalizationHelper _localizationHelper => JsonLocalizationHelper.Instance;
 
     // 实现INotifyPropertyChanged接口
     public event PropertyChangedEventHandler? PropertyChanged;
     protected virtual void OnPropertyChanged(string propertyName)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    // 下拉菜单按钮点击事件
+    private void DropdownMenuButton_Click(object sender, RoutedEventArgs e)
+    {
+        DropdownMenuPopup.IsOpen = !DropdownMenuPopup.IsOpen;
+    }
+
+    // 系统信息按钮点击事件
+    private void SystemInfoButton_Click(object sender, RoutedEventArgs e)
+    {
+        DropdownMenuPopup.IsOpen = false;
+        // 这里添加系统信息按钮的具体实现
+        MessageBox.Show("系统信息功能尚未实现", "提示");
+    }
+
+    // 关于按钮点击事件
+    private void AboutButton_Click(object sender, RoutedEventArgs e)
+    {
+        DropdownMenuPopup.IsOpen = false;
+        // 这里添加关于按钮的具体实现
+        MessageBox.Show("关于功能尚未实现", "提示");
     }
 
     // 跟踪设置按钮是否被点击
@@ -175,6 +200,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                     {
                         TitleText = translations["ghYh"];
                     }
+
+                    // 设置下拉菜单按钮文本
+                    SystemInfoButton.Content = _localizationHelper.GetString(10005);
+                    AboutButton.Content = _localizationHelper.GetString(10004);
                 }
 
                 // 设置窗口标题
