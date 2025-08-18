@@ -102,31 +102,9 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                // 确保本地化工具已初始化
-                if (!JsonLocalizationHelper.Instance.IsInitialized)
-                {
-                    try
-                    {
-                        JsonLocalizationHelper.Instance.Initialize();
-                        (Application.Current as App)?.LogMessage("已初始化本地化工具");
-                    }
-                    catch (Exception ex)
-                    {
-                        (Application.Current as App)?.LogMessage($"初始化本地化工具失败: {ex.Message}");
-                    }
-                }
-
-                // 获取进程名称
-                string appName = JsonLocalizationHelper.Instance.GetString(DEFAULT_SIGN_ID);
-                if (string.IsNullOrEmpty(appName))
-                {
-                    appName = DEFAULT_APP_NAME;
-                    (Application.Current as App)?.LogMessage($"警告: 未获取到sign_id={DEFAULT_SIGN_ID}的本地化文本，使用默认名称: {appName}");
-                }
-                else
-                {
-                    (Application.Current as App)?.LogMessage($"已获取应用名称: {appName}");
-                }
+                // 获取进程名称（使用LocalizedTitleHelper获取本地化标题）
+                string appName = ImageRecognitionApp.unit.assist.LocalizedTitleHelper.GetLocalizedAppTitle();
+                (Application.Current as App)?.LogMessage($"已获取应用名称: {appName}");
 
                 // 设置进程名称
                 SetProcessName(appName);
