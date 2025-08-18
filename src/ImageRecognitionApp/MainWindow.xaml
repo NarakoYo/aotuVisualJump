@@ -262,20 +262,21 @@
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Top"/>
                                                 <StackPanel Orientation="Horizontal"
-                                                            HorizontalAlignment="Center"
+                                                            HorizontalAlignment="Left"
                                                             VerticalAlignment="Center"
                                                             Margin="10,0,10,0">
                                             <!-- 图标 -->
                                             <Image Source="pack://application:,,,/Resources/Icons/igoutu/setting-gear.png"
                                                    Width="32"
                                                    Height="32"
-                                                   HorizontalAlignment="Center"
+                                                   HorizontalAlignment="Left"
                                                    VerticalAlignment="Center"/>
                                             <!-- 文字 -->
                                             <TextBlock x:Name="SettingButtonTextBlock" Text="{Binding SettingButtonText}"
                                                        Foreground="White"
                                                        FontSize="14"
                                                        Margin="5,0,0,0"
+                                                       HorizontalAlignment="Left"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Grid>
