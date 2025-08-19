@@ -260,7 +260,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     {
         (App.Current as App)?.LogMessage($"获取设置按钮图标路径失败: {ex.Message}");
         // 设置默认图标路径
-        SettingButtonIconPath = "pack://application:,,,/Resources/Icons/igoutu/setting-gear.png";
+        // SettingButtonIconPath = "pack://application:,,,/Resources/Icons/igoutu/setting-gear.png";
     }
 
             // 初始化本地化
@@ -311,8 +311,8 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 this.Title = TitleText;
 
                 // 记录当前语言
-                (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
-                (App.Current as App)?.LogMessage($"标题已设置为: {TitleText}");
+                // (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
+                // (App.Current as App)?.LogMessage($"标题已设置为: {TitleText}");
 
             }
             catch (Exception ex)
@@ -353,7 +353,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             if (e.PropertyName == nameof(TitleText) && _taskbarManager != null)
             {
                 _taskbarManager.UpdateTooltip(TitleText);
-                (App.Current as App)?.LogMessage($"任务栏提示文本已更新为: {TitleText}");
+                // (App.Current as App)?.LogMessage($"任务栏提示文本已更新为: {TitleText}");
             }
         }
 
