@@ -726,6 +726,10 @@ namespace ImageRecognitionApp.WinFun
                     IntPtr hMenu = GetSystemMenu(_windowHandle, false);
                     if (hMenu != IntPtr.Zero)
                     {
+                        // 禁用最大化菜单项
+                        // SC_MAXIMIZE = 0xF030
+                        EnableMenuItem(hMenu, SC_MAXIMIZE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+
                         // 获取当前鼠标位置
                         POINT cursorPos;
                         if (GetCursorPos(out cursorPos))
@@ -747,8 +751,16 @@ namespace ImageRecognitionApp.WinFun
                             // 如果用户选择了菜单项，则发送相应的系统命令
                             if (menuResult > 0)
                             {
-                                PostMessage(_windowHandle, WM_SYSCOMMAND, (IntPtr)menuResult, IntPtr.Zero);
-                                LogMessage($"TaskbarManager: 用户选择了系统菜单项: {menuResult}");
+                                // 过滤掉最大化命令
+                                if (menuResult != SC_MAXIMIZE)
+                                {
+                                    PostMessage(_windowHandle, WM_SYSCOMMAND, (IntPtr)menuResult, IntPtr.Zero);
+                                    LogMessage($"TaskbarManager: 用户选择了系统菜单项: {menuResult}");
+                                }
+                                else
+                                {
+                                    LogMessage("TaskbarManager: 忽略最大化菜单项选择");
+                                }
                             }
                         }
                     }
@@ -759,6 +771,15 @@ namespace ImageRecognitionApp.WinFun
                 LogMessage($"TaskbarManager: 显示系统菜单错误: {ex.Message}");
             }
         }
+        
+        // Windows API常量
+         private const uint MF_BYCOMMAND = 0x00000000;
+         private const uint MF_DISABLED = 0x00000002;
+         private const uint MF_GRAYED = 0x00000001;
+         
+         // Windows API函数声明
+         [DllImport("user32.dll")]
+         private static extern bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
 
         #endregion
 

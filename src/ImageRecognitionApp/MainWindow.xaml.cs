@@ -110,36 +110,54 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         // 全局右键点击事件处理
         private void MainWindow_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // 只有在自定义标题栏区域才允许右键菜单显示
+            // 只有在自定义标题栏非按钮区域才允许右键菜单显示
             // 检查点击位置是否在标题栏内
             var titleBar = this.FindName("TitleBar") as Border;
             if (titleBar != null)
             {
-                // 获取标题栏的位置和大小
-                Point titleBarPosition = titleBar.PointToScreen(new Point(0, 0));
-                Rect titleBarRect = new Rect(titleBarPosition.X, titleBarPosition.Y, titleBar.ActualWidth, titleBar.ActualHeight);
+                // 获取鼠标在标题栏内的位置
+                Point mousePositionInTitleBar = e.GetPosition(titleBar);
                 
-                // 获取鼠标点击位置
-                Point mousePosition = e.GetPosition(this);
-                Point screenMousePosition = this.PointToScreen(mousePosition);
-                
-                // 检查点击是否在标题栏内
-                if (titleBarRect.Contains(screenMousePosition))
+                // 检查点击是否在标题栏内（相对于标题栏的坐标）
+                if (mousePositionInTitleBar.X >= 0 && 
+                    mousePositionInTitleBar.Y >= 0 && 
+                    mousePositionInTitleBar.X <= titleBar.ActualWidth && 
+                    mousePositionInTitleBar.Y <= titleBar.ActualHeight)
                 {
-                    // 允许事件传递到标题栏的MouseRightButtonDown处理程序
-                    e.Handled = false;
-                }
-                else
-                {
-                    // 阻止非标题栏区域的右键菜单
-                    e.Handled = true;
+                    // 检查是否点击在按钮上
+                    DependencyObject clickedElement = e.OriginalSource as DependencyObject;
+                    if (clickedElement != null)
+                    {
+                        // 向上遍历视觉树，检查是否在按钮或按钮子元素上
+                        Button button = FindVisualParent<Button>(clickedElement);
+                        if (button == null)
+                        {
+                            // 非按钮区域，允许事件传递到标题栏的MouseRightButtonDown处理程序
+                            e.Handled = false;
+                            return;
+                        }
+                    }
                 }
             }
+            
+            // 非标题栏区域或标题栏中的按钮区域，阻止右键菜单
+            e.Handled = true;
+        }
+        
+        /// <summary>
+        /// 查找视觉树中的父元素
+        /// </summary>
+        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+            if (parentObject == null)
+                return null;
+            
+            T parent = parentObject as T;
+            if (parent != null)
+                return parent;
             else
-            {
-                // 如果找不到标题栏，默认阻止所有右键菜单
-                e.Handled = true;
-            }
+                return FindVisualParent<T>(parentObject);
         }
 
         // 设置按钮点击事件处理程序
