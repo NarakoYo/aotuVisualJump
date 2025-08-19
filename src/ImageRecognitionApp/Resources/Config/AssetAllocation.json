@@ -3,35 +3,39 @@
         "Resources":"..\\..\\Resources",
         "AssetList":[
             {
-                "sign_id":"10001",
+                "sign_id":10001,
                 "Asset":"logo\\logo.ico"
             },
             {
-                "sign_id":"10006",
+                "sign_id": 10003,
+                "Asset":"Icons\\igoutu\\setting-gear.png"
+            },
+            {
+                "sign_id":10006,
                 "Asset":"Icons\\igoutu\\play-96.png"
             },
             {
-                "sign_id":"10007",
+                "sign_id":10007,
                 "Asset":"Icons\\igoutu\\script-96.png"
             },
             {
-                "sign_id":"10008",
+                "sign_id":10008,
                 "Asset":"Icons\\igoutu\\pinwheel-96.png"
             },
             {
-                "sign_id":"10009",
+                "sign_id":10009,
                 "Asset":"Icons\\igoutu\\live-video-on-96.png"
             },
             {
-                "sign_id":"10010",
+                "sign_id":10010,
                 "Asset":"Icons\\igoutu\\key-press-96.png"
             },
             {
-                "sign_id":"10011",
+                "sign_id":10011,
                 "Asset":"Icons\\igoutu\\file-96.png"
             },
             {
-                "sign_id":"10012",
+                "sign_id":10012,
                 "Asset":"Icons\\igoutu\\console-96.png"
             }
         ]
