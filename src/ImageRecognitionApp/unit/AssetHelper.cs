@@ -65,6 +65,8 @@ namespace ImageRecognitionApp.unit
                     LoadAssetConfiguration();
                     _isInitialized = true;
                     _logManager.WriteLog(LogManager.LogLevel.Info, "资产配置初始化成功");
+                    // _logManager.WriteLog(LogManager.LogLevel.Info, $"资产配置文件路径: {_configFilePath}");
+                    // _logManager.WriteLog(LogManager.LogLevel.Info, $"资源基础路径: {_resourcesBasePath}");
                 }
             }
             catch (Exception ex)

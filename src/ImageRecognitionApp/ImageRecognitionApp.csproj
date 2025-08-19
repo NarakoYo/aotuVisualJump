@@ -23,7 +23,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\**\*" />
+    <Content Include="Resources\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Localization\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

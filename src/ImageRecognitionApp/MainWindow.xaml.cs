@@ -254,7 +254,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         var assetHelper = AssetHelper.Instance;
         string settingIconPath = assetHelper.GetAssetPath(10003);
         SettingButtonIconPath = settingIconPath;
-        (App.Current as App)?.LogMessage($"设置按钮图标路径已获取: {settingIconPath}");
+        // (App.Current as App)?.LogMessage($"设置按钮图标路径已获取: {settingIconPath}");
     }
     catch (Exception ex)
     {

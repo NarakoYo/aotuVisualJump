@@ -1,6 +1,5 @@
-{
-    "AssetAllocation":{
-        "Resources":"..\\..\\Resources",
+{    "AssetAllocation":{
+        "Resources":"Resources",
         "AssetList":[
             {
                 "sign_id":10001,
