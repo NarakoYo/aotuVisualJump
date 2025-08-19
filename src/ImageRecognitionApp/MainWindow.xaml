@@ -269,7 +269,7 @@
                                                             VerticalAlignment="Center"
                                                             Margin="10,0,10,0">
                                             <!-- 图标 -->
-                                            <Image Source="pack://application:,,,/Resources/Icons/igoutu/setting-gear.png"
+                                            <Image Source="{Binding SettingButtonIconPath}"
                                                    Width="32"
                                                    Height="32"
                                                    HorizontalAlignment="Left"

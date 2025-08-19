@@ -126,7 +126,28 @@ namespace ImageRecognitionApp.unit
                                 if (item.TryGetProperty("sign_id", out var signIdElement) && 
                                     item.TryGetProperty("Asset", out var assetElement))
                                 {
-                                    string signId = signIdElement.GetString() ?? string.Empty;
+                                    // 检查sign_id类型是否为数字
+                                string signId = string.Empty;
+                                if (signIdElement.ValueKind == JsonValueKind.Number)
+                                {
+                                    signId = signIdElement.GetInt32().ToString();
+                                }
+                                else if (signIdElement.ValueKind == JsonValueKind.String)
+                                {
+                                    signId = signIdElement.GetString() ?? string.Empty;
+                                    // 尝试将字符串转换为整数，确保sign_id是有效的数字
+                                    if (!int.TryParse(signId, out _))
+                                    {
+                                        _logManager.WriteLog(LogManager.LogLevel.Error, $"发现无效的sign_id类型: {signId}，应为数字类型，已忽略该配置项");
+                                        continue;
+                                    }
+                                }
+                                else
+                                {
+                                    _logManager.WriteLog(LogManager.LogLevel.Error, "发现无效的sign_id类型，应为数字或数字字符串，已忽略该配置项");
+                                    continue;
+                                }
+                                    
                                     string assetPath = assetElement.GetString() ?? string.Empty;
 
                                     if (string.IsNullOrEmpty(signId))
@@ -219,6 +240,16 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 获取资产文件的完整路径（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>资产文件的完整路径</returns>
+        public string GetAssetPath(int signId)
+        {
+            return GetAssetPath(signId.ToString());
+        }
+
+        /// <summary>
         /// 获取图片资源
         /// </summary>
         /// <param name="signId">资产标识ID</param>
@@ -259,6 +290,16 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 获取图片资源（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>BitmapImage对象</returns>
+        public BitmapImage GetImageAsset(int signId)
+        {
+            return GetImageAsset(signId.ToString());
+        }
+
+        /// <summary>
         /// 获取图标资源
         /// </summary>
         /// <param name="signId">资产标识ID</param>
@@ -291,6 +332,16 @@ namespace ImageRecognitionApp.unit
                 _logManager.WriteLog(LogManager.LogLevel.Error, $"加载图标资源 {signId} 时出错: {ex.Message}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// 获取图标资源（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>Icon对象</returns>
+        public System.Drawing.Icon GetIconAsset(int signId)
+        {
+            return GetIconAsset(signId.ToString());
         }
 
         /// <summary>
@@ -329,6 +380,16 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 获取SVG资源内容（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>SVG文件的内容字符串</returns>
+        public string GetSvgAssetContent(int signId)
+        {
+            return GetSvgAssetContent(signId.ToString());
+        }
+
+        /// <summary>
         /// 获取音频资源
         /// </summary>
         /// <param name="signId">资产标识ID</param>
@@ -362,6 +423,16 @@ namespace ImageRecognitionApp.unit
                 _logManager.WriteLog(LogManager.LogLevel.Error, $"加载音频资源 {signId} 时出错: {ex.Message}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// 获取音频资源（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>MediaPlayer对象</returns>
+        public MediaPlayer GetAudioAsset(int signId)
+        {
+            return GetAudioAsset(signId.ToString());
         }
 
         /// <summary>
@@ -468,6 +539,16 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 获取视频资源（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>MediaPlayer对象</returns>
+        public MediaPlayer GetVideoAsset(int signId)
+        {
+            return GetVideoAsset(signId.ToString());
+        }
+
+        /// <summary>
         /// 获取网页链接内容
         /// </summary>
         /// <param name="signId">资产标识ID</param>
@@ -503,6 +584,16 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 获取网页链接内容（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>网页内容字符串</returns>
+        public async Task<string> GetWebContentAsync(int signId)
+        {
+            return await GetWebContentAsync(signId.ToString());
+        }
+
+        /// <summary>
         /// 获取资源文件流
         /// </summary>
         /// <param name="signId">资产标识ID</param>
@@ -522,6 +613,16 @@ namespace ImageRecognitionApp.unit
         }
 
         /// <summary>
+        /// 获取资源文件流（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>文件流对象</returns>
+        public FileStream GetAssetStream(int signId)
+        {
+            return GetAssetStream(signId.ToString());
+        }
+
+        /// <summary>
         /// 获取资源的URI
         /// </summary>
         /// <param name="signId">资产标识ID</param>
@@ -538,6 +639,16 @@ namespace ImageRecognitionApp.unit
                 _logManager.WriteLog(LogManager.LogLevel.Error, $"获取资源URI {signId} 时出错: {ex.Message}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// 获取资源的URI（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>资源的URI对象</returns>
+        public Uri GetAssetUri(int signId)
+        {
+            return GetAssetUri(signId.ToString());
         }
 
         /// <summary>
@@ -572,6 +683,16 @@ namespace ImageRecognitionApp.unit
                 Initialize();
             }
             return _assetList.ContainsKey(signId);
+        }
+
+        /// <summary>
+        /// 检查sign_id是否存在（整数版本）
+        /// </summary>
+        /// <param name="signId">资产标识ID（整数）</param>
+        /// <returns>是否存在</returns>
+        public bool IsSignIdExists(int signId)
+        {
+            return IsSignIdExists(signId.ToString());
         }
 
         /// <summary>

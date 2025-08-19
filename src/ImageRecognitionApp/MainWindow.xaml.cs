@@ -40,19 +40,34 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
 
         // 设置按钮文本属性
-        private string _settingButtonText = string.Empty;
-        public string SettingButtonText
+    private string _settingButtonText = string.Empty;
+    public string SettingButtonText
+    {
+        get => _settingButtonText;
+        set
         {
-            get => _settingButtonText;
-            set
+            if (_settingButtonText != value)
             {
-                if (_settingButtonText != value)
-                {
-                    _settingButtonText = value;
-                    OnPropertyChanged(nameof(SettingButtonText));
-                }
+                _settingButtonText = value;
+                OnPropertyChanged(nameof(SettingButtonText));
             }
         }
+    }
+
+    // 设置按钮图标路径属性
+    private string _settingButtonIconPath = string.Empty;
+    public string SettingButtonIconPath
+    {
+        get => _settingButtonIconPath;
+        set
+        {
+            if (_settingButtonIconPath != value)
+            {
+                _settingButtonIconPath = value;
+                OnPropertyChanged(nameof(SettingButtonIconPath));
+            }
+        }
+    }
 
         // 本地化工具
         private JsonLocalizationHelper _localizationHelper => JsonLocalizationHelper.Instance;
@@ -231,7 +246,22 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             this.PreviewMouseRightButtonDown += MainWindow_PreviewMouseRightButtonDown;
 
             // 初始化设置按钮状态
-            _isSettingButtonClicked = false;
+    _isSettingButtonClicked = false;
+
+    // 初始化AssetHelper并获取设置按钮图标路径
+    try
+    {
+        var assetHelper = AssetHelper.Instance;
+        string settingIconPath = assetHelper.GetAssetPath(10003);
+        SettingButtonIconPath = settingIconPath;
+        (App.Current as App)?.LogMessage($"设置按钮图标路径已获取: {settingIconPath}");
+    }
+    catch (Exception ex)
+    {
+        (App.Current as App)?.LogMessage($"获取设置按钮图标路径失败: {ex.Message}");
+        // 设置默认图标路径
+        SettingButtonIconPath = "pack://application:,,,/Resources/Icons/igoutu/setting-gear.png";
+    }
 
             // 初始化本地化
             try
