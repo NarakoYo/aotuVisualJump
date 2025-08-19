@@ -110,8 +110,36 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         // 全局右键点击事件处理
         private void MainWindow_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // 阻止所有右键菜单显示
-            e.Handled = true;
+            // 只有在自定义标题栏区域才允许右键菜单显示
+            // 检查点击位置是否在标题栏内
+            var titleBar = this.FindName("TitleBar") as Border;
+            if (titleBar != null)
+            {
+                // 获取标题栏的位置和大小
+                Point titleBarPosition = titleBar.PointToScreen(new Point(0, 0));
+                Rect titleBarRect = new Rect(titleBarPosition.X, titleBarPosition.Y, titleBar.ActualWidth, titleBar.ActualHeight);
+                
+                // 获取鼠标点击位置
+                Point mousePosition = e.GetPosition(this);
+                Point screenMousePosition = this.PointToScreen(mousePosition);
+                
+                // 检查点击是否在标题栏内
+                if (titleBarRect.Contains(screenMousePosition))
+                {
+                    // 允许事件传递到标题栏的MouseRightButtonDown处理程序
+                    e.Handled = false;
+                }
+                else
+                {
+                    // 阻止非标题栏区域的右键菜单
+                    e.Handled = true;
+                }
+            }
+            else
+            {
+                // 如果找不到标题栏，默认阻止所有右键菜单
+                e.Handled = true;
+            }
         }
 
         // 设置按钮点击事件处理程序
