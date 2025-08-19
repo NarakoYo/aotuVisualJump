@@ -12,7 +12,10 @@
         Background="Transparent"
         Closing="Window_Closing"
         WindowStartupLocation="CenterScreen"
-        Icon="pack://application:,,,/Resources/logo/logo.png">
+        Icon="pack://application:,,,/Resources/logo/logo.png"
+        ResizeMode="CanMinimize"
+        StateChanged="Window_StateChanged"
+        Activated="Window_Activated">
     <Window.Resources>
 
         <!-- 减法转换器 - 用于计算值的差值，如内容框宽度和高度 -->

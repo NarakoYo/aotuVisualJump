@@ -4,27 +4,75 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using System.IO;
-using System.Drawing; // 添加对System.Drawing的引用
+using System.Drawing;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Threading;
 using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp.WinFun
 {
     /// <summary>
-    /// 任务栏管理器，负责处理任务栏图标的交互功能
+    /// 任务栏管理器，负责处理任务栏图标和任务栏应用程序区的交互功能
+    /// 实现Windows标准的任务栏行为，包括窗口最小化、恢复、隐藏到托盘等功能
     /// </summary>
     public class TaskbarManager : IDisposable
     {
         #region 字段定义
 
-    private IntPtr _windowHandle;
-    private readonly uint _taskbarIconId = 1001; // 设置默认图标ID
-    private NOTIFYICONDATA _notifyIconData;
-    private IntPtr _iconHandle = IntPtr.Zero; // 存储图标句柄以便释放
-    private TaskbarAnimation? _taskbarAnimation; // 任务栏动画引用
+        private static TaskbarManager? _instance;    // 单例实例
+        
+        private IntPtr _windowHandle;                // 窗口句柄
+        private readonly uint _taskbarIconId = 1001; // 任务栏图标ID
+        private NOTIFYICONDATA _notifyIconData;      // 任务栏图标数据结构
+        private IntPtr _iconHandle = IntPtr.Zero;    // 图标句柄，用于资源释放
+        private TaskbarAnimation? _taskbarAnimation; // 任务栏动画处理对象
+        private ContextMenu? _contextMenu;           // 右键上下文菜单
+        private HwndSource? _hwndSource;             // 窗口源对象，用于消息处理
+        private bool _isTrayIconVisible = false;     // 托盘图标可见状态
+        private bool _isWindowMinimizedToTray = false; // 窗口是否最小化到托盘
+        
+        // 窗口位置相关字段
+        private double _lastWindowLeft = 0;          // 上次窗口的左边界位置
+        private double _lastWindowTop = 0;           // 上次窗口的上边界位置
+        private double _lastWindowWidth = 800;       // 上次窗口的宽度
+        private double _lastWindowHeight = 600;      // 上次窗口的高度
+        private WindowState _lastWindowState = WindowState.Normal; // 上次窗口的状态
+        
+        /// <summary>
+        /// 获取TaskbarManager的单例实例
+        /// </summary>
+        public static TaskbarManager? Instance
+        {
+            get { return _instance; }
+        }
+        
+        /// <summary>
+        /// 获取上次保存的窗口Left位置
+        /// </summary>
+        public double LastWindowLeft { get { return _lastWindowLeft; } }
+        
+        /// <summary>
+        /// 获取上次保存的窗口Top位置
+        /// </summary>
+        public double LastWindowTop { get { return _lastWindowTop; } }
+        
+        /// <summary>
+        /// 获取上次保存的窗口宽度
+        /// </summary>
+        public double LastWindowWidth { get { return _lastWindowWidth; } }
+        
+        /// <summary>
+        /// 获取上次保存的窗口高度
+        /// </summary>
+        public double LastWindowHeight { get { return _lastWindowHeight; } }
+        
+        /// <summary>
+        /// 获取上次保存的窗口状态
+        /// </summary>
+        public WindowState LastWindowState { get { return _lastWindowState; } }
 
-    #endregion
+        #endregion
 
         #region 结构体定义
 
@@ -33,6 +81,37 @@ namespace ImageRecognitionApp.WinFun
         {
             public int x;
             public int y;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct NOTIFYICONDATA
+        {
+            public uint cbSize;
+            public IntPtr hWnd;
+            public uint uID;
+            public uint uFlags;
+            public uint uCallbackMessage;
+            public IntPtr hIcon;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string szTip;
+            public uint dwState;
+            public uint dwStateMask;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string szInfo;
+            public uint uTimeoutOrVersion;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+            public string szInfoTitle;
+            public uint dwInfoFlags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct FLASHWINFO
+        {
+            public uint cbSize;
+            public IntPtr hwnd;
+            public uint dwFlags;
+            public uint uCount;
+            public uint dwTimeout;
         }
 
         #endregion
@@ -84,72 +163,74 @@ namespace ImageRecognitionApp.WinFun
         [DllImport("user32.dll")]
         private static extern IntPtr LoadIcon(IntPtr hInstance, IntPtr lpIconName);
 
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsZoomed(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
         #endregion
 
         #region 常量定义
 
-        private const uint NIM_ADD = 0x00000000;
-        private const uint NIM_MODIFY = 0x00000001;
-        private const uint NIM_DELETE = 0x00000002;
-        private const uint NIF_MESSAGE = 0x00000001;
-        private const uint NIF_ICON = 0x00000002;
-        private const uint NIF_TIP = 0x00000004;
-        private const uint NIF_INFO = 0x00000010;
-        private const uint NIM_SETVERSION = 0x00000004;
-        private const uint NOTIFYICON_VERSION_4 = 0x00000004;
-        private const int WM_USER = 0x0400;
-        private const int WM_RBUTTONDOWN = 0x0204;
-        private const int WM_CONTEXTMENU = 0x007B;
-        private const int WM_NOTIFYICON = WM_USER + 1;
-        private const int WM_SYSCOMMAND = 0x0112;
-        private const uint SC_RESTORE = 0xF120;
-        private const uint SC_MINIMIZE = 0xF020;
-        private const uint SC_MAXIMIZE = 0xF030;
-        private const uint WM_LBUTTONDOWN = 0x00000201;
-        private const int IDI_APPLICATION = 0x7F00;
+        // 任务栏图标消息常量
+        private const uint NIM_ADD = 0x00000000;       // 添加任务栏图标
+        private const uint NIM_MODIFY = 0x00000001;    // 修改任务栏图标
+        private const uint NIM_DELETE = 0x00000002;    // 删除任务栏图标
+        private const uint NIF_MESSAGE = 0x00000001;   // 包含回调消息
+        private const uint NIF_ICON = 0x00000002;      // 包含图标
+        private const uint NIF_TIP = 0x00000004;       // 包含提示文本
+        private const uint NIF_INFO = 0x00000010;      // 包含气球通知
+        private const uint NIM_SETVERSION = 0x00000004;// 设置版本
+        private const uint NOTIFYICON_VERSION_4 = 0x00000004; // 通知图标版本4
+
+        // Windows消息常量
+        private const int WM_USER = 0x0400;            // 用户自定义消息基础
+        private const int WM_RBUTTONDOWN = 0x0204;     // 鼠标右键按下
+        private const int WM_CONTEXTMENU = 0x007B;     // 上下文菜单
+        private const int WM_NOTIFYICON = WM_USER + 1; // 通知图标消息
+        private const int WM_SYSCOMMAND = 0x0112;      // 系统命令
+        private const uint SC_RESTORE = 0xF120;        // 恢复窗口
+        private const uint SC_MINIMIZE = 0xF020;       // 最小化窗口
+        private const uint SC_MAXIMIZE = 0xF030;       // 最大化窗口
+        private const uint SC_CLOSE = 0xF060;          // 关闭窗口
+        private const uint WM_LBUTTONDOWN = 0x0201;    // 鼠标左键按下
+        private const uint WM_LBUTTONUP = 0x0202;      // 鼠标左键释放
+        private const uint WM_RBUTTONUP = 0x0205;      // 鼠标右键释放
+        private const uint WM_MBUTTONDOWN = 0x0207;    // 鼠标中键按下
+        private const uint WM_MBUTTONUP = 0x0208;      // 鼠标中键释放
+        private const uint WM_LBUTTONDBLCLK = 0x0203;  // 鼠标左键双击
+        private const uint WM_RBUTTONDBLCLK = 0x0206;  // 鼠标右键双击
+        private const uint WM_MBUTTONDBLCLK = 0x0209;  // 鼠标中键双击
+
+        // 窗口显示命令
+        private const int SW_HIDE = 0;                 // 隐藏窗口
+        private const int SW_SHOWNORMAL = 1;           // 正常显示窗口
+        private const int SW_SHOWMINIMIZED = 2;        // 最小化显示窗口
+        private const int SW_SHOWMAXIMIZED = 3;        // 最大化显示窗口
+        private const int SW_SHOWNOACTIVATE = 4;       // 显示但不激活窗口
+
+        // 图标常量
+        private const int IDI_APPLICATION = 0x7F00;    // 默认应用程序图标
+
+        // 菜单常量
+        private const uint TPM_RETURNCMD = 0x0100;     // 返回所选菜单项的ID
+        private const uint TPM_LEFTBUTTON = 0x0000;    // 左键菜单选择
 
         #endregion
 
-        #region 结构体定义
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct NOTIFYICONDATA
-        {
-            public uint cbSize;
-            public IntPtr hWnd;
-            public uint uID;
-            public uint uFlags;
-            public uint uCallbackMessage;
-            public IntPtr hIcon;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string szTip;
-            public uint dwState;
-            public uint dwStateMask;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-            public string szInfo;
-            public uint uTimeoutOrVersion;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
-            public string szInfoTitle;
-            public uint dwInfoFlags;
-            // 其他字段省略，根据需要添加
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct FLASHWINFO
-        {
-            public uint cbSize;
-            public IntPtr hwnd;
-            public uint dwFlags;
-            public uint uCount;
-            public uint dwTimeout;
-        }
-
-        #endregion
+        #region 构造函数与初始化
 
         /// <summary>
-        /// 构造函数
+        /// 构造函数，初始化任务栏管理器
         /// </summary>
-        /// <param name="window">WPF窗口</param>
+        /// <param name="window">要关联的WPF窗口</param>
         public TaskbarManager(System.Windows.Window window)
         {
             if (window == null)
@@ -157,60 +238,145 @@ namespace ImageRecognitionApp.WinFun
                 throw new ArgumentNullException(nameof(window), "窗口不能为空");
             }
             
-            // 创建初始化标记文件
-            // System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_manager_initialized.txt", DateTime.Now.ToString());
-            (App.Current as App)?.LogMessage("TaskbarManager: 构造函数被调用，已创建初始化标记文件");
-            
+            // 设置单例实例
+            _instance = this;
+
+            LogMessage("TaskbarManager: 初始化任务栏管理器");
+            SetupWindowEventHandlers(window);
+        }
+
+        /// <summary>
+        /// 设置窗口事件处理程序
+        /// </summary>
+        /// <param name="window">WPF窗口对象</param>
+        private void SetupWindowEventHandlers(System.Windows.Window window)
+        {
             // 延迟获取窗口句柄，确保窗口已加载
             window.Loaded += (sender, e) =>
             {
-                (App.Current as App)?.LogMessage("TaskbarManager: 窗口Loaded事件被触发");
+                LogMessage("TaskbarManager: 窗口Loaded事件被触发");
+                InitializeWindowHandle(window);
+                InitializeTaskbarComponents();
+            };
+
+            // 监听窗口状态变化
+            window.StateChanged += (sender, e) =>
+            {
+                if (sender is System.Windows.Window wnd)
+                {
+                    LogMessage($"TaskbarManager: 窗口状态变更为: {wnd.WindowState}");
+                    // 根据窗口状态更新任务栏图标的显示状态
+                    if (_taskbarAnimation != null)
+                    {
+                        switch (wnd.WindowState)
+                        {
+                            case WindowState.Minimized:
+                                _taskbarAnimation.MinimizeAnimation();
+                                LogMessage("TaskbarManager: 播放窗口最小化动画");
+                                break;
+                            case WindowState.Normal:
+                                // 窗口恢复到正常状态，不需要动画
+                                break;
+                            case WindowState.Maximized:
+                                // 窗口最大化，不需要动画
+                                break;
+                        }
+                    }
+                }
+            };
+
+            // 监听窗口关闭事件
+            window.Closing += (sender, e) =>
+            {
+                LogMessage("TaskbarManager: 窗口关闭事件被触发");
+                // 确保资源释放
+                Dispose();
+            };
+        }
+
+        /// <summary>
+        /// 初始化窗口句柄
+        /// </summary>
+        /// <param name="window">WPF窗口对象</param>
+        private void InitializeWindowHandle(System.Windows.Window window)
+        {
+            try
+            {
                 _windowHandle = new WindowInteropHelper(window).Handle;
                 if (_windowHandle == IntPtr.Zero)
                 {
-                    (App.Current as App)?.LogMessage("TaskbarManager: 窗口句柄获取失败");
+                    LogMessage("TaskbarManager: 窗口句柄获取失败");
                     // 尝试使用主窗口
                     if (System.Windows.Application.Current.MainWindow != null)
                     {
                         _windowHandle = new WindowInteropHelper(System.Windows.Application.Current.MainWindow).Handle;
-                        (App.Current as App)?.LogMessage($"TaskbarManager: 使用主窗口句柄: {_windowHandle}");
+                        LogMessage($"TaskbarManager: 使用主窗口句柄: {_windowHandle}");
                     }
-                else
-                {
-                    (App.Current as App)?.LogMessage("主窗口为空，调用原有处理逻辑");
-                    // 显示消息框，确认左键点击被触发
-                    // System.Windows.MessageBox.Show("任务栏托盘左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                }
                 }
                 else
                 {
-                    (App.Current as App)?.LogMessage($"TaskbarManager: 窗口句柄已设置: {_windowHandle}");
+                    LogMessage($"TaskbarManager: 窗口句柄已设置: {_windowHandle}");
                 }
-                
-                // 确保窗口句柄有效后再初始化任务栏图标
-                if (_windowHandle != IntPtr.Zero)
-                {
-                    _taskbarAnimation = new TaskbarAnimation(window);
-                    (App.Current as App)?.LogMessage("TaskbarManager: 初始化任务栏图标");
-                    InitializeTaskbarIcon();
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 初始化窗口句柄错误: {ex.Message}");
+            }
+        }
 
-                    // 注册窗口消息处理
-                    var hwndSource = HwndSource.FromHwnd(_windowHandle);
-                    if (hwndSource != null)
-                    {
-                        hwndSource.AddHook(WndProc);
-                        (App.Current as App)?.LogMessage("TaskbarManager: 窗口消息钩子已注册");
-                    }
-                    else
-                    {
-                        (App.Current as App)?.LogMessage("TaskbarManager: 无法获取HwndSource，消息钩子注册失败");
-                    }
+        /// <summary>
+        /// 初始化任务栏组件
+        /// </summary>
+        private void InitializeTaskbarComponents()
+        {
+            try
+            {
+                if (_windowHandle == IntPtr.Zero)
+                {
+                    LogMessage("TaskbarManager: 无法初始化，窗口句柄无效");
+                    return;
+                }
+
+                // 初始化任务栏动画对象
+                InitializeTaskbarAnimation();
+
+                // 初始化任务栏图标
+                InitializeTaskbarIcon();
+
+                // 注册窗口消息处理
+                RegisterWindowMessageHandler();
+
+                // 初始化上下文菜单
+                InitializeContextMenu();
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 初始化任务栏组件错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// 初始化任务栏动画对象
+        /// </summary>
+        private void InitializeTaskbarAnimation()
+        {
+            try
+            {
+                if (System.Windows.Application.Current.MainWindow != null)
+                {
+                    _taskbarAnimation = new TaskbarAnimation(System.Windows.Application.Current.MainWindow);
+                    LogMessage("TaskbarManager: 任务栏动画对象已初始化");
                 }
                 else
                 {
-                    (App.Current as App)?.LogMessage("TaskbarManager: 无法初始化，窗口句柄无效");
+                    LogMessage("TaskbarManager: 主窗口为空，无法初始化任务栏动画对象");
                 }
-            };
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 初始化任务栏动画对象错误: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -249,8 +415,9 @@ namespace ImageRecognitionApp.WinFun
                 _iconHandle = LoadIcon(IntPtr.Zero, (IntPtr)IDI_APPLICATION);
                 return _iconHandle;
             }
-            catch
+            catch (Exception ex)
             {
+                LogMessage($"TaskbarManager: 获取窗口图标错误: {ex.Message}");
                 // 出错时返回默认应用程序图标
                 _iconHandle = LoadIcon(IntPtr.Zero, (IntPtr)IDI_APPLICATION);
                 return _iconHandle;
@@ -264,10 +431,7 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                (App.Current as App)?.LogMessage("开始初始化任务栏图标");
-                
-                // 创建初始化标记文件
-                // System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_initializing.txt", DateTime.Now.ToString());
+                LogMessage("TaskbarManager: 开始初始化任务栏图标");
                 
                 // 获取应用程序标题
                 string appTitle = "Image Recognition App";
@@ -290,410 +454,242 @@ namespace ImageRecognitionApp.WinFun
                     hIcon = GetWindowIconHandle(),
                     szTip = appTitle
                 };
-                (App.Current as App)?.LogMessage($"任务栏图标配置: hWnd={_windowHandle}, uCallbackMessage={WM_NOTIFYICON}, szTip={appTitle}");
+                LogMessage($"TaskbarManager: 任务栏图标配置: hWnd={_windowHandle}, uCallbackMessage={WM_NOTIFYICON}, szTip={appTitle}");
 
                 // 添加任务栏图标
                 int addResult = Shell_NotifyIcon(NIM_ADD, ref _notifyIconData);
                 if (addResult != 0)
                 {
-                    (App.Current as App)?.LogMessage("任务栏图标添加成功");
-                    // System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_added.txt", DateTime.Now.ToString());
+                    LogMessage("TaskbarManager: 任务栏图标添加成功");
+                    _isTrayIconVisible = true;
                 }
                 else
                 {
-                    (App.Current as App)?.LogMessage("任务栏图标添加失败");
+                    LogMessage("TaskbarManager: 任务栏图标添加失败");
                     int errorCode = Marshal.GetLastWin32Error();
-                    (App.Current as App)?.LogMessage($"Win32错误代码: {errorCode}");
-                    // System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_add_failed.txt", $"错误代码: {errorCode}");
+                    LogMessage($"TaskbarManager: Win32错误代码: {errorCode}");
                 }
 
                 // 设置版本
                 int versionResult = Shell_NotifyIcon(NIM_SETVERSION, ref _notifyIconData);
                 if (versionResult != 0)
                 {
-                    (App.Current as App)?.LogMessage("任务栏图标版本设置成功");
+                    LogMessage("TaskbarManager: 任务栏图标版本设置成功");
                 }
                 else
                 {
-                    (App.Current as App)?.LogMessage("任务栏图标版本设置失败");
+                    LogMessage("TaskbarManager: 任务栏图标版本设置失败");
                 }
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"初始化任务栏图标错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
-                // System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\taskbar_icon_init_error.txt", $"错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 初始化任务栏图标错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
             }
         }
 
         /// <summary>
+        /// 注册窗口消息处理
+        /// </summary>
+        private void RegisterWindowMessageHandler()
+        {
+            try
+            {
+                _hwndSource = HwndSource.FromHwnd(_windowHandle);
+                if (_hwndSource != null)
+                {
+                    _hwndSource.AddHook(WndProc);
+                    LogMessage("TaskbarManager: 窗口消息钩子已注册");
+                }
+                else
+                {
+                    LogMessage("TaskbarManager: 无法获取HwndSource，消息钩子注册失败");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 注册窗口消息处理错误: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region 窗口消息处理
+
+        /// <summary>
         /// 窗口消息处理
+        /// 监听并处理所有任务栏相关的Windows消息
         /// </summary>
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             try
             {
-                (App.Current as App)?.LogMessage($"收到窗口消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
-                
-                if (msg == WM_NOTIFYICON)
+                // 记录关键消息，避免日志过多
+                if (msg == WM_SYSCOMMAND || msg == WM_NOTIFYICON || msg == WM_CONTEXTMENU)
                 {
-                    // 处理任务栏图标消息
-                    (App.Current as App)?.LogMessage($"确认是任务栏图标消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
-                    uint message = (uint)lParam;
-                    uint iconId = (uint)wParam;
-                    (App.Current as App)?.LogMessage($"接收到任务栏消息: 类型={message}, 图标ID={iconId}");
+                    LogMessage($"TaskbarManager: 收到窗口消息: 消息ID={msg}, wParam={wParam}, lParam={lParam}");
+                }
 
-                    switch (message)
+                // 处理系统命令消息
+                if (msg == WM_SYSCOMMAND)
+                {
+                    uint command = (uint)wParam & 0xFFF0;
+                    switch (command)
                     {
-                        case 0x0201:  // 鼠标左键点击(托盘)
-                            (App.Current as App)?.LogMessage("确认是鼠标左键点击");
+                        case SC_RESTORE:
+                            // 恢复窗口
+                            OnTaskbarShortcutLeftClick();
+                            LogMessage("TaskbarManager: 处理SC_RESTORE系统命令");
+                            break;
+                        case SC_MINIMIZE:
+                            // 最小化窗口时播放动画
+                            if (_taskbarAnimation != null)
+                            {
+                                _taskbarAnimation.MinimizeAnimation();
+                                LogMessage("TaskbarManager: 播放窗口最小化动画");
+                            }
+                            break;
+                        case SC_MAXIMIZE:
+                            // 最大化窗口
+                            LogMessage("TaskbarManager: 处理SC_MAXIMIZE系统命令");
+                            break;
+                        case SC_CLOSE:
+                            // 关闭窗口时清理资源
+                            LogMessage("TaskbarManager: 处理SC_CLOSE系统命令");
+                            break;
+                    }
+                }
+                // 处理通知图标消息
+                else if (msg == WM_NOTIFYICON)
+                {
+                    uint notificationMessage = (uint)lParam;
+                    switch (notificationMessage)
+                    {
+                        case WM_LBUTTONUP:
+                            // 左键点击托盘图标
                             OnLeftClick();
                             handled = true;
                             break;
-                        case 0x0202:  // 鼠标左键释放
-                            (App.Current as App)?.LogMessage("收到鼠标左键释放消息");
-                            handled = true;
-                            break;
-                        case 0x0204:  // 鼠标右键点击
-                            (App.Current as App)?.LogMessage("收到鼠标右键点击消息");
+                        case WM_RBUTTONUP:
+                            // 右键点击托盘图标
                             OnRightClick();
                             handled = true;
                             break;
-                        case 0x0112:  // 鼠标左键点击(任务栏)
-                            (App.Current as App)?.LogMessage("确认是鼠标左键点击");
-                            OnTaskbarShortcutLeftClick();
+                        case WM_LBUTTONDBLCLK:
+                            // 左键双击托盘图标
+                            OnDoubleClick();
                             handled = true;
                             break;
-                        default:
-                            (App.Current as App)?.LogMessage($"未知的任务栏消息: {message}");
-                            (App.Current as App)?.LogMessage($"收到未知的任务栏图标消息类型: lParam={lParam}, wParam={wParam}");
+                        case WM_CONTEXTMENU:
+                            // 显示上下文菜单
+                            OnContextMenuRequest();
+                            handled = true;
                             break;
                     }
                 }
-                else if (msg == WM_SYSCOMMAND)
-                {
-                    // 处理系统命令消息
-                    uint command = (uint)wParam & 0xFFF0; // 获取命令类型
-                    (App.Current as App)?.LogMessage($"收到系统命令: {command}");
-                    
-                    if (command == SC_MINIMIZE)
-                    {
-                        // 最小化窗口时的处理
-                        (App.Current as App)?.LogMessage("收到窗口最小化命令");
-                        if (_taskbarAnimation != null)
-                        {
-                            _taskbarAnimation.MinimizeAnimation();
-                            (App.Current as App)?.LogMessage("窗口最小化，播放缩放并向任务栏中央移动的动画");
-                        }
-                    }
-                    // 任务栏快捷方式左键点击通常会触发SC_RESTORE或SC_MINIMIZE
-                    else if (command == SC_RESTORE)
-                    {
-                        (App.Current as App)?.LogMessage("[TaskbarManager] 收到恢复命令");
-                        if (System.Windows.Application.Current.MainWindow != null)
-                        {
-                            var mainWindow = System.Windows.Application.Current.MainWindow;
-                            // 无论窗口当前状态如何，都确保它被激活
-                            if (mainWindow.WindowState == WindowState.Minimized)
-                            {
-                                mainWindow.WindowState = WindowState.Normal;
-                            }
-                            mainWindow.Activate();
-                            if (_taskbarAnimation != null)
-                            {
-                                _taskbarAnimation.RestoreAnimation();
-                            }
-                        }
-                    }
-                }
+                // 处理上下文菜单消息
                 else if (msg == WM_CONTEXTMENU)
                 {
-                    // 处理右键上下文菜单消息
-                    // (App.Current as App)?.LogMessage("收到上下文菜单消息");
-                    
-                    // 显示消息框，确认右键点击被触发
-                    // System.Windows.MessageBox.Show("任务栏快捷方式右键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                    
-                    // 显示系统菜单
-                    ShowSystemMenu();
-                    handled = true;
-                }
-                return IntPtr.Zero;
-            }
-            catch (Exception ex)
-            {
-                (App.Current as App)?.LogMessage($"窗口消息处理错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
-                return IntPtr.Zero;
-            }
-        }
-
-        /// <summary>
-        /// 鼠标左键点击事件
-        /// </summary>
-        private void OnLeftClick()
-        {
-            try
-            {
-                // 创建一个标记文件，确认方法被调用
-                // System.IO.File.WriteAllText("e:\\.Temp\\workspace\\aotuVisualJump\\left_click_triggered.txt", DateTime.Now.ToString());
-                // (App.Current as App)?.LogMessage("执行OnLeftClick方法，已创建标记文件");
-                // 显示消息框，确认左键点击被触发
-                // System.Windows.MessageBox.Show("任务栏快捷方式左键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                // 切换窗口激活/最小化/隐藏
-                if (System.Windows.Application.Current.MainWindow != null)
-                {
-                    var mainWindow = System.Windows.Application.Current.MainWindow;
-                    // (App.Current as App)?.LogMessage($"窗口当前状态: {mainWindow.WindowState}, 是否激活: {mainWindow.IsActive}, 是否可见: {mainWindow.Visibility}, 窗口句柄: {_windowHandle}");
-                    
-                    // 如果窗口已激活（处于前台并聚焦），则将其最小化
-                    if (mainWindow.IsActive)
+                    // 检查是否是任务栏快捷方式的右键菜单
+                    if (wParam == _windowHandle)
                     {
-                        // (App.Current as App)?.LogMessage("窗口已激活，准备最小化");
-                        mainWindow.WindowState = WindowState.Minimized;
-                    // (App.Current as App)?.LogMessage("窗口已设置为最小化状态");
-                    if (_taskbarAnimation != null)
-                    {
-                        // 不需要在这里再次调用，避免重复播放动画
-                        // (App.Current as App)?.LogMessage("窗口已最小化，动画将由系统命令消息处理");
+                        OnTaskbarShortcutRightClick();
+                        handled = true;
                     }
-                        else
-                        {
-                            // (App.Current as App)?.LogMessage("窗口已最小化，但_taskbarAnimation为null，无法播放动画");
-                        }
-                    }
-                    else
-                    {
-                        // 窗口未激活，恢复并激活
-                        // (App.Current as App)?.LogMessage("窗口未激活，准备恢复");
-                        mainWindow.WindowState = WindowState.Normal;
-                        // (App.Current as App)?.LogMessage("窗口已恢复为正常状态");
-                        mainWindow.Visibility = Visibility.Visible;
-                        // (App.Current as App)?.LogMessage("窗口已设置为可见");
-                        mainWindow.ShowInTaskbar = true;
-                        // (App.Current as App)?.LogMessage("窗口已设置为在任务栏显示");
-                        mainWindow.Show();
-                        // (App.Current as App)?.LogMessage("窗口已显示");
-                        mainWindow.Activate();
-                        // (App.Current as App)?.LogMessage("窗口已激活");
-                        // 确保窗口前置
-                        bool setForegroundResult = SetForegroundWindow(_windowHandle);
-                        // (App.Current as App)?.LogMessage($"SetForegroundWindow结果: {setForegroundResult}");
-                        if (!setForegroundResult)
-                        {
-                            // (App.Current as App)?.LogMessage("SetForegroundWindow调用失败，尝试其他方法激活窗口");
-                            // 尝试通过用户32 API强制激活
-                            IntPtr currentForeground = GetForegroundWindow();
-                            uint currentThreadId = GetWindowThreadProcessId(currentForeground, IntPtr.Zero);
-                            uint ourThreadId = GetCurrentThreadId();
-                            
-                            // (App.Current as App)?.LogMessage($"当前前景窗口: {currentForeground}, 当前线程ID: {currentThreadId}, 我们的线程ID: {ourThreadId}");
-                            if (currentThreadId != ourThreadId)
-                            {
-                                // (App.Current as App)?.LogMessage("附加线程输入");
-                                AttachThreadInput(currentThreadId, ourThreadId, true);
-                                setForegroundResult = SetForegroundWindow(_windowHandle);
-                                // (App.Current as App)?.LogMessage($"附加线程后SetForegroundWindow结果: {setForegroundResult}");
-                                AttachThreadInput(currentThreadId, ourThreadId, false);
-                                // (App.Current as App)?.LogMessage("分离线程输入");
-                            }
-                        }
-                        if (_taskbarAnimation != null)
-                        {
-                            _taskbarAnimation.JumpUpAnimation();
-                            // (App.Current as App)?.LogMessage("窗口已激活，播放向上跳跃动画");
-                        }
-                        else
-                        {
-                            // (App.Current as App)?.LogMessage("窗口已激活，但_taskbarAnimation为null，无法播放动画");
-                        }
-                    }
-                }
-                else
-                {
-                    // (App.Current as App)?.LogMessage("主窗口为空");
                 }
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"左键点击处理错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+                LogMessage($"TaskbarManager: 处理窗口消息错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
             }
+
+            return IntPtr.Zero;
         }
 
-        /// <summary>
-        /// 上下文菜单
-        /// </summary>
-        private ContextMenu? _contextMenu;
+        #endregion
+
+        #region 任务栏快捷方式处理
 
         /// <summary>
-        /// 初始化上下文菜单
-        /// </summary>
-        private void InitializeContextMenu()
-        {
-            if (_contextMenu != null)
-                return;
-
-            _contextMenu = new ContextMenu
-            {
-                // 确保点击菜单外部时关闭菜单
-                StaysOpen = false
-            };
-
-            // 添加菜单关闭事件处理
-                _contextMenu.Closed += (sender, e) =>
-                {
-                    // (App.Current as App)?.LogMessage("右键菜单已关闭");
-                };
-
-        //     // 显示窗口菜单项
-        //     MenuItem showWindowItem = new MenuItem();
-        //     showWindowItem.Header = "显示窗口";
-        //     showWindowItem.Click += (sender, e) =>
-        //     {
-        //         if (System.Windows.Application.Current.MainWindow != null)
-        //         {
-        //             var mainWindow = System.Windows.Application.Current.MainWindow;
-        //             mainWindow.WindowState = WindowState.Normal;
-        //             mainWindow.Visibility = Visibility.Visible;
-        //             mainWindow.ShowInTaskbar = true;
-        //             mainWindow.Show();
-        //             mainWindow.Activate();
-        //             SetForegroundWindow(_windowHandle);
-                    
-        //             if (_taskbarAnimation != null)
-        //             {
-        //                 _taskbarAnimation.JumpUpAnimation();
-        //             }
-        //         }
-        //     };
-        //     _contextMenu.Items.Add(showWindowItem);
-
-        //     // 最小化窗口菜单项
-        //     MenuItem minimizeWindowItem = new MenuItem();
-        //     minimizeWindowItem.Header = "最小化";
-        //     minimizeWindowItem.Click += (sender, e) =>
-        //     {
-        //         if (System.Windows.Application.Current.MainWindow != null)
-        //         {
-        //             var mainWindow = System.Windows.Application.Current.MainWindow;
-        //             mainWindow.WindowState = WindowState.Minimized;
-                    
-        //             if (_taskbarAnimation != null)
-        //             {
-        //                 _taskbarAnimation.JumpDownAnimation();
-        //             }
-        //         }
-        //     };
-        //     _contextMenu.Items.Add(minimizeWindowItem);
-
-        //     // 分隔线
-        //     _contextMenu.Items.Add(new Separator());
-
-            // 退出应用菜单项
-            MenuItem exitItem = new MenuItem();
-            exitItem.Header = JsonLocalizationHelper.Instance.GetString(20004);
-            exitItem.Click += (sender, e) =>
-            {
-                try
-                {
-                    // 获取主窗口并关闭它，确保触发Closed事件以释放资源
-                    MainWindow mainWindow = null;
-                    foreach (Window window in System.Windows.Application.Current.Windows)
-                    {
-                        if (window is MainWindow)
-                        {
-                            mainWindow = (MainWindow)window;
-                            break;
-                        }
-                    }
-
-                    if (mainWindow != null)
-                    {
-                        // 注册关闭完成事件
-                        mainWindow.Closed += (s, args) =>
-                        {
-                            // 确保所有资源释放后再关闭应用
-                            System.Windows.Application.Current.Shutdown();
-                        };
-                        mainWindow.Close();
-                    }
-                    else
-                    {
-                        // 如果找不到主窗口，直接关闭应用
-                        System.Windows.Application.Current.Shutdown();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"退出过程中发生错误: {ex.Message}");
-                    (System.Windows.Application.Current as App)?.LogMessage($"退出过程中发生错误: {ex.Message}");
-                }
-            };
-            _contextMenu.Items.Add(exitItem);
-        }
-
-        /// <summary>
-        /// 任务栏快捷方式左键点击事件
+        /// 处理任务栏快捷方式左键点击
         /// </summary>
         private void OnTaskbarShortcutLeftClick()
         {
             try
             {
-                if (System.Windows.Application.Current.MainWindow != null)
+                LogMessage("TaskbarManager: 处理任务栏快捷方式左键点击");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
                 {
-                    var mainWindow = System.Windows.Application.Current.MainWindow;
-                    // 检查窗口是否未处于最小化状态
-                    if (mainWindow.WindowState != WindowState.Minimized)
+                    LogMessage($"TaskbarManager: 当前窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                    
+                    // 先确保窗口在任务栏显示
+                    mainWindow.ShowInTaskbar = true;
+                    
+                    // 播放窗口动画 - 只有在窗口已恢复到正常状态且可见时才播放动画
+                    if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
                     {
-                        // 触发自定义标题栏的最小化按钮功能
-                        mainWindow.WindowState = WindowState.Minimized;
-                        if (_taskbarAnimation != null)
+                        if (mainWindow.WindowState == WindowState.Normal && mainWindow.IsVisible)
                         {
-                            _taskbarAnimation.JumpDownAnimation();
+                            // 在播放动画前再次确保ShowInTaskbar = true
+                            mainWindow.ShowInTaskbar = true;
+                            
+                            _taskbarAnimation.RestoreAnimation();
+                            LogMessage("TaskbarManager: 播放窗口恢复动画");
+                        }
+                        else
+                        {
+                            // 窗口未显示或不是Normal状态，先设置状态再播放动画
+                            mainWindow.WindowState = WindowState.Normal;
+                            mainWindow.Visibility = Visibility.Visible;
+                            mainWindow.ShowInTaskbar = true;
+                            
+                            _taskbarAnimation.RestoreAnimation();
+                            LogMessage("TaskbarManager: 恢复窗口状态并播放动画");
                         }
                     }
                     else
                     {
-                        // 窗口处于最小化状态，恢复窗口并播放恢复动画
-                        if (_taskbarAnimation != null)
-                        {
-                            _taskbarAnimation.RestoreAnimation();
-                        }
-                        else
-                        {
-                            // 如果动画不可用，直接恢复窗口
-                            mainWindow.WindowState = WindowState.Normal;
-                            mainWindow.Activate();
-                        }
+                        // 如果没有动画或动画正在运行，则直接恢复窗口
+                        mainWindow.WindowState = WindowState.Normal;
+                        mainWindow.Visibility = Visibility.Visible;
+                        mainWindow.ShowInTaskbar = true;
+                        
+                        // 恢复窗口位置
+                        RestoreWindowPosition(mainWindow);
+                        
+                        // 强制激活窗口
+                        mainWindow.Activate();
+                        mainWindow.Focus();
+                         
+                        LogMessage("TaskbarManager: 直接恢复并激活窗口");
+                        LogMessage($"TaskbarManager: 恢复后窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"任务栏快捷方式左键点击处理错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+                LogMessage($"TaskbarManager: 处理任务栏快捷方式左键点击错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
             }
         }
 
         /// <summary>
-        /// 任务栏快捷方式右键点击事件
+        /// 处理任务栏快捷方式右键点击事件
+        /// 显示系统菜单
         /// </summary>
-        private void OnTaskbarShortcutRightClick()
+        public void OnTaskbarShortcutRightClick()
         {
             try
             {
-                // (App.Current as App)?.LogMessage("执行OnTaskbarShortcutRightClick方法");
-                // 显示消息框，确认右键点击被触发
-                // System.Windows.MessageBox.Show("任务栏快捷方式右键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                
-                // 显示系统菜单
+                LogMessage("TaskbarManager: 处理任务栏快捷方式右键点击");
                 ShowSystemMenu();
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"任务栏快捷方式右键点击处理错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+                LogMessage($"TaskbarManager: 处理任务栏快捷方式右键点击错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
             }
         }
 
@@ -704,55 +700,576 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                // (App.Current as App)?.LogMessage("执行ShowSystemMenu方法");
-                // 获取系统菜单
-                IntPtr hMenu = GetSystemMenu(_windowHandle, false);
-                if (hMenu != IntPtr.Zero)
+                LogMessage("TaskbarManager: 显示系统菜单");
+                if (_windowHandle != IntPtr.Zero)
                 {
-                    // 获取鼠标位置
-                    POINT mousePos = new POINT();
-                    GetCursorPos(out mousePos);
-                    
-                    // 显示菜单
-                    TrackPopupMenu(hMenu, 0x00000010 | 0x00000020, mousePos.x, mousePos.y, 0, _windowHandle, IntPtr.Zero);
+                    // 获取系统菜单
+                    IntPtr hMenu = GetSystemMenu(_windowHandle, false);
+                    if (hMenu != IntPtr.Zero)
+                    {
+                        // 获取当前鼠标位置
+                        POINT cursorPos;
+                        if (GetCursorPos(out cursorPos))
+                        {
+                            // 设置窗口为前景窗口
+                            SetForegroundWindow(_windowHandle);
+
+                            // 显示系统菜单
+                            uint menuResult = (uint)TrackPopupMenu(
+                                hMenu,              // 菜单句柄
+                                TPM_RETURNCMD | TPM_LEFTBUTTON, // 显示选项
+                                cursorPos.x,        // X坐标
+                                cursorPos.y,        // Y坐标
+                                0,                  // 保留参数
+                                _windowHandle,      // 窗口句柄
+                                IntPtr.Zero         // 矩形区域
+                            );
+
+                            // 如果用户选择了菜单项，则发送相应的系统命令
+                            if (menuResult > 0)
+                            {
+                                PostMessage(_windowHandle, WM_SYSCOMMAND, (IntPtr)menuResult, IntPtr.Zero);
+                                LogMessage($"TaskbarManager: 用户选择了系统菜单项: {menuResult}");
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"显示系统菜单错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+                LogMessage($"TaskbarManager: 显示系统菜单错误: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region 托盘图标交互处理
+
+        /// <summary>
+        /// 处理托盘图标左键点击
+        /// 只负责恢复窗口，不再触发最小化功能
+        /// </summary>
+        private void OnLeftClick()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 处理托盘图标左键点击");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    LogMessage($"TaskbarManager: 当前窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                       
+                    if (mainWindow.WindowState == WindowState.Minimized || !mainWindow.IsVisible)
+                    {
+                        // 如果窗口最小化或不可见，则恢复窗口
+                        
+                        // 先确保窗口在任务栏显示
+                        mainWindow.ShowInTaskbar = true;
+                        
+                        // 播放恢复动画，让动画来负责显示和激活窗口
+                        if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
+                        {
+                            LogMessage("TaskbarManager: 播放窗口恢复动画");
+                            // 在播放动画前再次确保ShowInTaskbar = true
+                            mainWindow.ShowInTaskbar = true;
+                            _taskbarAnimation.RestoreAnimation();
+                        }
+                        else
+                        {
+                            // 如果没有动画或动画正在运行，则直接恢复窗口
+                            mainWindow.Visibility = Visibility.Visible;
+                            mainWindow.ShowInTaskbar = true;
+                               
+                            // 恢复窗口位置
+                            RestoreWindowPosition(mainWindow);
+                               
+                            // 强制激活窗口
+                            mainWindow.Activate();
+                            mainWindow.Focus();
+                                
+                            LogMessage("TaskbarManager: 从托盘恢复并激活窗口");
+                            LogMessage($"TaskbarManager: 恢复后窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                        }
+                    }
+                    else
+                    {
+                        // 如果窗口已显示，则只激活窗口，不再最小化
+                        if (!mainWindow.IsActive)
+                        {
+                            mainWindow.Activate();
+                            mainWindow.Focus();
+                            LogMessage("TaskbarManager: 激活已有窗口");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理托盘图标左键点击错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
             }
         }
 
         /// <summary>
-        /// 鼠标右键点击事件
+        /// 处理托盘图标右键点击
         /// </summary>
         private void OnRightClick()
         {
             try
             {
-                // (App.Current as App)?.LogMessage("执行OnRightClick方法");
-                // 显示消息框，确认右键点击被触发
-                // System.Windows.MessageBox.Show("任务栏快捷方式右键点击被触发！", "测试", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                LogMessage("TaskbarManager: 处理托盘图标右键点击");
+                // 显示上下文菜单
+                ShowContextMenu();
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理托盘图标右键点击错误: {ex.Message}");
+            }
+        }
 
-                // 初始化上下文菜单
-                InitializeContextMenu();
+        /// <summary>
+        /// 处理托盘图标双击
+        /// </summary>
+        private void OnDoubleClick()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 处理托盘图标双击");
+                // 双击托盘图标等同于左键点击
+                OnLeftClick();
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理托盘图标双击错误: {ex.Message}");
+            }
+        }
 
-                if (_contextMenu != null)
+        /// <summary>
+        /// 处理上下文菜单请求
+        /// </summary>
+        private void OnContextMenuRequest()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 处理上下文菜单请求");
+                // 显示上下文菜单
+                ShowContextMenu();
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理上下文菜单请求错误: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region 上下文菜单处理
+
+        /// <summary>
+        /// 初始化上下文菜单
+        /// </summary>
+        private void InitializeContextMenu()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 初始化上下文菜单");
+                _contextMenu = new ContextMenu();
+
+                // 添加显示/隐藏窗口菜单项
+                MenuItem showHideMenuItem = new MenuItem
                 {
-                    // 获取鼠标位置
-                    System.Windows.Point mousePos = System.Windows.Input.Mouse.GetPosition(null);
-                    
-                    // 在鼠标位置显示菜单
+                    Header = "显示窗口",
+                    Tag = "ShowHideWindow"
+                };
+                showHideMenuItem.Click += OnShowHideWindowMenuItemClick;
+                _contextMenu.Items.Add(showHideMenuItem);
+
+                // 添加分隔符
+                _contextMenu.Items.Add(new Separator());
+
+                // 添加最小化窗口菜单项
+                MenuItem minimizeMenuItem = new MenuItem
+                {
+                    Header = "最小化窗口",
+                    Tag = "MinimizeWindow"
+                };
+                minimizeMenuItem.Click += OnMinimizeWindowMenuItemClick;
+                _contextMenu.Items.Add(minimizeMenuItem);
+
+                // 添加隐藏到托盘菜单项
+                MenuItem hideToTrayMenuItem = new MenuItem
+                {
+                    Header = "隐藏到托盘",
+                    Tag = "HideToTray"
+                };
+                hideToTrayMenuItem.Click += OnHideToTrayMenuItemClick;
+                _contextMenu.Items.Add(hideToTrayMenuItem);
+
+                // 添加分隔符
+                _contextMenu.Items.Add(new Separator());
+
+                // 添加退出应用菜单项
+                MenuItem exitMenuItem = new MenuItem
+                {
+                    Header = "退出",
+                    Tag = "ExitApplication"
+                };
+                exitMenuItem.Click += OnExitApplicationMenuItemClick;
+                _contextMenu.Items.Add(exitMenuItem);
+
+                LogMessage("TaskbarManager: 上下文菜单已创建");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 初始化上下文菜单错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 显示上下文菜单
+        /// </summary>
+        private void ShowContextMenu()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 显示上下文菜单");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null && _contextMenu != null)
+                {
+                    // 确保上下文菜单已初始化
+                    if (_contextMenu.Items.Count == 0)
+                    {
+                        InitializeContextMenu();
+                    }
+
+                    // 更新菜单状态
+                    UpdateContextMenuState();
+
+                    // 显示菜单
                     _contextMenu.IsOpen = true;
-                    
-                    // (App.Current as App)?.LogMessage("右键菜单已显示");
+                    LogMessage("TaskbarManager: 上下文菜单已显示");
                 }
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"右键点击处理错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+                LogMessage($"TaskbarManager: 显示上下文菜单错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 更新上下文菜单状态
+        /// </summary>
+        private void UpdateContextMenuState()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 更新上下文菜单状态");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null && _contextMenu != null)
+                {
+                    // 根据窗口状态更新菜单文本和可用性
+                    foreach (var item in _contextMenu.Items)
+                    {
+                        if (item is MenuItem menuItem && menuItem.Tag != null)
+                        {
+                            switch (menuItem.Tag.ToString())
+                            {
+                                case "ShowHideWindow":
+                                    // 根据窗口是否可见更新菜单文本
+                                    menuItem.Header = mainWindow.IsVisible ? "隐藏窗口" : "显示窗口";
+                                    break;
+                                case "MinimizeWindow":
+                                    // 根据窗口状态更新最小化菜单项可用性
+                                    menuItem.IsEnabled = mainWindow.IsVisible && mainWindow.WindowState != WindowState.Minimized;
+                                    break;
+                                case "HideToTray":
+                                    // 隐藏到托盘菜单项始终可用
+                                    break;
+                                case "ExitApplication":
+                                    // 退出应用菜单项始终可用
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 更新上下文菜单状态错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 显示/隐藏窗口菜单项点击处理
+        /// </summary>
+        private void OnShowHideWindowMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 处理显示/隐藏窗口菜单项点击");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    if (mainWindow.IsVisible)
+                    {
+                        // 隐藏窗口
+                        mainWindow.Visibility = Visibility.Hidden;
+                        _isWindowMinimizedToTray = true;
+                        LogMessage("TaskbarManager: 隐藏窗口");
+                    }
+                    else
+                    {
+                        // 播放恢复动画，让动画来负责显示和激活窗口
+                        if (_taskbarAnimation != null)
+                        {
+                            LogMessage("TaskbarManager: 播放窗口恢复动画");
+                            _taskbarAnimation.RestoreAnimation();
+                        }
+                        else
+                        {
+                            // 如果没有动画，则直接恢复窗口
+                            mainWindow.Visibility = Visibility.Visible;
+                            mainWindow.WindowState = WindowState.Normal;
+                            mainWindow.ShowInTaskbar = true;
+                            mainWindow.Activate();
+                            _isWindowMinimizedToTray = false;
+                            LogMessage("TaskbarManager: 显示并激活窗口");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理显示/隐藏窗口菜单项点击错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 最小化窗口菜单项点击处理
+        /// </summary>
+        private void OnMinimizeWindowMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 处理最小化窗口菜单项点击");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null && mainWindow.IsVisible)
+                {
+                    mainWindow.WindowState = WindowState.Minimized;
+                    LogMessage("TaskbarManager: 最小化窗口");
+
+                    // 播放最小化动画
+                    if (_taskbarAnimation != null)
+                    {
+                        _taskbarAnimation.MinimizeAnimation();
+                        LogMessage("TaskbarManager: 播放窗口最小化动画");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理最小化窗口菜单项点击错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 隐藏到托盘菜单项点击处理
+        /// </summary>
+        private void OnHideToTrayMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 处理隐藏到托盘菜单项点击");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    mainWindow.WindowState = WindowState.Minimized;
+                    mainWindow.Visibility = Visibility.Hidden;
+                    mainWindow.ShowInTaskbar = false;
+                    _isWindowMinimizedToTray = true;
+                    LogMessage("TaskbarManager: 将窗口隐藏到托盘");
+
+                    // 播放最小化动画
+                    if (_taskbarAnimation != null)
+                    {
+                        _taskbarAnimation.MinimizeAnimation();
+                        LogMessage("TaskbarManager: 播放窗口最小化动画");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理隐藏到托盘菜单项点击错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 退出应用菜单项点击处理
+        /// </summary>
+        private void OnExitApplicationMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 处理退出应用菜单项点击");
+                // 清理资源
+                Dispose();
+                
+                // 关闭应用程序
+                System.Windows.Application.Current.Shutdown();
+                LogMessage("TaskbarManager: 应用程序已退出");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 处理退出应用菜单项点击错误: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region 窗口位置管理
+        /// <summary>
+        /// 保存窗口当前位置和状态
+        /// </summary>
+        /// <param name="window">要保存位置的窗口</param>
+        private void SaveWindowPosition(Window window)
+        {
+            try
+            {
+                if (window != null)
+                {
+                    // 保存窗口位置和尺寸
+                    _lastWindowLeft = window.Left;
+                    _lastWindowTop = window.Top;
+                    _lastWindowWidth = window.Width;
+                    _lastWindowHeight = window.Height;
+                    _lastWindowState = window.WindowState;
+                    
+                    LogMessage($"TaskbarManager: 保存窗口位置 - Left: {_lastWindowLeft}, Top: {_lastWindowTop}, Width: {_lastWindowWidth}, Height: {_lastWindowHeight}, State: {_lastWindowState}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 保存窗口位置错误: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// 恢复窗口到上次保存的位置和状态
+        /// </summary>
+        /// <param name="window">要恢复位置的窗口</param>
+        private void RestoreWindowPosition(Window window)
+        {
+            try
+            {
+                if (window != null)
+                {
+                    // 先设置为Normal状态，再恢复位置和尺寸
+                    window.WindowState = WindowState.Normal;
+                    
+                    // 恢复窗口位置
+                    window.Left = _lastWindowLeft;
+                    window.Top = _lastWindowTop;
+                    window.Width = _lastWindowWidth;
+                    window.Height = _lastWindowHeight;
+                    
+                    // 如果上次是最大化状态，则恢复最大化
+                    if (_lastWindowState == WindowState.Maximized)
+                    {
+                        window.WindowState = WindowState.Maximized;
+                    }
+                    
+                    LogMessage($"TaskbarManager: 恢复窗口位置 - Left: {_lastWindowLeft}, Top: {_lastWindowTop}, Width: {_lastWindowWidth}, Height: {_lastWindowHeight}, State: {_lastWindowState}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 恢复窗口位置错误: {ex.Message}");
+            }
+        }
+        #endregion
+
+        #region 任务栏辅助功能
+
+        /// <summary>
+        /// 将窗口最小化到任务栏（保持任务栏缩略图预览）
+        /// </summary>
+        public void MinimizeToTaskbar()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 将窗口最小化到任务栏");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    // 保存窗口当前位置和状态
+                    SaveWindowPosition(mainWindow);
+                    
+                    // 确保窗口先恢复到原始大小（从最大化或其他状态）
+                    if (mainWindow.WindowState != WindowState.Normal)
+                    {
+                        mainWindow.WindowState = WindowState.Normal;
+                        LogMessage("TaskbarManager: 恢复窗口到正常大小");
+                    }
+                    
+                    // 保持窗口可见并在任务栏显示，以支持缩略图预览
+                    mainWindow.Visibility = Visibility.Visible;
+                    mainWindow.ShowInTaskbar = true;
+                    
+                    // 播放最小化动画
+                    if (_taskbarAnimation != null)
+                    {
+                        _taskbarAnimation.MinimizeAnimation();
+                        LogMessage("TaskbarManager: 播放窗口最小化动画");
+                    }
+                    else
+                    {
+                        // 如果没有动画，则直接最小化
+                        mainWindow.WindowState = WindowState.Minimized;
+                    }
+                    
+                    // 不再使用_isWindowMinimizedToTray标志，直接基于窗口状态判断
+                    LogMessage("TaskbarManager: 窗口已最小化到任务栏");
+                    LogMessage($"TaskbarManager: 窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 将窗口最小化到任务栏错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// 将窗口隐藏到托盘（不在任务栏显示）
+        /// </summary>
+        public void HideWindowToTray()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 将窗口隐藏到托盘");
+                var mainWindow = System.Windows.Application.Current.MainWindow;
+                if (mainWindow != null)
+                {
+                    // 保存窗口当前位置和状态
+                    SaveWindowPosition(mainWindow);
+                    
+                    mainWindow.WindowState = WindowState.Minimized;
+                    mainWindow.Visibility = Visibility.Hidden;
+                    mainWindow.ShowInTaskbar = false;
+                    // 不再使用_isWindowMinimizedToTray标志，直接基于窗口状态判断
+                    LogMessage("TaskbarManager: 窗口已隐藏到托盘");
+
+                    // 播放最小化动画
+                    if (_taskbarAnimation != null)
+                    {
+                        _taskbarAnimation.MinimizeAnimation();
+                        LogMessage("TaskbarManager: 播放窗口最小化动画");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 将窗口隐藏到托盘错误: {ex.Message}");
             }
         }
 
@@ -763,80 +1280,184 @@ namespace ImageRecognitionApp.WinFun
         /// <param name="message">通知消息</param>
         public void ShowNotification(string title, string message)
         {
-            _notifyIconData.szInfoTitle = title;
-            _notifyIconData.szInfo = message;
-            _notifyIconData.uFlags |= NIF_INFO;
-            _notifyIconData.dwInfoFlags = 0; // 无图标
-            _notifyIconData.uTimeoutOrVersion = 5000; // 5秒后自动消失
+            try
+            {
+                LogMessage($"TaskbarManager: 显示通知: {title} - {message}");
+                if (_windowHandle != IntPtr.Zero && _isTrayIconVisible)
+                {
+                    _notifyIconData.szInfoTitle = title;
+                    _notifyIconData.szInfo = message;
+                    _notifyIconData.uTimeoutOrVersion = 5000; // 5秒后自动消失
+                    _notifyIconData.dwInfoFlags = 0; // 无图标
+                    _notifyIconData.uFlags |= NIF_INFO;
 
-            Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
+                    Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 显示通知错误: {ex.Message}");
+            }
         }
 
         /// <summary>
-        /// 更新任务栏图标的鼠标悬停提示文本
+        /// 更新托盘图标提示文本
         /// </summary>
         /// <param name="tooltipText">新的提示文本</param>
         public void UpdateTooltip(string tooltipText)
         {
-            if (string.IsNullOrEmpty(tooltipText))
+            try
             {
-                // (App.Current as App)?.LogMessage("警告: 尝试设置空的任务栏提示文本");
-                return;
+                LogMessage($"TaskbarManager: 更新托盘图标提示文本: {tooltipText}");
+                if (_windowHandle != IntPtr.Zero && _isTrayIconVisible)
+                {
+                    _notifyIconData.szTip = tooltipText;
+                    Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
+                }
             }
-
-            if (_notifyIconData.szTip != tooltipText)
+            catch (Exception ex)
             {
-                // 确保字符串不超过Windows限制的128个字符
-                string truncatedTooltip = tooltipText.Length > 127 ? tooltipText.Substring(0, 127) : tooltipText;
-                _notifyIconData.szTip = truncatedTooltip;
-                _notifyIconData.uFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE;
-                
-                int result = Shell_NotifyIcon(NIM_MODIFY, ref _notifyIconData);
-                if (result != 0)
-                {
-                    // (App.Current as App)?.LogMessage($"任务栏图标提示文本已更新: {truncatedTooltip}");
-                }
-                else
-                {
-                    int errorCode = Marshal.GetLastWin32Error();
-                    (App.Current as App)?.LogMessage($"更新任务栏提示文本失败，错误代码: {errorCode}");
-                }
+                LogMessage($"TaskbarManager: 更新托盘图标提示文本错误: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// 闪烁任务栏图标
+        /// 闪烁窗口图标
         /// </summary>
-        /// <param name="flashCount">闪烁次数</param>
-        public void FlashIcon(uint flashCount = 3)
+        /// <param name="flashCount">闪烁次数，0表示一直闪烁</param>
+        public void FlashIcon(uint flashCount = 0)
         {
-            var flashInfo = new FLASHWINFO
+            try
             {
-                cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
-                hwnd = _windowHandle,
-                dwFlags = 3,  // 闪烁窗口标题和任务栏按钮
-                uCount = flashCount,
-                dwTimeout = 0
-            };
+                LogMessage($"TaskbarManager: 闪烁窗口图标，次数: {flashCount}");
+                if (_windowHandle != IntPtr.Zero)
+                {
+                    FLASHWINFO flashInfo = new FLASHWINFO
+                    {
+                        cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
+                        hwnd = _windowHandle,
+                        dwFlags = 3, // 闪烁窗口标题栏和任务栏按钮
+                        uCount = flashCount,
+                        dwTimeout = 50 // 闪烁间隔（毫秒）
+                    };
 
-            FlashWindowEx(ref flashInfo);
+                    FlashWindowEx(ref flashInfo);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 闪烁窗口图标错误: {ex.Message}");
+            }
         }
 
         /// <summary>
-        /// 清理资源
+        /// 停止图标闪烁
+        /// </summary>
+        public void StopFlashIcon()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 停止图标闪烁");
+                if (_windowHandle != IntPtr.Zero)
+                {
+                    FLASHWINFO flashInfo = new FLASHWINFO
+                    {
+                        cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
+                        hwnd = _windowHandle,
+                        dwFlags = 0, // 停止闪烁
+                        uCount = 0,
+                        dwTimeout = 0
+                    };
+
+                    FlashWindowEx(ref flashInfo);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 停止图标闪烁错误: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region 资源释放
+
+        /// <summary>
+        /// 释放任务栏管理器资源
         /// </summary>
         public void Dispose()
         {
-            // 删除任务栏图标
-            Shell_NotifyIcon(NIM_DELETE, ref _notifyIconData);
-            // 移除窗口消息钩子
-            HwndSource.FromHwnd(_windowHandle)?.RemoveHook(WndProc);
-            // 释放图标句柄
-            if (_iconHandle != IntPtr.Zero)
+            try
             {
-                DestroyIcon(_iconHandle);
-                _iconHandle = IntPtr.Zero;
+                LogMessage("TaskbarManager: 释放任务栏管理器资源");
+
+                // 移除窗口消息钩子
+                if (_hwndSource != null)
+                {
+                    _hwndSource.RemoveHook(WndProc);
+                    _hwndSource.Dispose();
+                    _hwndSource = null;
+                    LogMessage("TaskbarManager: 窗口消息钩子已移除");
+                }
+
+                // 移除任务栏图标
+                if (_isTrayIconVisible && _windowHandle != IntPtr.Zero)
+                {
+                    Shell_NotifyIcon(NIM_DELETE, ref _notifyIconData);
+                    _isTrayIconVisible = false;
+                    LogMessage("TaskbarManager: 任务栏图标已移除");
+                }
+
+                // 销毁图标句柄
+                if (_iconHandle != IntPtr.Zero)
+                {
+                    DestroyIcon(_iconHandle);
+                    _iconHandle = IntPtr.Zero;
+                    LogMessage("TaskbarManager: 图标句柄已销毁");
+                }
+
+                // 释放上下文菜单
+                if (_contextMenu != null)
+                {
+                    _contextMenu.Items.Clear();
+                    _contextMenu = null;
+                    LogMessage("TaskbarManager: 上下文菜单已释放");
+                }
+
+                // 释放任务栏动画对象
+                if (_taskbarAnimation != null)
+                {
+                    _taskbarAnimation.Dispose();
+                    _taskbarAnimation = null;
+                    LogMessage("TaskbarManager: 任务栏动画对象已释放");
+                }
+
+                LogMessage("TaskbarManager: 所有资源已成功释放");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 释放资源错误: {ex.Message}");
             }
         }
+
+        #endregion
+
+        #region 日志辅助方法
+
+        /// <summary>
+        /// 记录日志消息
+        /// </summary>
+        /// <param name="message">日志消息</param>
+        private void LogMessage(string message)
+        {
+            try
+            {
+                // 使用TraceHelper记录日志
+                TraceHelper.Record($"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{Thread.CurrentThread.ManagedThreadId}] {message}");
+            }
+            catch { }
+        }
+
+        #endregion
     }
 }

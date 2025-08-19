@@ -409,17 +409,18 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // 最小化窗口
     private void MinimizeWindow(object sender, RoutedEventArgs e)
     {
-        // 先播放最小化动画，然后再设置窗口状态
-        _taskbarAnimation?.MinimizeAnimation();
+        // 使用TaskbarManager的MinimizeToTaskbar方法将窗口最小化到任务栏
+        // 该方法会保持ShowInTaskbar = true，确保任务栏缩略图预览功能正常工作
+        _taskbarManager?.MinimizeToTaskbar();
     }
 
     // 隐藏至托盘
     private void HideToTray(object sender, RoutedEventArgs e)
     {
-        // 隐藏窗口
-        this.Visibility = Visibility.Hidden;
-        // 从任务栏中移除
-        this.ShowInTaskbar = false;
+        // 使用TaskbarManager的HideWindowToTray方法隐藏窗口到托盘
+        // 该方法会正确设置_windowMinimizedToTray标志
+        _taskbarManager?.HideWindowToTray();
+        
         // 显示托盘通知
         _taskbarManager?.ShowNotification("应用已最小化到托盘", "点击托盘图标可恢复窗口");
     }
@@ -691,6 +692,28 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     {
         // 这里不执行DragMove，仅标记事件已处理
         e.Handled = true;
+    }
+
+    // 新增：窗口状态变化事件处理 - 确保窗口状态正确处理
+    private void Window_StateChanged(object sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            // 确保窗口在最小化状态下仍然显示在任务栏中
+            ShowInTaskbar = true;
+            (App.Current as App)?.LogMessage("窗口已最小化，保持在任务栏显示");
+        }
+    }
+
+    // 新增：窗口激活事件处理 - 确保窗口被正确激活
+    private void Window_Activated(object sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            // 如果被激活时是最小化状态，则恢复为正常状态
+            WindowState = WindowState.Normal;
+            (App.Current as App)?.LogMessage("窗口被激活，从最小化状态恢复");
+        }
     }
 }
 
