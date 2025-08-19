@@ -613,6 +613,7 @@ namespace ImageRecognitionApp.WinFun
 
         /// <summary>
         /// 处理任务栏快捷方式左键点击
+        /// 当任务栏应用程序区的程序快捷方式处于选中状态时，左键点击优先触发最小化
         /// </summary>
         private void OnTaskbarShortcutLeftClick()
         {
@@ -622,49 +623,67 @@ namespace ImageRecognitionApp.WinFun
                 var mainWindow = System.Windows.Application.Current.MainWindow;
                 if (mainWindow != null)
                 {
-                    LogMessage($"TaskbarManager: 当前窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                    LogMessage($"TaskbarManager: 当前窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}, IsActive: {mainWindow.IsActive}");
                     
                     // 先确保窗口在任务栏显示
                     mainWindow.ShowInTaskbar = true;
                     
-                    // 播放窗口动画 - 只有在窗口已恢复到正常状态且可见时才播放动画
-                    if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
+                    // 检查窗口是否已经可见且被选中（活动状态）
+                    if (mainWindow.IsVisible && mainWindow.IsActive)
                     {
-                        if (mainWindow.WindowState == WindowState.Normal && mainWindow.IsVisible)
+                        // 如果窗口已经可见且被选中，优先触发最小化
+                        mainWindow.WindowState = WindowState.Minimized;
+                        LogMessage("TaskbarManager: 窗口已选中，触发最小化");
+                         
+                        // 播放最小化动画
+                        if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
                         {
-                            // 在播放动画前再次确保ShowInTaskbar = true
-                            mainWindow.ShowInTaskbar = true;
-                            
-                            _taskbarAnimation.RestoreAnimation();
-                            LogMessage("TaskbarManager: 播放窗口恢复动画");
-                        }
-                        else
-                        {
-                            // 窗口未显示或不是Normal状态，先设置状态再播放动画
-                            mainWindow.WindowState = WindowState.Normal;
-                            mainWindow.Visibility = Visibility.Visible;
-                            mainWindow.ShowInTaskbar = true;
-                            
-                            _taskbarAnimation.RestoreAnimation();
-                            LogMessage("TaskbarManager: 恢复窗口状态并播放动画");
+                            _taskbarAnimation.MinimizeAnimation();
+                            LogMessage("TaskbarManager: 播放窗口最小化动画");
                         }
                     }
                     else
                     {
-                        // 如果没有动画或动画正在运行，则直接恢复窗口
-                        mainWindow.WindowState = WindowState.Normal;
-                        mainWindow.Visibility = Visibility.Visible;
-                        mainWindow.ShowInTaskbar = true;
-                        
-                        // 恢复窗口位置
-                        RestoreWindowPosition(mainWindow);
-                        
-                        // 强制激活窗口
-                        mainWindow.Activate();
-                        mainWindow.Focus();
-                         
-                        LogMessage("TaskbarManager: 直接恢复并激活窗口");
-                        LogMessage($"TaskbarManager: 恢复后窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                        // 窗口未被选中或不可见，执行恢复窗口逻辑
+                        // 播放窗口动画
+                        if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
+                        {
+                            if (mainWindow.WindowState == WindowState.Normal && mainWindow.IsVisible)
+                            {
+                                // 在播放动画前再次确保ShowInTaskbar = true
+                                mainWindow.ShowInTaskbar = true;
+                                
+                                _taskbarAnimation.RestoreAnimation();
+                                LogMessage("TaskbarManager: 播放窗口恢复动画");
+                            }
+                            else
+                            {
+                                // 窗口未显示或不是Normal状态，先设置状态再播放动画
+                                mainWindow.WindowState = WindowState.Normal;
+                                mainWindow.Visibility = Visibility.Visible;
+                                mainWindow.ShowInTaskbar = true;
+                                
+                                _taskbarAnimation.RestoreAnimation();
+                                LogMessage("TaskbarManager: 恢复窗口状态并播放动画");
+                            }
+                        }
+                        else
+                        {
+                            // 如果没有动画或动画正在运行，则直接恢复窗口
+                            mainWindow.WindowState = WindowState.Normal;
+                            mainWindow.Visibility = Visibility.Visible;
+                            mainWindow.ShowInTaskbar = true;
+                            
+                            // 恢复窗口位置
+                            RestoreWindowPosition(mainWindow);
+                            
+                            // 强制激活窗口
+                            mainWindow.Activate();
+                            mainWindow.Focus();
+                              
+                            LogMessage("TaskbarManager: 直接恢复并激活窗口");
+                            LogMessage($"TaskbarManager: 恢复后窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                        }
                     }
                 }
             }
