@@ -957,6 +957,14 @@ namespace ImageRecognitionApp.WinFun
         }
 
         /// <summary>
+        /// 公共方法，用于从外部调用显示上下文菜单
+        /// </summary>
+        public void DisplayContextMenu()
+        {
+            ShowContextMenu();
+        }
+
+        /// <summary>
         /// 更新上下文菜单状态
         /// </summary>
         private void UpdateContextMenuState()

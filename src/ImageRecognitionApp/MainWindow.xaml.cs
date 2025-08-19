@@ -70,6 +70,20 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         DropdownMenuPopup.IsOpen = !DropdownMenuPopup.IsOpen;
     }
 
+    // 标题栏右键点击事件处理
+    private void TitleBar_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // 确保事件被处理，阻止冒泡到窗口
+        e.Handled = true;
+        
+        // 检查_taskbarManager是否已初始化
+        if (_taskbarManager != null)
+        {
+            // 使用公共方法显示上下文菜单
+            _taskbarManager.DisplayContextMenu();
+        }
+    }
+
     // 系统信息按钮点击事件
     private void SystemInfoButton_Click(object sender, RoutedEventArgs e)
     {
@@ -92,12 +106,20 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // Python相关路径
     private readonly string _pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\venv\\Scripts\\python.exe");
 
-    // 设置按钮点击事件处理程序
-    private void SettingButton_Click(object sender, RoutedEventArgs e)
-    {
-        // 设置按钮被点击状态
-        _isSettingButtonClicked = true;
-        UpdateSettingButtonBackground();
+    // 窗口构造函数
+        // 全局右键点击事件处理
+        private void MainWindow_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // 阻止所有右键菜单显示
+            e.Handled = true;
+        }
+
+        // 设置按钮点击事件处理程序
+        private void SettingButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 设置按钮被点击状态
+            _isSettingButtonClicked = true;
+            UpdateSettingButtonBackground();
     }
 
     // 更新设置按钮背景色
@@ -158,6 +180,9 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
             // 注册窗口关闭事件以释放资源
             this.Closed += MainWindow_Closed;
+            
+            // 添加全局右键点击事件处理，阻止非标题栏区域的右键菜单
+            this.PreviewMouseRightButtonDown += MainWindow_PreviewMouseRightButtonDown;
 
             // 初始化设置按钮状态
             _isSettingButtonClicked = false;
@@ -656,34 +681,13 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
-            // 获取鼠标相对于屏幕的位置
-            Point screenPoint = Mouse.GetPosition(null);
-
-            // 检测是否拖动到屏幕顶部
-            if (screenPoint.Y <= 5)
-            {
-                if (!_isMaximized)
-                {
-                    // 保存当前窗口位置和大小
-                    _restorePoint = new Point(this.Left, this.Top);
-                    // 最大化窗口
-                    this.WindowState = WindowState.Maximized;
-                    _isMaximized = true;
-                }
-                else
-                {
-                    // 还原窗口
-                    this.WindowState = WindowState.Normal;
-                    this.Left = _restorePoint.X;
-                    this.Top = _restorePoint.Y;
-                    _isMaximized = false;
-                }
-            }
-            else
-            {
-                // 正常拖动窗口
-                DragMove();
-            }
+            // 只保留正常拖动窗口的功能，移除最大化相关的代码
+            // 确保窗口始终保持在正常状态
+            this.WindowState = WindowState.Normal;
+            _isMaximized = false;
+            
+            // 正常拖动窗口
+            DragMove();
         }
     }
 
