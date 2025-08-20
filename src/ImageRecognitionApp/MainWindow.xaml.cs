@@ -103,8 +103,19 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     private void SystemInfoButton_Click(object sender, RoutedEventArgs e)
     {
         DropdownMenuPopup.IsOpen = false;
-        // 这里添加系统信息按钮的具体实现
-        MessageBox.Show("系统信息功能尚未实现", "提示");
+        
+        try
+        {
+            // 创建系统信息管理器并显示系统信息窗口
+            ImageRecognitionApp.Assets.UICode.SystemInfoManager systemInfoManager = new ImageRecognitionApp.Assets.UICode.SystemInfoManager();
+            systemInfoManager.ShowSystemInfoWindow();
+        }
+        catch (Exception ex)
+        {
+            // 记录错误
+            (App.Current as App)?.LogMessage($"显示系统信息时出错: {ex.Message}");
+            MessageBox.Show("显示系统信息时出错: " + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     // 关于按钮点击事件
