@@ -207,6 +207,22 @@
       "hiIn": "कंसोल",
       "ptBr": "Console"
     },
+    {
+      "sign_id": 10013,
+      "isEx": 0,
+      "ghYh": "占位10013",
+      "zhCn": "小工具",
+      "enUs": "Tool",
+      "frFr": "Outil",
+      "ruRu": "Инструмент",
+      "esEs": "Herramienta",
+      "arSa": "أداة",
+      "deDe": "Werkzeug",
+      "jaJp": "ツール",
+      "koKr": "도구",
+      "hiIn": "उपकरण",
+      "ptBr": "Ferramenta"
+    },
     
     {
       "sign_id": 20001,
