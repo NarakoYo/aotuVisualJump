@@ -69,6 +69,232 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
     }
 
+    // 侧边栏按钮文本属性
+    private string _launchButtonText = string.Empty;
+    public string LaunchButtonText
+    {
+        get => _launchButtonText;
+        set
+        {
+            if (_launchButtonText != value)
+            {
+                _launchButtonText = value;
+                OnPropertyChanged(nameof(LaunchButtonText));
+            }
+        }
+    }
+
+    private string _visualScriptButtonText = string.Empty;
+    public string VisualScriptButtonText
+    {
+        get => _visualScriptButtonText;
+        set
+        {
+            if (_visualScriptButtonText != value)
+            {
+                _visualScriptButtonText = value;
+                OnPropertyChanged(nameof(VisualScriptButtonText));
+            }
+        }
+    }
+
+    private string _auxiliaryOperationButtonText = string.Empty;
+    public string AuxiliaryOperationButtonText
+    {
+        get => _auxiliaryOperationButtonText;
+        set
+        {
+            if (_auxiliaryOperationButtonText != value)
+            {
+                _auxiliaryOperationButtonText = value;
+                OnPropertyChanged(nameof(AuxiliaryOperationButtonText));
+            }
+        }
+    }
+
+    private string _screenRecordingButtonText = string.Empty;
+    public string ScreenRecordingButtonText
+    {
+        get => _screenRecordingButtonText;
+        set
+        {
+            if (_screenRecordingButtonText != value)
+            {
+                _screenRecordingButtonText = value;
+                OnPropertyChanged(nameof(ScreenRecordingButtonText));
+            }
+        }
+    }
+
+    private string _shortcutKeysButtonText = string.Empty;
+    public string ShortcutKeysButtonText
+    {
+        get => _shortcutKeysButtonText;
+        set
+        {
+            if (_shortcutKeysButtonText != value)
+            {
+                _shortcutKeysButtonText = value;
+                OnPropertyChanged(nameof(ShortcutKeysButtonText));
+            }
+        }
+    }
+
+    private string _directoryManagementButtonText = string.Empty;
+    public string DirectoryManagementButtonText
+    {
+        get => _directoryManagementButtonText;
+        set
+        {
+            if (_directoryManagementButtonText != value)
+            {
+                _directoryManagementButtonText = value;
+                OnPropertyChanged(nameof(DirectoryManagementButtonText));
+            }
+        }
+    }
+
+    private string _consoleButtonText = string.Empty;
+    public string ConsoleButtonText
+    {
+        get => _consoleButtonText;
+        set
+        {
+            if (_consoleButtonText != value)
+            {
+                _consoleButtonText = value;
+                OnPropertyChanged(nameof(ConsoleButtonText));
+            }
+        }
+    }
+
+    private string _toolButtonText = string.Empty;
+    public string ToolButtonText
+    {
+        get => _toolButtonText;
+        set
+        {
+            if (_toolButtonText != value)
+            {
+                _toolButtonText = value;
+                OnPropertyChanged(nameof(ToolButtonText));
+            }
+        }
+    }
+
+    // 侧边栏按钮图标路径属性
+    private string _launchButtonIconPath = string.Empty;
+    public string LaunchButtonIconPath
+    {
+        get => _launchButtonIconPath;
+        set
+        {
+            if (_launchButtonIconPath != value)
+            {
+                _launchButtonIconPath = value;
+                OnPropertyChanged(nameof(LaunchButtonIconPath));
+            }
+        }
+    }
+
+    private string _visualScriptButtonIconPath = string.Empty;
+    public string VisualScriptButtonIconPath
+    {
+        get => _visualScriptButtonIconPath;
+        set
+        {
+            if (_visualScriptButtonIconPath != value)
+            {
+                _visualScriptButtonIconPath = value;
+                OnPropertyChanged(nameof(VisualScriptButtonIconPath));
+            }
+        }
+    }
+
+    private string _auxiliaryOperationButtonIconPath = string.Empty;
+    public string AuxiliaryOperationButtonIconPath
+    {
+        get => _auxiliaryOperationButtonIconPath;
+        set
+        {
+            if (_auxiliaryOperationButtonIconPath != value)
+            {
+                _auxiliaryOperationButtonIconPath = value;
+                OnPropertyChanged(nameof(AuxiliaryOperationButtonIconPath));
+            }
+        }
+    }
+
+    private string _screenRecordingButtonIconPath = string.Empty;
+    public string ScreenRecordingButtonIconPath
+    {
+        get => _screenRecordingButtonIconPath;
+        set
+        {
+            if (_screenRecordingButtonIconPath != value)
+            {
+                _screenRecordingButtonIconPath = value;
+                OnPropertyChanged(nameof(ScreenRecordingButtonIconPath));
+            }
+        }
+    }
+
+    private string _shortcutKeysButtonIconPath = string.Empty;
+    public string ShortcutKeysButtonIconPath
+    {
+        get => _shortcutKeysButtonIconPath;
+        set
+        {
+            if (_shortcutKeysButtonIconPath != value)
+            {
+                _shortcutKeysButtonIconPath = value;
+                OnPropertyChanged(nameof(ShortcutKeysButtonIconPath));
+            }
+        }
+    }
+
+    private string _directoryManagementButtonIconPath = string.Empty;
+    public string DirectoryManagementButtonIconPath
+    {
+        get => _directoryManagementButtonIconPath;
+        set
+        {
+            if (_directoryManagementButtonIconPath != value)
+            {
+                _directoryManagementButtonIconPath = value;
+                OnPropertyChanged(nameof(DirectoryManagementButtonIconPath));
+            }
+        }
+    }
+
+    private string _consoleButtonIconPath = string.Empty;
+    public string ConsoleButtonIconPath
+    {
+        get => _consoleButtonIconPath;
+        set
+        {
+            if (_consoleButtonIconPath != value)
+            {
+                _consoleButtonIconPath = value;
+                OnPropertyChanged(nameof(ConsoleButtonIconPath));
+            }
+        }
+    }
+
+    private string _toolButtonIconPath = string.Empty;
+    public string ToolButtonIconPath
+    {
+        get => _toolButtonIconPath;
+        set
+        {
+            if (_toolButtonIconPath != value)
+            {
+                _toolButtonIconPath = value;
+                OnPropertyChanged(nameof(ToolButtonIconPath));
+            }
+        }
+    }
+
         // 本地化工具
         private JsonLocalizationHelper _localizationHelper => JsonLocalizationHelper.Instance;
 
@@ -88,15 +314,8 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // 标题栏右键点击事件处理
     private void TitleBar_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
-        // 确保事件被处理，阻止冒泡到窗口
-        e.Handled = true;
-        
-        // 检查_taskbarManager是否已初始化
-        if (_taskbarManager != null)
-        {
-            // 使用公共方法显示上下文菜单
-            _taskbarManager.DisplayContextMenu();
-        }
+        // 允许在标题栏非按钮区域显示系统菜单
+        e.Handled = false;
     }
 
     // 系统信息按钮点击事件
@@ -189,9 +408,24 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         // 设置按钮点击事件处理程序
         private void SettingButton_Click(object sender, RoutedEventArgs e)
         {
-            // 设置按钮被点击状态
+            // 重置所有侧边栏按钮状态（包括其他按钮和设置按钮）
+            ResetAllSidebarButtonsState();
+            
+            // 设置当前点击按钮的状态
+            var button = sender as Button;
+            if (button != null && button.Template != null)
+            {
+                var border = button.Template.FindName("border", button) as Border;
+                if (border != null)
+                {
+                    // 使用Tag属性来标记按钮被选中
+                    border.Tag = "Selected";
+                    border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
+                }
+            }
+            
+            // 跟踪设置按钮被点击状态
             _isSettingButtonClicked = true;
-            UpdateSettingButtonBackground();
     }
 
     // 更新设置按钮背景色
@@ -202,7 +436,16 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             var border = SettingButton.Template.FindName("border", SettingButton) as Border;
             if (border != null)
             {
-                border.Background = _isSettingButtonClicked ? new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D")) : new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E1E1E"));
+                if (_isSettingButtonClicked)
+                {
+                    // 只有在按钮被选中时才直接设置背景色
+                    border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
+                }
+                else
+                {
+                    // 清除直接设置的背景色，恢复样式触发器的控制权
+                    border.ClearValue(Border.BackgroundProperty);
+                }
             }
         }
     }
@@ -211,6 +454,17 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     public void ResetSettingButtonState()
     {
         _isSettingButtonClicked = false;
+        
+        // 清除设置按钮的选中标记
+        if (SettingButton != null && SettingButton.Template != null)
+        {
+            var border = SettingButton.Template.FindName("border", SettingButton) as Border;
+            if (border != null)
+            {
+                border.Tag = null;
+            }
+        }
+        
         UpdateSettingButtonBackground();
     }
     private readonly string _scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\image_recognition.py");
@@ -259,14 +513,25 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             // 初始化设置按钮状态
     _isSettingButtonClicked = false;
 
-    // 初始化AssetHelper并获取设置按钮图标路径
-    try
-    {
-        var assetHelper = AssetHelper.Instance;
-        string settingIconPath = assetHelper.GetAssetPath(10003);
-        SettingButtonIconPath = settingIconPath;
-        // (App.Current as App)?.LogMessage($"设置按钮图标路径已获取: {settingIconPath}");
-    }
+    // 初始化AssetHelper并获取按钮图标路径
+            try
+            {
+                var assetHelper = AssetHelper.Instance;
+                
+                // 设置按钮图标路径
+                string settingIconPath = assetHelper.GetAssetPath(10003);
+                SettingButtonIconPath = settingIconPath;
+                
+                // 侧边栏按钮图标路径
+                LaunchButtonIconPath = assetHelper.GetAssetPath(10006);
+                VisualScriptButtonIconPath = assetHelper.GetAssetPath(10007);
+                AuxiliaryOperationButtonIconPath = assetHelper.GetAssetPath(10008);
+                ScreenRecordingButtonIconPath = assetHelper.GetAssetPath(10009);
+                ShortcutKeysButtonIconPath = assetHelper.GetAssetPath(10010);
+                DirectoryManagementButtonIconPath = assetHelper.GetAssetPath(10011);
+                ConsoleButtonIconPath = assetHelper.GetAssetPath(10012);
+                ToolButtonIconPath = assetHelper.GetAssetPath(10013);
+            }
     catch (Exception ex)
     {
         (App.Current as App)?.LogMessage($"获取设置按钮图标路径失败: {ex.Message}");
@@ -321,6 +586,16 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 // 设置窗口标题
                 this.Title = TitleText;
 
+                // 获取侧边栏按钮文本
+                LaunchButtonText = helper.GetString(10006);
+                VisualScriptButtonText = helper.GetString(10007);
+                AuxiliaryOperationButtonText = helper.GetString(10008);
+                ScreenRecordingButtonText = helper.GetString(10009);
+                ShortcutKeysButtonText = helper.GetString(10010);
+                DirectoryManagementButtonText = helper.GetString(10011);
+                ConsoleButtonText = helper.GetString(10012);
+                ToolButtonText = helper.GetString(10013);
+
                 // 记录当前语言
                 // (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
                 // (App.Current as App)?.LogMessage($"标题已设置为: {TitleText}");
@@ -328,9 +603,20 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"设置标题时出错: {ex.Message}");
+                (App.Current as App)?.LogMessage($"设置标题和按钮文本时出错: {ex.Message}");
                 this.Title = "图像识别应用";
                 TitleText = "图像识别应用";
+                
+                // 设置默认按钮文本
+                SettingButtonText = "设置";
+                LaunchButtonText = "启动";
+                VisualScriptButtonText = "视觉脚本";
+                AuxiliaryOperationButtonText = "辅助操控";
+                ScreenRecordingButtonText = "屏幕录制";
+                ShortcutKeysButtonText = "快捷键";
+                DirectoryManagementButtonText = "目录管理";
+                ConsoleButtonText = "控制台";
+                ToolButtonText = "小工具";
             }
 
 
@@ -365,6 +651,67 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             {
                 _taskbarManager.UpdateTooltip(TitleText);
                 // (App.Current as App)?.LogMessage($"任务栏提示文本已更新为: {TitleText}");
+            }
+        }
+        
+        /// <summary>
+        /// 侧边栏按钮点击事件处理程序
+        /// </summary>
+        private void SidebarButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 重置所有按钮状态
+            ResetAllSidebarButtonsState();
+            
+            // 设置当前点击按钮的状态
+            var button = sender as Button;
+            if (button != null && button.Template != null)
+            {
+                var border = button.Template.FindName("border", button) as Border;
+                if (border != null)
+                {
+                    // 添加一个标记来表示按钮被选中
+                    border.Tag = "Selected";
+                    border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
+                }
+            }
+            
+            // 这里可以添加按钮点击后的具体逻辑
+        }
+        
+        /// <summary>
+        /// 重置所有侧边栏按钮的状态
+        /// </summary>
+        private void ResetAllSidebarButtonsState()
+        {
+            // 重置设置按钮状态
+            ResetSettingButtonState();
+            
+            // 重置其他侧边栏按钮状态
+            ResetButtonState(LaunchButton);
+            ResetButtonState(VisualScriptButton);
+            ResetButtonState(AuxiliaryOperationButton);
+            ResetButtonState(ScreenRecordingButton);
+            ResetButtonState(ShortcutKeysButton);
+            ResetButtonState(DirectoryManagementButton);
+            ResetButtonState(ConsoleButton);
+            ResetButtonState(ToolButton);
+        }
+        
+        /// <summary>
+        /// 重置单个按钮的状态
+        /// </summary>
+        private void ResetButtonState(Button button)
+        {
+            if (button != null && button.Template != null)
+            {
+                var border = button.Template.FindName("border", button) as Border;
+                if (border != null)
+                {
+                    // 只清除选中标记，不直接设置背景色，让XAML样式触发器自然应用效果
+                    border.Tag = null;
+                    // 移除直接设置的背景色，恢复样式触发器的控制权
+                    border.ClearValue(Border.BackgroundProperty);
+                }
             }
         }
 

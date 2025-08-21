@@ -106,7 +106,7 @@
                             <!-- 标题栏左侧面板 - 包含logo和应用标题 -->
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,0">
                             <!-- 应用Logo - 显示应用程序图标 -->
-                            <Image Source="pack://application:,,,/Resources/logo/logo.png" Width="46" Height="46" Stretch="UniformToFill" VerticalAlignment="Center" Margin="0,0,2,0">
+                            <Image Source="pack://application:,,,/Resources/logo/logo.png" Width="46" Height="46" Stretch="UniformToFill" VerticalAlignment="Center" Margin="0,0,15,0">
                                 <Image.Clip>
                                     <RectangleGeometry RadiusX="8" RadiusY="8" Rect="0,0,46,46"/>
                                 </Image.Clip>
@@ -228,9 +228,455 @@
                                 Background="#1E1E1E"
                                 CornerRadius="10"
                                 Margin="0">
-                            <!-- 侧边栏内容可以在这里添加 -->
+                            <!-- 侧边栏内容容器 -->
+                            <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <!-- 顶部按钮列表 -->
+                                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,5,0,0">
+                            <!-- 启动按钮 -->
+                            <Button x:Name="LaunchButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Tag" Value="Selected">
+                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="Tag" Value="{x:Null}"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                </MultiTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal" 
+                                                            HorizontalAlignment="Left" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding LaunchButtonIconPath}" 
+                                                           Width="32" 
+                                                           Height="32" 
+                                                           HorizontalAlignment="Left" 
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding LaunchButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
 
-                        <!-- 设置按钮 - 水平居中，位于底部 -->
+                            <!-- 视觉脚本按钮 -->
+                            <Button x:Name="VisualScriptButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Tag" Value="Selected">
+                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="Tag" Value="{x:Null}"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                </MultiTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal" 
+                                                            HorizontalAlignment="Left" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding VisualScriptButtonIconPath}" 
+                                                           Width="32" 
+                                                           Height="32" 
+                                                           HorizontalAlignment="Left" 
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding VisualScriptButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <!-- 辅助操控按钮 -->
+                            <Button x:Name="AuxiliaryOperationButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Tag" Value="Selected">
+                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="Tag" Value="{x:Null}"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                </MultiTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal" 
+                                                            HorizontalAlignment="Left" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding AuxiliaryOperationButtonIconPath}" 
+                                                           Width="32" 
+                                                           Height="32" 
+                                                           HorizontalAlignment="Left" 
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding AuxiliaryOperationButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <!-- 屏幕录制按钮 -->
+                            <Button x:Name="ScreenRecordingButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Tag" Value="Selected">
+                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="Tag" Value="{x:Null}"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                </MultiTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal" 
+                                                            HorizontalAlignment="Left" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding ScreenRecordingButtonIconPath}" 
+                                                           Width="32" 
+                                                           Height="32" 
+                                                           HorizontalAlignment="Left" 
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding ScreenRecordingButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <!-- 快捷键按钮 -->
+                            <Button x:Name="ShortcutKeysButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Tag" Value="Selected">
+                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="Tag" Value="{x:Null}"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                </MultiTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal" 
+                                                            HorizontalAlignment="Left" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding ShortcutKeysButtonIconPath}" 
+                                                           Width="32" 
+                                                           Height="32" 
+                                                           HorizontalAlignment="Left" 
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding ShortcutKeysButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <!-- 目录管理按钮 -->
+                            <Button x:Name="DirectoryManagementButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Style.Triggers>
+                                                                <Trigger Property="Tag" Value="Selected">
+                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                </Trigger>
+                                                                <MultiTrigger>
+                                                                    <MultiTrigger.Conditions>
+                                                                        <Condition Property="IsMouseOver" Value="True"/>
+                                                                        <Condition Property="Tag" Value="{x:Null}"/>
+                                                                    </MultiTrigger.Conditions>
+                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                </MultiTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal" 
+                                                            HorizontalAlignment="Left" 
+                                                            VerticalAlignment="Center" 
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding DirectoryManagementButtonIconPath}" 
+                                                           Width="32" 
+                                                           Height="32" 
+                                                           HorizontalAlignment="Left" 
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding DirectoryManagementButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <!-- 控制台按钮 -->
+                            <Button x:Name="ConsoleButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="Tag" Value="Selected">
+                                                                <Setter Property="Background" Value="#37373D"/>
+                                                            </Trigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="IsMouseOver" Value="True"/>
+                                                                    <Condition Property="Tag" Value="{x:Null}"/>
+                                                                </MultiTrigger.Conditions>
+                                                                <Setter Property="Background" Value="#2A2D2E"/>
+                                                            </MultiTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding ConsoleButtonIconPath}"
+                                                           Width="32"
+                                                           Height="32"
+                                                           HorizontalAlignment="Left"
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding ConsoleButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+
+                            <!-- 小工具按钮 -->
+                            <Button x:Name="ToolButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
+                                    Height="40" 
+                                    HorizontalAlignment="Stretch" 
+                                    Background="Transparent" 
+                                    BorderThickness="0" 
+                                    Margin="0,0,0,5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border" CornerRadius="5" 
+                                                Width="{TemplateBinding Width}" 
+                                                Height="{TemplateBinding Height}">
+                                            <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="Tag" Value="Selected">
+                                                                <Setter Property="Background" Value="#37373D"/>
+                                                            </Trigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="IsMouseOver" Value="True"/>
+                                                                    <Condition Property="Tag" Value="{x:Null}"/>
+                                                                </MultiTrigger.Conditions>
+                                                                <Setter Property="Background" Value="#2A2D2E"/>
+                                                            </MultiTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                            <Grid>
+                                                <!-- 上边框线已移除 -->
+                                                <StackPanel Orientation="Horizontal"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            Margin="10,0,10,0">
+                                                    <!-- 图标 -->
+                                                    <Image Source="{Binding ToolButtonIconPath}"
+                                                           Width="32"
+                                                           Height="32"
+                                                           HorizontalAlignment="Left"
+                                                           VerticalAlignment="Center"/>
+                                                    <!-- 文字 -->
+                                                    <TextBlock Text="{Binding ToolButtonText}"
+                                                               Foreground="White"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                        
+                        <!-- 占位元素，确保设置按钮位于底部 -->
+                        <StackPanel Height="Auto" VerticalAlignment="Stretch"/>
+                        
+                        <!-- 设置按钮 - 位于底部，忽略按钮间距规则 -->
                         <!-- 设置按钮 - 打开应用程序设置界面 -->
                         <Button x:Name="SettingButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SettingButton_Click"
                                 Height="40"
@@ -238,7 +684,7 @@
                                 HorizontalAlignment="Stretch"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                Margin="0,0,0,0">
+                                Margin="0,50,0,0" Panel.ZIndex="10">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="border" CornerRadius="5"
@@ -250,10 +696,16 @@
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="#1E1E1E"/>
                                                     <Style.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#2A2D2E"/>
+                                                        <Trigger Property="Tag" Value="Selected">
+                                                            <Setter Property="Background" Value="#37373D"/>
                                                         </Trigger>
-
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                                <Condition Property="Tag" Value="{x:Null}"/>
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter Property="Background" Value="#2A2D2E"/>
+                                                        </MultiTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
@@ -278,7 +730,7 @@
                                             <TextBlock x:Name="SettingButtonTextBlock" Text="{Binding SettingButtonText}"
                                                        Foreground="White"
                                                        FontSize="14"
-                                                       Margin="5,0,0,0"
+                                                       Margin="15,0,0,0"
                                                        HorizontalAlignment="Left"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
@@ -287,6 +739,7 @@
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
+                        </StackPanel>
                         </Border>
                         <!-- 主内容区域 - 宽度为内容框的3/4-2px - 高度为内容框的高度 - 背景色#1E1E1E - 10px圆角 -->
                         <Border Grid.Column="1"
