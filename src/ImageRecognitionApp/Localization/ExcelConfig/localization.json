@@ -223,6 +223,22 @@
       "hiIn": "उपकरण",
       "ptBr": "Ferramenta"
     },
+    {
+      "sign_id": 10014,
+      "isEx": 0,
+      "ghYh": "占位10014",
+      "zhCn": "折叠",
+      "enUs": "Fold",
+      "frFr": "Pliez",
+      "ruRu": "Свернуть",
+      "esEs": "Plegar",
+      "arSa": "طوي",
+      "deDe": "Falten",
+      "jaJp": "折り畳む",
+      "koKr": "접기",
+      "hiIn": "मोड़ें",
+      "ptBr": "Pregar"
+    },
     
     {
       "sign_id": 20001,

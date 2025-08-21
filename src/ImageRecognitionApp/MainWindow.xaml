@@ -231,7 +231,7 @@
                             <!-- 侧边栏内容容器 -->
                             <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                 <!-- 顶部按钮列表 -->
-                                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,5,0,0">
+                                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,50,0,0">
                             <!-- 启动按钮 -->
                             <Button x:Name="LaunchButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
                                     Height="40" 
