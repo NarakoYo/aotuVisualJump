@@ -296,7 +296,35 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     }
 
         // 本地化工具
-        private JsonLocalizationHelper _localizationHelper => JsonLocalizationHelper.Instance;
+        private string _collapseButtonIconPath = string.Empty;
+    public string CollapseButtonIconPath
+    {
+        get => _collapseButtonIconPath;
+        set
+        {
+            if (_collapseButtonIconPath != value)
+            {
+                _collapseButtonIconPath = value;
+                OnPropertyChanged(nameof(CollapseButtonIconPath));
+            }
+        }
+    }
+
+    private string _collapseButtonText = string.Empty;
+    public string CollapseButtonText
+    {
+        get => _collapseButtonText;
+        set
+        {
+            if (_collapseButtonText != value)
+            {
+                _collapseButtonText = value;
+                OnPropertyChanged(nameof(CollapseButtonText));
+            }
+        }
+    }
+
+    private JsonLocalizationHelper _localizationHelper => JsonLocalizationHelper.Instance;
 
     // 实现INotifyPropertyChanged接口
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -403,6 +431,27 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 return parent;
             else
                 return FindVisualParent<T>(parentObject);
+        }
+
+        // 折叠按钮点击事件处理程序
+        private void CollapseButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 这里实现侧边栏折叠功能
+            // 可以通过修改侧边栏的宽度来实现折叠效果
+            var sidebar = this.FindName("Sidebar") as Border;
+            if (sidebar != null)
+            {
+                if (sidebar.Width == 200)
+                {
+                    // 折叠侧边栏
+                    sidebar.Width = 50;
+                }
+                else
+                {
+                    // 展开侧边栏
+                    sidebar.Width = 200;
+                }
+            }
         }
 
         // 设置按钮点击事件处理程序
@@ -531,6 +580,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 DirectoryManagementButtonIconPath = assetHelper.GetAssetPath(10011);
                 ConsoleButtonIconPath = assetHelper.GetAssetPath(10012);
                 ToolButtonIconPath = assetHelper.GetAssetPath(10013);
+                CollapseButtonIconPath = assetHelper.GetAssetPath(10014);
             }
     catch (Exception ex)
     {
@@ -595,6 +645,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 DirectoryManagementButtonText = helper.GetString(10011);
                 ConsoleButtonText = helper.GetString(10012);
                 ToolButtonText = helper.GetString(10013);
+                CollapseButtonText = helper.GetString(10014);
 
                 // 记录当前语言
                 // (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
@@ -1048,6 +1099,26 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 // 创建ToolTip对象
                 ToolTip tooltip = new ToolTip();
                 tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20004);
+                
+                // 设置ToolTip样式
+                Style tooltipStyle = new Style(typeof(ToolTip));
+                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+                tooltip.Style = tooltipStyle;
+                
+                // 设置显示时长并应用到按钮
+                ToolTipService.SetShowDuration(button, 30000);
+                button.ToolTip = tooltip;
+            }
+        }
+
+    private void CollapseButton_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button)
+            {
+                // 创建ToolTip对象
+                ToolTip tooltip = new ToolTip();
+                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(10014);
                 
                 // 设置ToolTip样式
                 Style tooltipStyle = new Style(typeof(ToolTip));

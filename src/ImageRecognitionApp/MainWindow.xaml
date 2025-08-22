@@ -230,8 +230,41 @@
                                 Margin="0">
                             <!-- 侧边栏内容容器 -->
                             <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <!-- 折叠按钮 -->
+                                <Button x:Name="CollapseButton" Width="40" Height="40" Margin="10,5,0,5" Background="Transparent" BorderThickness="0" Loaded="CollapseButton_Loaded" Click="CollapseButton_Click" HorizontalAlignment="Left">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="border" CornerRadius="5" Width="40" Height="40">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="Tag" Value="Selected">
+                                                                <Setter Property="Background" Value="#37373D"/>
+                                                            </Trigger>
+                                                            <MultiTrigger>
+                                                                <MultiTrigger.Conditions>
+                                                                    <Condition Property="IsMouseOver" Value="True"/>
+                                                                    <Condition Property="Tag" Value="{x:Null}"/>
+                                                                </MultiTrigger.Conditions>
+                                                                <Setter Property="Background" Value="#2A2D2E"/>
+                                                            </MultiTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <!-- 图标 -->
+                                                        <Image Source="{Binding CollapseButtonIconPath}" Width="32" Height="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+
                                 <!-- 顶部按钮列表 -->
-                                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,50,0,0">
+                                <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,0">
                             <!-- 启动按钮 -->
                             <Button x:Name="LaunchButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
                                     Height="40" 
@@ -266,7 +299,7 @@
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
                                                             VerticalAlignment="Center" 
-                                                            Margin="10,0,10,0">
+                                                            Margin="12,0,10,0">
                                                     <!-- 图标 -->
                                                     <Image Source="{Binding LaunchButtonIconPath}" 
                                                            Width="32" 
@@ -275,11 +308,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding LaunchButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -321,7 +364,7 @@
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
                                                             VerticalAlignment="Center" 
-                                                            Margin="10,0,10,0">
+                                                            Margin="12,0,10,0">
                                                     <!-- 图标 -->
                                                     <Image Source="{Binding VisualScriptButtonIconPath}" 
                                                            Width="32" 
@@ -330,11 +373,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding VisualScriptButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -376,7 +429,7 @@
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
                                                             VerticalAlignment="Center" 
-                                                            Margin="10,0,10,0">
+                                                            Margin="12,0,10,0">
                                                     <!-- 图标 -->
                                                     <Image Source="{Binding AuxiliaryOperationButtonIconPath}" 
                                                            Width="32" 
@@ -385,11 +438,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding AuxiliaryOperationButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -440,11 +503,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding ScreenRecordingButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -495,11 +568,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding ShortcutKeysButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -550,11 +633,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding DirectoryManagementButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -605,11 +698,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding ConsoleButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -660,11 +763,21 @@
                                                            VerticalAlignment="Center"/>
                                                     <!-- 文字 -->
                                                     <TextBlock Text="{Binding ToolButtonText}"
-                                                               Foreground="White"
                                                                FontSize="14"
                                                                Margin="15,0,0,0"
                                                                HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"/>
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
@@ -727,12 +840,23 @@
                                                    HorizontalAlignment="Left"
                                                    VerticalAlignment="Center"/>
                                             <!-- 文字 -->
-                                            <TextBlock x:Name="SettingButtonTextBlock" Text="{Binding SettingButtonText}"
-                                                       Foreground="White"
-                                                       FontSize="14"
-                                                       Margin="15,0,0,0"
-                                                       HorizontalAlignment="Left"
-                                                       VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="SettingButtonTextBlock"
+                                                               Text="{Binding SettingButtonText}"
+                                                               FontSize="14"
+                                                               Margin="15,0,0,0"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="White"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                                        <Setter Property="Foreground" Value="#007ACC"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                         </StackPanel>
                                     </Grid>
                                     </Border>
