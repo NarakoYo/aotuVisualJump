@@ -95,6 +95,12 @@
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
         
+        <Style x:Key="ScrollBarButtonStyle" TargetType="RepeatButton">
+            <Setter Property="Height" Value="0"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        
         <!-- 现代化滚动条样式 -->
         <Style TargetType="ScrollBar">
             <Setter Property="Stylus.IsFlicksEnabled" Value="false"/>
@@ -137,12 +143,6 @@
                     <Setter Property="Foreground" Value="#A0A0A0"/>
                 </Trigger>
             </Style.Triggers>
-        </Style>
-        
-        <Style x:Key="ScrollBarButtonStyle" TargetType="RepeatButton">
-            <Setter Property="Height" Value="0"/>
-            <Setter Property="Width" Value="0"/>
-            <Setter Property="Opacity" Value="0"/>
         </Style>
     </Window.Resources>
     <Grid>
@@ -238,8 +238,95 @@
                             <!-- 设备信息折叠面板 -->
                             <Expander x:Name="DeviceInfoExpander" Style="{StaticResource InfoExpanderStyle}" IsExpanded="False">
                                 <StackPanel>
-                                    <!-- 设备信息内容将在后续实现 -->
-                                    <TextBlock Text="设备信息内容将在后续实现" Style="{StaticResource InfoValueStyle}" Margin="16,10,0,10"/>
+                                    <!-- 型号 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="ModelLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="ModelValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 中央处理器 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="CpuLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="CpuValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 主板 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="MotherboardLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="MotherboardValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 内存 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="MemoryLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="MemoryValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 图形处理器 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="GpuLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="GpuValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 磁盘 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="DiskLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="DiskValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 声卡 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="AudioCardLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="AudioCardValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 网卡 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="NetworkCardLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="NetworkCardValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
+                            
+                            <!-- 显示器 -->
+                            <Grid Style="{StaticResource InfoItemStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="120"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock x:Name="MonitorLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
+                                <TextBlock x:Name="MonitorValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            </Grid>
                                 </StackPanel>
                             </Expander>
                         </StackPanel>

@@ -18,10 +18,10 @@ namespace ImageRecognitionApp.Assets.UICode
             {
                 // 创建并显示系统信息窗口
                 SystemInfoWindow systemInfoWindow = new SystemInfoWindow();
-                
+
                 // 设置为模态窗口，这样在关闭之前无法操作主窗口
                 systemInfoWindow.ShowDialog();
-                
+
                 // 记录日志
                 (App.Current as App)?.LogMessage("系统信息窗口已显示");
             }
