@@ -85,7 +85,7 @@ namespace ImageRecognitionApp.WinFun
                     {
                         _warningWindow.Close();
                     }
-                    catch {}
+                    catch { }
                     finally
                     {
                         _warningWindow = null;
@@ -307,7 +307,7 @@ namespace ImageRecognitionApp.WinFun
                 }
 
                 // 使用JsonLocalizationHelper获取本地化文本
-            string result = JsonLocalizationHelper.Instance.GetString(id);
+                string result = JsonLocalizationHelper.Instance.GetString(id);
                 (App.Current as App)?.LogMessage($"获取本地化字符串结果: id={id}, result={result ?? "null"}");
 
                 // 检查是否找到本地化文本

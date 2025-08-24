@@ -19,27 +19,27 @@ namespace ImageRecognitionApp;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyChanged
-    {
-        // 任务栏管理器和动画
-        private TaskbarManager? _taskbarManager = null;
-        private TaskbarAnimation? _taskbarAnimation = null;
+{
+    // 任务栏管理器和动画
+    private TaskbarManager? _taskbarManager = null;
+    private TaskbarAnimation? _taskbarAnimation = null;
 
-        // 窗口标题属性
-        private string _titleText = string.Empty;
-        public string TitleText
+    // 窗口标题属性
+    private string _titleText = string.Empty;
+    public string TitleText
+    {
+        get => _titleText;
+        set
         {
-            get => _titleText;
-            set
+            if (_titleText != value)
             {
-                if (_titleText != value)
-                {
-                    _titleText = value;
-                    OnPropertyChanged(nameof(TitleText));
-                }
+                _titleText = value;
+                OnPropertyChanged(nameof(TitleText));
             }
         }
+    }
 
-        // 设置按钮文本属性
+    // 设置按钮文本属性
     private string _settingButtonText = string.Empty;
     public string SettingButtonText
     {
@@ -295,8 +295,8 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
     }
 
-        // 本地化工具
-        private string _collapseButtonIconPath = string.Empty;
+    // 本地化工具
+    private string _collapseButtonIconPath = string.Empty;
     public string CollapseButtonIconPath
     {
         get => _collapseButtonIconPath;
@@ -350,7 +350,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     private void SystemInfoButton_Click(object sender, RoutedEventArgs e)
     {
         DropdownMenuPopup.IsOpen = false;
-        
+
         try
         {
             // 创建系统信息管理器并显示系统信息窗口
@@ -380,101 +380,101 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     private readonly string _pythonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\venv\\Scripts\\python.exe");
 
     // 窗口构造函数
-        // 全局右键点击事件处理
-        private void MainWindow_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    // 全局右键点击事件处理
+    private void MainWindow_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        // 只有在自定义标题栏非按钮区域才允许右键菜单显示
+        // 检查点击位置是否在标题栏内
+        var titleBar = this.FindName("TitleBar") as Border;
+        if (titleBar != null)
         {
-            // 只有在自定义标题栏非按钮区域才允许右键菜单显示
-            // 检查点击位置是否在标题栏内
-            var titleBar = this.FindName("TitleBar") as Border;
-            if (titleBar != null)
+            // 获取鼠标在标题栏内的位置
+            Point mousePositionInTitleBar = e.GetPosition(titleBar);
+
+            // 检查点击是否在标题栏内（相对于标题栏的坐标）
+            if (mousePositionInTitleBar.X >= 0 &&
+                mousePositionInTitleBar.Y >= 0 &&
+                mousePositionInTitleBar.X <= titleBar.ActualWidth &&
+                mousePositionInTitleBar.Y <= titleBar.ActualHeight)
             {
-                // 获取鼠标在标题栏内的位置
-                Point mousePositionInTitleBar = e.GetPosition(titleBar);
-                
-                // 检查点击是否在标题栏内（相对于标题栏的坐标）
-                if (mousePositionInTitleBar.X >= 0 && 
-                    mousePositionInTitleBar.Y >= 0 && 
-                    mousePositionInTitleBar.X <= titleBar.ActualWidth && 
-                    mousePositionInTitleBar.Y <= titleBar.ActualHeight)
+                // 检查是否点击在按钮上
+                DependencyObject clickedElement = e.OriginalSource as DependencyObject;
+                if (clickedElement != null)
                 {
-                    // 检查是否点击在按钮上
-                    DependencyObject clickedElement = e.OriginalSource as DependencyObject;
-                    if (clickedElement != null)
+                    // 向上遍历视觉树，检查是否在按钮或按钮子元素上
+                    Button button = FindVisualParent<Button>(clickedElement);
+                    if (button == null)
                     {
-                        // 向上遍历视觉树，检查是否在按钮或按钮子元素上
-                        Button button = FindVisualParent<Button>(clickedElement);
-                        if (button == null)
-                        {
-                            // 非按钮区域，允许事件传递到标题栏的MouseRightButtonDown处理程序
-                            e.Handled = false;
-                            return;
-                        }
+                        // 非按钮区域，允许事件传递到标题栏的MouseRightButtonDown处理程序
+                        e.Handled = false;
+                        return;
                     }
                 }
             }
-            
-            // 非标题栏区域或标题栏中的按钮区域，阻止右键菜单
-            e.Handled = true;
         }
-        
-        /// <summary>
-        /// 查找视觉树中的父元素
-        /// </summary>
-        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+
+        // 非标题栏区域或标题栏中的按钮区域，阻止右键菜单
+        e.Handled = true;
+    }
+
+    /// <summary>
+    /// 查找视觉树中的父元素
+    /// </summary>
+    private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
+    {
+        DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+        if (parentObject == null)
+            return null;
+
+        T parent = parentObject as T;
+        if (parent != null)
+            return parent;
+        else
+            return FindVisualParent<T>(parentObject);
+    }
+
+    // 折叠按钮点击事件处理程序
+    private void CollapseButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 这里实现侧边栏折叠功能
+        // 可以通过修改侧边栏的宽度来实现折叠效果
+        var sidebar = this.FindName("Sidebar") as Border;
+        if (sidebar != null)
         {
-            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
-            if (parentObject == null)
-                return null;
-            
-            T parent = parentObject as T;
-            if (parent != null)
-                return parent;
+            if (sidebar.Width == 200)
+            {
+                // 折叠侧边栏
+                sidebar.Width = 50;
+            }
             else
-                return FindVisualParent<T>(parentObject);
-        }
-
-        // 折叠按钮点击事件处理程序
-        private void CollapseButton_Click(object sender, RoutedEventArgs e)
-        {
-            // 这里实现侧边栏折叠功能
-            // 可以通过修改侧边栏的宽度来实现折叠效果
-            var sidebar = this.FindName("Sidebar") as Border;
-            if (sidebar != null)
             {
-                if (sidebar.Width == 200)
-                {
-                    // 折叠侧边栏
-                    sidebar.Width = 50;
-                }
-                else
-                {
-                    // 展开侧边栏
-                    sidebar.Width = 200;
-                }
+                // 展开侧边栏
+                sidebar.Width = 200;
+            }
+        }
+    }
+
+    // 设置按钮点击事件处理程序
+    private void SettingButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 重置所有侧边栏按钮状态（包括其他按钮和设置按钮）
+        ResetAllSidebarButtonsState();
+
+        // 设置当前点击按钮的状态
+        var button = sender as Button;
+        if (button != null && button.Template != null)
+        {
+            var border = button.Template.FindName("border", button) as Border;
+            if (border != null)
+            {
+                // 使用Tag属性来标记按钮被选中
+                border.Tag = "Selected";
+                border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
             }
         }
 
-        // 设置按钮点击事件处理程序
-        private void SettingButton_Click(object sender, RoutedEventArgs e)
-        {
-            // 重置所有侧边栏按钮状态（包括其他按钮和设置按钮）
-            ResetAllSidebarButtonsState();
-            
-            // 设置当前点击按钮的状态
-            var button = sender as Button;
-            if (button != null && button.Template != null)
-            {
-                var border = button.Template.FindName("border", button) as Border;
-                if (border != null)
-                {
-                    // 使用Tag属性来标记按钮被选中
-                    border.Tag = "Selected";
-                    border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
-                }
-            }
-            
-            // 跟踪设置按钮被点击状态
-            _isSettingButtonClicked = true;
+        // 跟踪设置按钮被点击状态
+        _isSettingButtonClicked = true;
     }
 
     // 更新设置按钮背景色
@@ -503,7 +503,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     public void ResetSettingButtonState()
     {
         _isSettingButtonClicked = false;
-        
+
         // 清除设置按钮的选中标记
         if (SettingButton != null && SettingButton.Template != null)
         {
@@ -513,7 +513,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 border.Tag = null;
             }
         }
-        
+
         UpdateSettingButtonBackground();
     }
     private readonly string _scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..\\..\\..\\..\\PythonScripts\\image_recognition.py");
@@ -533,142 +533,142 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     private Point _restorePoint; // 新增：存储窗口还原位置
 
     public MainWindow()
-        {
-            InitializeComponent();
-            DataContext = this; // 设置数据上下文
-
-            // 初始化任务栏管理器和动画
-            try
-            {
-                _taskbarManager = new TaskbarManager(this);
-                _taskbarAnimation = new TaskbarAnimation(this);
-                (App.Current as App)?.LogMessage("任务栏管理器和动画初始化成功");
-            }
-            catch (Exception ex)
-            {
-                (App.Current as App)?.LogMessage($"任务栏初始化错误: {ex.Message}");
-                (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
-            }
-
-            // 订阅属性变化事件以更新任务栏提示
-            this.PropertyChanged += MainWindow_PropertyChanged;
-
-            // 注册窗口关闭事件以释放资源
-            this.Closed += MainWindow_Closed;
-            
-            // 添加全局右键点击事件处理，阻止非标题栏区域的右键菜单
-            this.PreviewMouseRightButtonDown += MainWindow_PreviewMouseRightButtonDown;
-
-            // 初始化设置按钮状态
-    _isSettingButtonClicked = false;
-
-    // 初始化AssetHelper并获取按钮图标路径
-            try
-            {
-                var assetHelper = AssetHelper.Instance;
-                
-                // 设置按钮图标路径
-                string settingIconPath = assetHelper.GetAssetPath(10003);
-                SettingButtonIconPath = settingIconPath;
-                
-                // 侧边栏按钮图标路径
-                LaunchButtonIconPath = assetHelper.GetAssetPath(10006);
-                VisualScriptButtonIconPath = assetHelper.GetAssetPath(10007);
-                AuxiliaryOperationButtonIconPath = assetHelper.GetAssetPath(10008);
-                ScreenRecordingButtonIconPath = assetHelper.GetAssetPath(10009);
-                ShortcutKeysButtonIconPath = assetHelper.GetAssetPath(10010);
-                DirectoryManagementButtonIconPath = assetHelper.GetAssetPath(10011);
-                ConsoleButtonIconPath = assetHelper.GetAssetPath(10012);
-                ToolButtonIconPath = assetHelper.GetAssetPath(10013);
-                CollapseButtonIconPath = assetHelper.GetAssetPath(10014);
-            }
-    catch (Exception ex)
     {
-        (App.Current as App)?.LogMessage($"获取设置按钮图标路径失败: {ex.Message}");
-        // 设置默认图标路径
-        // SettingButtonIconPath = "pack://application:,,,/Resources/Icons/igoutu/setting-gear.png";
-    }
+        InitializeComponent();
+        DataContext = this; // 设置数据上下文
 
-            // 初始化本地化
-            try
+        // 初始化任务栏管理器和动画
+        try
+        {
+            _taskbarManager = new TaskbarManager(this);
+            _taskbarAnimation = new TaskbarAnimation(this);
+            (App.Current as App)?.LogMessage("任务栏管理器和动画初始化成功");
+        }
+        catch (Exception ex)
+        {
+            (App.Current as App)?.LogMessage($"任务栏初始化错误: {ex.Message}");
+            (App.Current as App)?.LogMessage($"错误堆栈: {ex.StackTrace}");
+        }
+
+        // 订阅属性变化事件以更新任务栏提示
+        this.PropertyChanged += MainWindow_PropertyChanged;
+
+        // 注册窗口关闭事件以释放资源
+        this.Closed += MainWindow_Closed;
+
+        // 添加全局右键点击事件处理，阻止非标题栏区域的右键菜单
+        this.PreviewMouseRightButtonDown += MainWindow_PreviewMouseRightButtonDown;
+
+        // 初始化设置按钮状态
+        _isSettingButtonClicked = false;
+
+        // 初始化AssetHelper并获取按钮图标路径
+        try
+        {
+            var assetHelper = AssetHelper.Instance;
+
+            // 设置按钮图标路径
+            string settingIconPath = assetHelper.GetAssetPath(10003);
+            SettingButtonIconPath = settingIconPath;
+
+            // 侧边栏按钮图标路径
+            LaunchButtonIconPath = assetHelper.GetAssetPath(10006);
+            VisualScriptButtonIconPath = assetHelper.GetAssetPath(10007);
+            AuxiliaryOperationButtonIconPath = assetHelper.GetAssetPath(10008);
+            ScreenRecordingButtonIconPath = assetHelper.GetAssetPath(10009);
+            ShortcutKeysButtonIconPath = assetHelper.GetAssetPath(10010);
+            DirectoryManagementButtonIconPath = assetHelper.GetAssetPath(10011);
+            ConsoleButtonIconPath = assetHelper.GetAssetPath(10012);
+            ToolButtonIconPath = assetHelper.GetAssetPath(10013);
+            CollapseButtonIconPath = assetHelper.GetAssetPath(10014);
+        }
+        catch (Exception ex)
+        {
+            (App.Current as App)?.LogMessage($"获取设置按钮图标路径失败: {ex.Message}");
+            // 设置默认图标路径
+            // SettingButtonIconPath = "pack://application:,,,/Resources/Icons/igoutu/setting-gear.png";
+        }
+
+        // 初始化本地化
+        try
+        {
+            // 初始化本地化助手
+            var helper = ImageRecognitionApp.unit.JsonLocalizationHelper.Instance;
+            helper.Initialize();
+
+            // 获取标题文本和设置按钮文本
+            TitleText = helper.GetString(10001);
+            SettingButtonText = helper.GetString(10003);
+
+            // 获取当前语言
+            var currentLanguageField = helper.GetType().GetField(
+                "_currentLanguage",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            string currentLanguage = currentLanguageField?.GetValue(helper) as string ?? "未知";
+
+            // 检查本地化数据
+            var localizationDataField = helper.GetType().GetField(
+                "_localizationData",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var localizationData = localizationDataField?.GetValue(helper) as Dictionary<int, Dictionary<string, string>>;
+
+            // 优先使用中文翻译
+            if (localizationData != null && localizationData.ContainsKey(10001))
             {
-                // 初始化本地化助手
-                var helper = ImageRecognitionApp.unit.JsonLocalizationHelper.Instance;
-                helper.Initialize();
-
-                // 获取标题文本和设置按钮文本
-                TitleText = helper.GetString(10001);
-                SettingButtonText = helper.GetString(10003);
-
-                // 获取当前语言
-                var currentLanguageField = helper.GetType().GetField(
-                    "_currentLanguage", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                string currentLanguage = currentLanguageField?.GetValue(helper) as string ?? "未知";
-
-                // 检查本地化数据
-                var localizationDataField = helper.GetType().GetField(
-                    "_localizationData", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var localizationData = localizationDataField?.GetValue(helper) as Dictionary<int, Dictionary<string, string>>;
+                var translations = localizationData[10001];
 
                 // 优先使用中文翻译
-                if (localizationData != null && localizationData.ContainsKey(10001))
+                if (translations.ContainsKey("zhCn"))
                 {
-                    var translations = localizationData[10001];
-                       
-                    // 优先使用中文翻译
-                    if (translations.ContainsKey("zhCn"))
-                    {
-                        TitleText = translations["zhCn"];
-                    }
-                    // 如果没有中文翻译，尝试使用ghYh字段
-                    else if (translations.ContainsKey("ghYh"))
-                    {
-                        TitleText = translations["ghYh"];
-                    }
-
-                    // 设置下拉菜单按钮文本
-                    SystemInfoButton.Content = _localizationHelper.GetString(10005);
-                    AboutButton.Content = _localizationHelper.GetString(10004);
+                    TitleText = translations["zhCn"];
+                }
+                // 如果没有中文翻译，尝试使用ghYh字段
+                else if (translations.ContainsKey("ghYh"))
+                {
+                    TitleText = translations["ghYh"];
                 }
 
-                // 设置窗口标题
-                this.Title = TitleText;
-
-                // 获取侧边栏按钮文本
-                LaunchButtonText = helper.GetString(10006);
-                VisualScriptButtonText = helper.GetString(10007);
-                AuxiliaryOperationButtonText = helper.GetString(10008);
-                ScreenRecordingButtonText = helper.GetString(10009);
-                ShortcutKeysButtonText = helper.GetString(10010);
-                DirectoryManagementButtonText = helper.GetString(10011);
-                ConsoleButtonText = helper.GetString(10012);
-                ToolButtonText = helper.GetString(10013);
-                CollapseButtonText = helper.GetString(10014);
-
-                // 记录当前语言
-                // (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
-                // (App.Current as App)?.LogMessage($"标题已设置为: {TitleText}");
-
+                // 设置下拉菜单按钮文本
+                SystemInfoButton.Content = _localizationHelper.GetString(10005);
+                AboutButton.Content = _localizationHelper.GetString(10004);
             }
-            catch (Exception ex)
-            {
-                (App.Current as App)?.LogMessage($"设置标题和按钮文本时出错: {ex.Message}");
-                this.Title = "图像识别应用";
-                TitleText = "图像识别应用";
-                
-                // 设置默认按钮文本
-                SettingButtonText = "设置";
-                LaunchButtonText = "启动";
-                VisualScriptButtonText = "视觉脚本";
-                AuxiliaryOperationButtonText = "辅助操控";
-                ScreenRecordingButtonText = "屏幕录制";
-                ShortcutKeysButtonText = "快捷键";
-                DirectoryManagementButtonText = "目录管理";
-                ConsoleButtonText = "控制台";
-                ToolButtonText = "小工具";
-            }
+
+            // 设置窗口标题
+            this.Title = TitleText;
+
+            // 获取侧边栏按钮文本
+            LaunchButtonText = helper.GetString(10006);
+            VisualScriptButtonText = helper.GetString(10007);
+            AuxiliaryOperationButtonText = helper.GetString(10008);
+            ScreenRecordingButtonText = helper.GetString(10009);
+            ShortcutKeysButtonText = helper.GetString(10010);
+            DirectoryManagementButtonText = helper.GetString(10011);
+            ConsoleButtonText = helper.GetString(10012);
+            ToolButtonText = helper.GetString(10013);
+            CollapseButtonText = helper.GetString(10014);
+
+            // 记录当前语言
+            // (App.Current as App)?.LogMessage($"当前语言: {currentLanguage}");
+            // (App.Current as App)?.LogMessage($"标题已设置为: {TitleText}");
+
+        }
+        catch (Exception ex)
+        {
+            (App.Current as App)?.LogMessage($"设置标题和按钮文本时出错: {ex.Message}");
+            this.Title = "图像识别应用";
+            TitleText = "图像识别应用";
+
+            // 设置默认按钮文本
+            SettingButtonText = "设置";
+            LaunchButtonText = "启动";
+            VisualScriptButtonText = "视觉脚本";
+            AuxiliaryOperationButtonText = "辅助操控";
+            ScreenRecordingButtonText = "屏幕录制";
+            ShortcutKeysButtonText = "快捷键";
+            DirectoryManagementButtonText = "目录管理";
+            ConsoleButtonText = "控制台";
+            ToolButtonText = "小工具";
+        }
 
 
 
@@ -685,86 +685,86 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
     // 窗口关闭事件处理程序
     private void MainWindow_Closed(object? sender, EventArgs e)
+    {
+        // 停止脚本执行
+        StopScriptExecution();
+        // 释放任务栏资源
+        _taskbarManager?.Dispose();
+        _taskbarAnimation?.StopFlashAnimation();
+    }
+
+    /// <summary>
+    /// 属性变化事件处理程序
+    /// </summary>
+    private void MainWindow_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TitleText) && _taskbarManager != null)
         {
-            // 停止脚本执行
-            StopScriptExecution();
-            // 释放任务栏资源
-            _taskbarManager?.Dispose();
-            _taskbarAnimation?.StopFlashAnimation();
+            _taskbarManager.UpdateTooltip(TitleText);
+            // (App.Current as App)?.LogMessage($"任务栏提示文本已更新为: {TitleText}");
+        }
+    }
+
+    /// <summary>
+    /// 侧边栏按钮点击事件处理程序
+    /// </summary>
+    private void SidebarButton_Click(object sender, RoutedEventArgs e)
+    {
+        // 重置所有按钮状态
+        ResetAllSidebarButtonsState();
+
+        // 设置当前点击按钮的状态
+        var button = sender as Button;
+        if (button != null && button.Template != null)
+        {
+            var border = button.Template.FindName("border", button) as Border;
+            if (border != null)
+            {
+                // 添加一个标记来表示按钮被选中
+                border.Tag = "Selected";
+                border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
+            }
         }
 
-        /// <summary>
-        /// 属性变化事件处理程序
-        /// </summary>
-        private void MainWindow_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        // 这里可以添加按钮点击后的具体逻辑
+    }
+
+    /// <summary>
+    /// 重置所有侧边栏按钮的状态
+    /// </summary>
+    private void ResetAllSidebarButtonsState()
+    {
+        // 重置设置按钮状态
+        ResetSettingButtonState();
+
+        // 重置其他侧边栏按钮状态
+        ResetButtonState(LaunchButton);
+        ResetButtonState(VisualScriptButton);
+        ResetButtonState(AuxiliaryOperationButton);
+        ResetButtonState(ScreenRecordingButton);
+        ResetButtonState(ShortcutKeysButton);
+        ResetButtonState(DirectoryManagementButton);
+        ResetButtonState(ConsoleButton);
+        ResetButtonState(ToolButton);
+    }
+
+    /// <summary>
+    /// 重置单个按钮的状态
+    /// </summary>
+    private void ResetButtonState(Button button)
+    {
+        if (button != null && button.Template != null)
         {
-            if (e.PropertyName == nameof(TitleText) && _taskbarManager != null)
+            var border = button.Template.FindName("border", button) as Border;
+            if (border != null)
             {
-                _taskbarManager.UpdateTooltip(TitleText);
-                // (App.Current as App)?.LogMessage($"任务栏提示文本已更新为: {TitleText}");
+                // 只清除选中标记，不直接设置背景色，让XAML样式触发器自然应用效果
+                border.Tag = null;
+                // 移除直接设置的背景色，恢复样式触发器的控制权
+                border.ClearValue(Border.BackgroundProperty);
             }
         }
-        
-        /// <summary>
-        /// 侧边栏按钮点击事件处理程序
-        /// </summary>
-        private void SidebarButton_Click(object sender, RoutedEventArgs e)
-        {
-            // 重置所有按钮状态
-            ResetAllSidebarButtonsState();
-            
-            // 设置当前点击按钮的状态
-            var button = sender as Button;
-            if (button != null && button.Template != null)
-            {
-                var border = button.Template.FindName("border", button) as Border;
-                if (border != null)
-                {
-                    // 添加一个标记来表示按钮被选中
-                    border.Tag = "Selected";
-                    border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
-                }
-            }
-            
-            // 这里可以添加按钮点击后的具体逻辑
-        }
-        
-        /// <summary>
-        /// 重置所有侧边栏按钮的状态
-        /// </summary>
-        private void ResetAllSidebarButtonsState()
-        {
-            // 重置设置按钮状态
-            ResetSettingButtonState();
-            
-            // 重置其他侧边栏按钮状态
-            ResetButtonState(LaunchButton);
-            ResetButtonState(VisualScriptButton);
-            ResetButtonState(AuxiliaryOperationButton);
-            ResetButtonState(ScreenRecordingButton);
-            ResetButtonState(ShortcutKeysButton);
-            ResetButtonState(DirectoryManagementButton);
-            ResetButtonState(ConsoleButton);
-            ResetButtonState(ToolButton);
-        }
-        
-        /// <summary>
-        /// 重置单个按钮的状态
-        /// </summary>
-        private void ResetButtonState(Button button)
-        {
-            if (button != null && button.Template != null)
-            {
-                var border = button.Template.FindName("border", button) as Border;
-                if (border != null)
-                {
-                    // 只清除选中标记，不直接设置背景色，让XAML样式触发器自然应用效果
-                    border.Tag = null;
-                    // 移除直接设置的背景色，恢复样式触发器的控制权
-                    border.ClearValue(Border.BackgroundProperty);
-                }
-            }
-        }
+    }
 
     /// <summary>
     /// 初始化键盘快捷键
@@ -826,16 +826,16 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             // 任务栏通知和动画
             _taskbarManager?.ShowNotification("开始录制", "脚本录制已开始");
             _taskbarAnimation?.StartFlashAnimation(0, 1000);  // 无限闪烁，间隔1秒
-            
+
             if (_recordingTimer == null)
             {
                 _recordingTimer = new DispatcherTimer();
             }
-            
+
             _recordingTimer.Interval = TimeSpan.FromMilliseconds(50);
             _recordingTimer.Tick += RecordingTimer_Tick;
             _recordingTimer.Start();
-            
+
             // Update UI
             // UpdateRecordingButton();
         }
@@ -857,16 +857,16 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             // 停止任务栏动画并显示通知
             _taskbarAnimation?.StopFlashAnimation();
             _taskbarManager?.ShowNotification("录制完成", "脚本已录制完成并保存");
-            
+
             if (_recordingTimer != null)
             {
                 _recordingTimer.Stop();
                 _recordingTimer.Tick -= RecordingTimer_Tick;
             }
-            
+
             // Process recording
             SaveScriptToFile();
-            
+
             // Update UI
             // UpdateRecordingButton();
         }
@@ -930,7 +930,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         // 使用TaskbarManager的HideWindowToTray方法隐藏窗口到托盘
         // 该方法会正确设置_windowMinimizedToTray标志
         _taskbarManager?.HideWindowToTray();
-        
+
         // 显示托盘通知
         _taskbarManager?.ShowNotification("应用已最小化到托盘", "点击托盘图标可恢复窗口");
     }
@@ -1053,84 +1053,84 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     }
 
     private void HideToTrayButton_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button)
         {
-            if (sender is Button button)
-            {
-                // 创建ToolTip对象
-                ToolTip tooltip = new ToolTip();
-                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20006);
-                
-                // 设置ToolTip样式
-                Style tooltipStyle = new Style(typeof(ToolTip));
-                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
-                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
-                tooltip.Style = tooltipStyle;
-                
-                // 设置显示时长并应用到按钮
-                ToolTipService.SetShowDuration(button, 30000);
-                button.ToolTip = tooltip;
-            }
+            // 创建ToolTip对象
+            ToolTip tooltip = new ToolTip();
+            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20006);
+
+            // 设置ToolTip样式
+            Style tooltipStyle = new Style(typeof(ToolTip));
+            tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+            tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+            tooltip.Style = tooltipStyle;
+
+            // 设置显示时长并应用到按钮
+            ToolTipService.SetShowDuration(button, 30000);
+            button.ToolTip = tooltip;
         }
+    }
 
     private void MinimizeWindowButton_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button)
         {
-            if (sender is Button button)
-            {
-                // 创建ToolTip对象
-                ToolTip tooltip = new ToolTip();
-                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20005);
-                
-                // 设置ToolTip样式
-                Style tooltipStyle = new Style(typeof(ToolTip));
-                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
-                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
-                tooltip.Style = tooltipStyle;
-                
-                // 设置显示时长并应用到按钮
-                ToolTipService.SetShowDuration(button, 30000);
-                button.ToolTip = tooltip;
-            }
+            // 创建ToolTip对象
+            ToolTip tooltip = new ToolTip();
+            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20005);
+
+            // 设置ToolTip样式
+            Style tooltipStyle = new Style(typeof(ToolTip));
+            tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+            tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+            tooltip.Style = tooltipStyle;
+
+            // 设置显示时长并应用到按钮
+            ToolTipService.SetShowDuration(button, 30000);
+            button.ToolTip = tooltip;
         }
+    }
 
     private void CloseWindowButton_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button)
         {
-            if (sender is Button button)
-            {
-                // 创建ToolTip对象
-                ToolTip tooltip = new ToolTip();
-                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20004);
-                
-                // 设置ToolTip样式
-                Style tooltipStyle = new Style(typeof(ToolTip));
-                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
-                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
-                tooltip.Style = tooltipStyle;
-                
-                // 设置显示时长并应用到按钮
-                ToolTipService.SetShowDuration(button, 30000);
-                button.ToolTip = tooltip;
-            }
+            // 创建ToolTip对象
+            ToolTip tooltip = new ToolTip();
+            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20004);
+
+            // 设置ToolTip样式
+            Style tooltipStyle = new Style(typeof(ToolTip));
+            tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+            tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+            tooltip.Style = tooltipStyle;
+
+            // 设置显示时长并应用到按钮
+            ToolTipService.SetShowDuration(button, 30000);
+            button.ToolTip = tooltip;
         }
+    }
 
     private void CollapseButton_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button)
         {
-            if (sender is Button button)
-            {
-                // 创建ToolTip对象
-                ToolTip tooltip = new ToolTip();
-                tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(10014);
-                
-                // 设置ToolTip样式
-                Style tooltipStyle = new Style(typeof(ToolTip));
-                tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
-                tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
-                tooltip.Style = tooltipStyle;
-                
-                // 设置显示时长并应用到按钮
-                ToolTipService.SetShowDuration(button, 30000);
-                button.ToolTip = tooltip;
-            }
+            // 创建ToolTip对象
+            ToolTip tooltip = new ToolTip();
+            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(10014);
+
+            // 设置ToolTip样式
+            Style tooltipStyle = new Style(typeof(ToolTip));
+            tooltipStyle.Setters.Add(new Setter(Control.BackgroundProperty, new SolidColorBrush(Color.FromArgb(255, 30, 30, 30))));
+            tooltipStyle.Setters.Add(new Setter(Control.ForegroundProperty, new SolidColorBrush(Color.FromArgb(255, 255, 255, 255))));
+            tooltip.Style = tooltipStyle;
+
+            // 设置显示时长并应用到按钮
+            ToolTipService.SetShowDuration(button, 30000);
+            button.ToolTip = tooltip;
         }
+    }
 
     private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
@@ -1190,7 +1190,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             // 确保窗口始终保持在正常状态
             this.WindowState = WindowState.Normal;
             _isMaximized = false;
-            
+
             // 正常拖动窗口
             DragMove();
         }

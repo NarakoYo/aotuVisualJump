@@ -321,7 +321,7 @@ namespace ImageRecognitionApp.unit
                 string localizedText = JsonLocalizationHelper.Instance.GetString(10001);
 
                 // 生成日志内容
-                string logContent = $"[{formattedTime}]+{localizedText}+{(isStartup ? "Start" : "Close"+"\n")}";
+                string logContent = $"[{formattedTime}]+{localizedText}+{(isStartup ? "Start" : "Close" + "\n")}";
 
                 // 写入日志
                 WriteLog(LogLevel.Info, logContent);

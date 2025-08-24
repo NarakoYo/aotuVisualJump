@@ -35,17 +35,17 @@ namespace ImageRecognitionApp.unit.assist
 
                 // 获取本地化标题
                 string localizedTitle = JsonLocalizationHelper.Instance.GetString(APP_TITLE_SIGN_ID);
-                
+
                 // 检查是否获取到有效的本地化标题
-                if (string.IsNullOrEmpty(localizedTitle) || 
-                    localizedTitle.StartsWith("未找到") || 
+                if (string.IsNullOrEmpty(localizedTitle) ||
+                    localizedTitle.StartsWith("未找到") ||
                     localizedTitle.StartsWith("ERROR_") ||
                     localizedTitle.Contains("_MISSING_"))
                 {
                     Console.WriteLine($"未获取到sign_id={APP_TITLE_SIGN_ID}的本地化文本，使用默认标题: {DEFAULT_APP_TITLE}");
                     return DEFAULT_APP_TITLE;
                 }
-                
+
                 return localizedTitle;
             }
             catch (Exception ex)

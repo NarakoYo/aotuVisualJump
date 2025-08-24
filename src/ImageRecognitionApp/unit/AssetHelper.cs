@@ -106,10 +106,10 @@ namespace ImageRecognitionApp.unit
                             {
                                 _logManager.WriteLog(LogManager.LogLevel.Warning, "配置文件中的资源路径为空，使用默认路径");
                             }
-                              
+
                             // 构建完整的资源基础路径
                             _resourcesBasePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, resourcesPath));
-                              
+
                             if (!Directory.Exists(_resourcesBasePath))
                             {
                                 _logManager.WriteLog(LogManager.LogLevel.Warning, $"资源基础路径不存在: {_resourcesBasePath}");
@@ -122,34 +122,34 @@ namespace ImageRecognitionApp.unit
                         if (assetAllocationElement.TryGetProperty("AssetList", out var assetListElement))
                         {
                             Dictionary<string, int> assetPathCount = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                              
+
                             foreach (var item in assetListElement.EnumerateArray())
                             {
-                                if (item.TryGetProperty("sign_id", out var signIdElement) && 
+                                if (item.TryGetProperty("sign_id", out var signIdElement) &&
                                     item.TryGetProperty("Asset", out var assetElement))
                                 {
                                     // 检查sign_id类型是否为数字
-                                string signId = string.Empty;
-                                if (signIdElement.ValueKind == JsonValueKind.Number)
-                                {
-                                    signId = signIdElement.GetInt32().ToString();
-                                }
-                                else if (signIdElement.ValueKind == JsonValueKind.String)
-                                {
-                                    signId = signIdElement.GetString() ?? string.Empty;
-                                    // 尝试将字符串转换为整数，确保sign_id是有效的数字
-                                    if (!int.TryParse(signId, out _))
+                                    string signId = string.Empty;
+                                    if (signIdElement.ValueKind == JsonValueKind.Number)
                                     {
-                                        _logManager.WriteLog(LogManager.LogLevel.Error, $"发现无效的sign_id类型: {signId}，应为数字类型，已忽略该配置项");
+                                        signId = signIdElement.GetInt32().ToString();
+                                    }
+                                    else if (signIdElement.ValueKind == JsonValueKind.String)
+                                    {
+                                        signId = signIdElement.GetString() ?? string.Empty;
+                                        // 尝试将字符串转换为整数，确保sign_id是有效的数字
+                                        if (!int.TryParse(signId, out _))
+                                        {
+                                            _logManager.WriteLog(LogManager.LogLevel.Error, $"发现无效的sign_id类型: {signId}，应为数字类型，已忽略该配置项");
+                                            continue;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        _logManager.WriteLog(LogManager.LogLevel.Error, "发现无效的sign_id类型，应为数字或数字字符串，已忽略该配置项");
                                         continue;
                                     }
-                                }
-                                else
-                                {
-                                    _logManager.WriteLog(LogManager.LogLevel.Error, "发现无效的sign_id类型，应为数字或数字字符串，已忽略该配置项");
-                                    continue;
-                                }
-                                    
+
                                     string assetPath = assetElement.GetString() ?? string.Empty;
 
                                     if (string.IsNullOrEmpty(signId))
@@ -227,13 +227,13 @@ namespace ImageRecognitionApp.unit
             {
                 // 构建完整的资产路径
                 string fullPath = Path.Combine(_resourcesBasePath, assetPath);
-                
+
                 // 检查文件是否存在
                 if (!File.Exists(fullPath))
                 {
                     _logManager.WriteLog(LogManager.LogLevel.Warning, $"资产文件不存在: {fullPath}，sign_id: {signId}");
                 }
-                
+
                 return fullPath;
             }
 
@@ -480,7 +480,7 @@ namespace ImageRecognitionApp.unit
         /// <returns>是否为有效的URL</returns>
         private bool IsValidUrl(string urlString)
         {
-            return Uri.TryCreate(urlString, UriKind.Absolute, out Uri? uriResult) && 
+            return Uri.TryCreate(urlString, UriKind.Absolute, out Uri? uriResult) &&
                    (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
         }
 
