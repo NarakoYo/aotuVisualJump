@@ -1263,16 +1263,15 @@ namespace ImageRecognitionApp.WinFun
                     mainWindow.Visibility = Visibility.Visible;
                     mainWindow.ShowInTaskbar = true;
                     
-                    // 播放最小化动画
+                    // 先执行窗口最小化操作
+                    mainWindow.WindowState = WindowState.Minimized;
+                    LogMessage("TaskbarManager: 窗口已最小化");
+                    
+                    // 然后播放最小化动画
                     if (_taskbarAnimation != null)
                     {
                         _taskbarAnimation.MinimizeAnimation();
                         LogMessage("TaskbarManager: 播放窗口最小化动画");
-                    }
-                    else
-                    {
-                        // 如果没有动画，则直接最小化
-                        mainWindow.WindowState = WindowState.Minimized;
                     }
                     
                     // 不再使用_isWindowMinimizedToTray标志，直接基于窗口状态判断

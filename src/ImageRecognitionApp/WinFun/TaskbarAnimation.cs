@@ -68,10 +68,49 @@ namespace ImageRecognitionApp.WinFun
     private Task? _animationTask = null;
     private const int JUMP_HEIGHT = 10; // 跳跃高度（像素）
     private const int JUMP_DURATION_MS = 200; // 跳跃动画持续时间（毫秒）
-    private const int MINIMIZE_ANIMATION_DURATION_MS = 200; // 最小化动画持续时间（毫秒）
-    private const int RESTORE_ANIMATION_DURATION_MS = 200; // 恢复动画持续时间（毫秒）
-    private const double MINIMUM_SCALE = 0.1; // 最小缩放比例
-    private const int FRAMES_PER_SECOND = 60; // 动画帧率（每秒帧数）- 降低到60FPS提高性能
+    private const int MINIMIZE_ANIMATION_DURATION_MS = 120; // 最小化动画持续时间（毫秒）- 已缩短以提升流畅度
+    private const int RESTORE_ANIMATION_DURATION_MS = 120; // 恢复动画持续时间（毫秒）
+    private const double MINIMUM_SCALE = 0.0001; // 最小缩放比例
+    // 使用当前屏幕的最大刷新率作为动画帧率，提升动画流畅度
+    private static readonly int FRAMES_PER_SECOND = GetMaxScreenRefreshRate();
+    
+    /// <summary>
+    /// 获取当前屏幕的最大刷新率
+    /// </summary>
+    /// <returns>最大刷新率</returns>
+    private static int GetMaxScreenRefreshRate()
+    {
+        try
+        {
+            // 导入GDI32.dll中的GetDeviceCaps函数
+            IntPtr hScreenDC = GetDC(IntPtr.Zero);
+            int refreshRate = GetDeviceCaps(hScreenDC, VERTREFRESH);
+            ReleaseDC(IntPtr.Zero, hScreenDC);
+            
+            // 确保获取到有效刷新率，如果获取失败则使用默认值
+            return refreshRate > 0 ? refreshRate : 60;
+        }
+        catch
+        {
+            // 默认返回60FPS作为fallback
+            return 60;
+        }
+    }
+    
+    #region 额外的Win32 API导入
+    
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetDC(IntPtr hWnd);
+    
+    [DllImport("user32.dll")]
+    private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDC);
+    
+    [DllImport("gdi32.dll")]
+    private static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
+    
+    private const int VERTREFRESH = 116; // 垂直刷新率索引
+    
+    #endregion
 
     // 用于存储原始图标位置
         private System.Windows.Point _originalIconPosition = new System.Windows.Point(-1, -1);

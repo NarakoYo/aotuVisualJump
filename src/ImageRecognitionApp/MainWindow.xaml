@@ -726,7 +726,7 @@
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
-                                    Margin="0,0,0,5">
+                                    Margin="0,0,0,0">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
                                         <Border x:Name="border" CornerRadius="5" 
@@ -797,7 +797,7 @@
                                 HorizontalAlignment="Stretch"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                Margin="0,50,0,0" Panel.ZIndex="10">
+                                Margin="0,5,0,0" Panel.ZIndex="10">
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="border" CornerRadius="5"

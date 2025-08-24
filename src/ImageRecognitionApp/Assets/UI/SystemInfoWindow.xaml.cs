@@ -1,9 +1,8 @@
 using System;
-using System.Diagnostics;
 using System.Management;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Input;
 using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp.Assets.UI
@@ -31,7 +30,18 @@ namespace ImageRecognitionApp.Assets.UI
                 this.Height = Application.Current.MainWindow.ActualHeight * 2 / 3;
             }
             
-            // 设置本地化标题
+            // 加载本地化文本
+            InitializeLocalizedTexts();
+            
+            // 加载系统信息
+            LoadSystemInformation();
+        }
+        
+        /// <summary>
+        /// 初始化本地化文本
+        /// </summary>
+        private void InitializeLocalizedTexts()
+        {
             try
             {
                 // 确保本地化工具已初始化
@@ -40,7 +50,7 @@ namespace ImageRecognitionApp.Assets.UI
                     JsonLocalizationHelper.Instance.Initialize();
                 }
                 
-                // 获取sign_id=10005的本地化标题
+                // 设置窗口标题 (sign_id=10005)
                 string localizedTitle = JsonLocalizationHelper.Instance.GetString(10005);
                 if (!string.IsNullOrEmpty(localizedTitle) && 
                     !localizedTitle.StartsWith("未找到") && 
@@ -48,14 +58,69 @@ namespace ImageRecognitionApp.Assets.UI
                 {
                     this.Title = localizedTitle;
                 }
+                
+                // 设置系统信息折叠面板标题 (sign_id=20007)
+                string systemInfoTitle = JsonLocalizationHelper.Instance.GetString(20007);
+                if (!string.IsNullOrEmpty(systemInfoTitle) && 
+                    !systemInfoTitle.StartsWith("未找到") && 
+                    !systemInfoTitle.StartsWith("ERROR_"))
+                {
+                    SystemInfoExpander.Header = systemInfoTitle;
+                }
+                else
+                {
+                    SystemInfoExpander.Header = "系统信息";
+                }
+                
+                // 设置设备信息折叠面板标题 (sign_id=20008)
+                string deviceInfoTitle = JsonLocalizationHelper.Instance.GetString(20008);
+                if (!string.IsNullOrEmpty(deviceInfoTitle) && 
+                    !deviceInfoTitle.StartsWith("未找到") && 
+                    !deviceInfoTitle.StartsWith("ERROR_"))
+                {
+                    DeviceInfoExpander.Header = deviceInfoTitle;
+                }
+                else
+                {
+                    DeviceInfoExpander.Header = "设备信息";
+                }
+                
+                // 设置系统信息项标签
+                WinVersionLabel.Text = GetLocalizedText(20009, "Windows版本:");
+                WinBuildLabel.Text = GetLocalizedText(20010, "Windows版本号:");
+                OSVersionLabel.Text = GetLocalizedText(20011, "操作系统版本:");
+                DeviceNameLabel.Text = GetLocalizedText(20012, "设备名称:");
+                ArchitectureLabel.Text = GetLocalizedText(20013, "系统架构:");
+                DeviceIDLabel.Text = GetLocalizedText(20014, "设备ID:");
+                ProductIDLabel.Text = GetLocalizedText(20015, "产品ID:");
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"设置系统信息窗口标题时出错: {ex.Message}");
+                (App.Current as App)?.LogMessage($"初始化本地化文本时出错: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// 获取本地化文本，如果获取失败则返回默认值
+        /// </summary>
+        /// <param name="signId">本地化标识ID</param>
+        /// <param name="defaultText">默认文本</param>
+        /// <returns>本地化文本或默认文本</returns>
+        private string GetLocalizedText(int signId, string defaultText)
+        {
+            try
+            {
+                string localizedText = JsonLocalizationHelper.Instance.GetString(signId);
+                if (!string.IsNullOrEmpty(localizedText) && 
+                    !localizedText.StartsWith("未找到") && 
+                    !localizedText.StartsWith("ERROR_"))
+                {
+                    return localizedText;
+                }
+            }
+            catch { }
             
-            // 加载系统信息
-            LoadSystemInformation();
+            return defaultText;
         }
         
         /// <summary>
@@ -65,49 +130,82 @@ namespace ImageRecognitionApp.Assets.UI
         {
             try
             {
-                // 获取.NET Framework版本
-                FrameworkVersionText.Text = Environment.Version.ToString();
+                // 获取Windows版本
+                try
+                {
+                    string winVersion = GetWindowsVersion();
+                    WinVersionValue.Text = string.IsNullOrEmpty(winVersion) ? GetLocalizedText(20016, "未正常获取") : winVersion;
+                }
+                catch (Exception)
+                {
+                    WinVersionValue.Text = GetLocalizedText(20016, "未正常获取");
+                }
                 
-                // 获取操作系统信息
-                OSVersionText.Text = $"{Environment.OSVersion.VersionString}";
+                // 获取Windows版本号
+                try
+                {
+                    string winBuild = GetWindowsBuildNumber();
+                    WinBuildValue.Text = string.IsNullOrEmpty(winBuild) ? GetLocalizedText(20016, "未正常获取") : winBuild;
+                }
+                catch (Exception)
+                {
+                    WinBuildValue.Text = GetLocalizedText(20016, "未正常获取");
+                }
+                
+                // 获取操作系统版本
+                try
+                {
+                    string osVersion = Environment.OSVersion.VersionString;
+                    OSVersionValue.Text = string.IsNullOrEmpty(osVersion) ? GetLocalizedText(20016, "未正常获取") : osVersion;
+                }
+                catch (Exception)
+                {
+                    OSVersionValue.Text = GetLocalizedText(20016, "未正常获取");
+                }
+                
+                // 获取设备名称
+                try
+                {
+                    string deviceName = Environment.MachineName;
+                    DeviceNameValue.Text = string.IsNullOrEmpty(deviceName) ? GetLocalizedText(20016, "未正常获取") : deviceName;
+                }
+                catch (Exception)
+                {
+                    DeviceNameValue.Text = GetLocalizedText(20016, "未正常获取");
+                }
                 
                 // 获取系统架构
-                ArchitectureText.Text = Environment.Is64BitOperatingSystem ? "64位" : "32位";
-                
-                // 获取系统内存信息
                 try
                 {
-                    ulong totalMemoryBytes = GetTotalPhysicalMemory();
-                    ulong totalMemoryGB = totalMemoryBytes / (1024 * 1024 * 1024);
-                    MemoryText.Text = $"{totalMemoryGB} GB";
+                    string architecture = Environment.Is64BitOperatingSystem ? "X86_64" : "X86_32";
+                    ArchitectureValue.Text = architecture;
                 }
                 catch (Exception)
                 {
-                    MemoryText.Text = "无法获取";
+                    ArchitectureValue.Text = GetLocalizedText(20016, "未正常获取");
                 }
                 
-                // 获取CPU信息
+                // 获取设备ID
                 try
                 {
-                    string cpuInfo = GetCPUInformation();
-                    CPUText.Text = cpuInfo;
+                    string deviceId = GetDeviceId();
+                    DeviceIDValue.Text = string.IsNullOrEmpty(deviceId) ? GetLocalizedText(20016, "未正常获取") : deviceId;
                 }
                 catch (Exception)
                 {
-                    CPUText.Text = "无法获取";
+                    DeviceIDValue.Text = GetLocalizedText(20016, "未正常获取");
                 }
                 
-                // 获取屏幕分辨率
-                double screenWidth = SystemParameters.PrimaryScreenWidth;
-                double screenHeight = SystemParameters.PrimaryScreenHeight;
-                ResolutionText.Text = $"{screenWidth} × {screenHeight}";
-                
-                // 获取应用程序版本
-                Version version = Assembly.GetExecutingAssembly().GetName().Version;
-                AppVersionText.Text = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
-                
-                // 获取应用程序路径
-                AppPathText.Text = AppDomain.CurrentDomain.BaseDirectory;
+                // 获取产品ID
+                try
+                {
+                    string productId = GetProductId();
+                    ProductIDValue.Text = string.IsNullOrEmpty(productId) ? GetLocalizedText(20016, "未正常获取") : productId;
+                }
+                catch (Exception)
+                {
+                    ProductIDValue.Text = GetLocalizedText(20016, "未正常获取");
+                }
             }
             catch (Exception ex)
             {
@@ -117,46 +215,135 @@ namespace ImageRecognitionApp.Assets.UI
         }
         
         /// <summary>
-        /// 获取总物理内存大小
+        /// 获取Windows版本名称
         /// </summary>
-        /// <returns>总物理内存字节数</returns>
-        private ulong GetTotalPhysicalMemory()
+        /// <returns>Windows版本名称</returns>
+        private string GetWindowsVersion()
         {
             try
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem"))
+                // 获取Windows版本信息
+                Version version = Environment.OSVersion.Version;
+                
+                // 根据版本号判断Windows版本名称
+                if (version.Major == 10 && version.Build >= 22000)
                 {
-                    foreach (ManagementObject obj in searcher.Get())
-                    {
-                        return Convert.ToUInt64(obj["TotalPhysicalMemory"]);
-                    }
+                    return "Windows 11";
+                }
+                else if (version.Major == 10)
+                {
+                    return "Windows 10";
+                }
+                else if (version.Major == 6 && version.Minor == 3)
+                {
+                    return "Windows 8.1";
+                }
+                else if (version.Major == 6 && version.Minor == 2)
+                {
+                    return "Windows 8";
+                }
+                else if (version.Major == 6 && version.Minor == 1)
+                {
+                    return "Windows 7";
+                }
+                else
+                {
+                    return "Windows 其他版本";
                 }
             }
             catch { }
             
-            return 0;
+            return string.Empty;
         }
         
         /// <summary>
-        /// 获取CPU信息
+        /// 获取Windows内部版本号
         /// </summary>
-        /// <returns>CPU信息</returns>
-        private string GetCPUInformation()
+        /// <returns>Windows内部版本号</returns>
+        private string GetWindowsBuildNumber()
         {
             try
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_Processor"))
+                // 使用ManagementObjectSearcher获取更详细的Windows版本信息
+                using (var searcher = new ManagementObjectSearcher("SELECT BuildNumber, CSDVersion FROM Win32_OperatingSystem"))
                 {
                     foreach (ManagementObject obj in searcher.Get())
                     {
-                        return obj["Name"].ToString();
+                        string buildNumber = obj["BuildNumber"]?.ToString() ?? string.Empty;
+                        string csdVersion = obj["CSDVersion"]?.ToString() ?? string.Empty;
+                        
+                        if (!string.IsNullOrEmpty(buildNumber))
+                        {
+                            if (!string.IsNullOrEmpty(csdVersion))
+                            {
+                                return $"{buildNumber} {csdVersion}";
+                            }
+                            return buildNumber;
+                        }
+                    }
+                }
+                
+                // 如果上面的方法失败，回退到Environment.OSVersion
+                return Environment.OSVersion.Version.Build.ToString();
+            }
+            catch { }
+            
+            return string.Empty;
+        }
+        
+        /// <summary>
+        /// 获取设备ID
+        /// </summary>
+        /// <returns>设备ID</returns>
+        private string GetDeviceId()
+        {
+            try
+            {
+                // 使用ManagementObjectSearcher获取设备ID
+                using (var searcher = new ManagementObjectSearcher("SELECT UUID FROM Win32_ComputerSystemProduct"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        string uuid = obj["UUID"]?.ToString() ?? string.Empty;
+                        if (!string.IsNullOrEmpty(uuid) && !uuid.Equals("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return uuid;
+                        }
                     }
                 }
             }
             catch { }
             
-            return "未知处理器";
+            return string.Empty;
         }
+        
+        /// <summary>
+        /// 获取产品ID
+        /// </summary>
+        /// <returns>产品ID</returns>
+        private string GetProductId()
+        {
+            try
+            {
+                // 使用ManagementObjectSearcher获取产品ID
+                using (var searcher = new ManagementObjectSearcher("SELECT IdentificationCode FROM Win32_ComputerSystemProduct"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        string productId = obj["IdentificationCode"]?.ToString() ?? string.Empty;
+                        if (!string.IsNullOrEmpty(productId))
+                        {
+                            return productId;
+                        }
+                    }
+                }
+            }
+            catch { }
+            
+            return string.Empty;
+        }
+        
+
         
         /// <summary>
         /// 关闭按钮点击事件
