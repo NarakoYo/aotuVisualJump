@@ -34,13 +34,12 @@
         
         <!-- 折叠面板样式 -->
         <Style x:Key="InfoExpanderStyle" TargetType="Expander">
-            <Setter Property="Background" Value="#252526"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="18"/>
             <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="Margin" Value="0,0,0,14"/>
             <Setter Property="BorderBrush" Value="#3E3E42"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="10"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -157,7 +156,7 @@
                 
                 <!-- 内容区域 -->
                 <Grid Margin="0,40,0,0" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Background="Transparent" Padding="16" 
+                    <ScrollViewer VerticalScrollBarVisibility="Hidden" Background="Transparent" Padding="16" 
                                   HorizontalScrollBarVisibility="Disabled">
                         <StackPanel Orientation="Vertical" Width="Auto" Height="Auto" Margin="0,0,0,10">
                             <!-- 系统信息折叠面板 -->
@@ -236,7 +235,7 @@
                             </Expander>
                             
                             <!-- 设备信息折叠面板 -->
-                            <Expander x:Name="DeviceInfoExpander" Style="{StaticResource InfoExpanderStyle}" IsExpanded="False">
+                            <Expander x:Name="DeviceInfoExpander" Style="{StaticResource InfoExpanderStyle}" IsExpanded="True">
                                 <StackPanel>
                                     <!-- 型号 -->
                             <Grid Style="{StaticResource InfoItemStyle}">
