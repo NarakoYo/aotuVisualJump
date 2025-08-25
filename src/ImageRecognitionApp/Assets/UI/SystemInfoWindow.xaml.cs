@@ -9,6 +9,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using ImageRecognitionApp.unit;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ImageRecognitionApp.Assets.UI
 {
@@ -63,7 +65,7 @@ namespace ImageRecognitionApp.Assets.UI
             {
                 // 为系统信息折叠面板设置图标和动画
                 SetupExpander(SystemInfoExpander);
-                
+
                 // 为设备信息折叠面板设置图标和动画
                 SetupExpander(DeviceInfoExpander);
             }
@@ -835,34 +837,79 @@ namespace ImageRecognitionApp.Assets.UI
 
                             // 获取SDRAM技术版本
                             string memoryType = "未知类型";
-                            if (obj["MemoryType"] != null)
+                            
+                            // 优先尝试从SMBIOSMemoryType获取类型，因为它通常更准确
+                            if (obj["SMBIOSMemoryType"] != null)
                             {
                                 try
                                 {
-                                    uint typeCode = Convert.ToUInt32(obj["MemoryType"]);
-                                    // 扩展MemoryType编码映射，处理更多可能的值
-                                    switch (typeCode)
+                                    uint smbiosType = Convert.ToUInt32(obj["SMBIOSMemoryType"]);
+                                    switch (smbiosType)
                                     {
-                                        case 0:
-                                            memoryType = "未知";
-                                            // 尝试从SMBIOSMemoryType获取更准确的类型
-                                            if (obj["SMBIOSMemoryType"] != null)
+                                        case 20: memoryType = "DDR"; break;
+                                        case 21: memoryType = "DDR2"; break;
+                                        case 24: memoryType = "DDR3"; break;
+                                        case 26: memoryType = "DDR4"; break;
+                                        case 28: memoryType = "DDR5"; break;
+                                        default: 
+                                            // 如果SMBIOSMemoryType没有匹配的已知类型，再尝试使用MemoryType
+                                            if (obj["MemoryType"] != null)
                                             {
                                                 try
                                                 {
-                                                    uint smbiosType = Convert.ToUInt32(obj["SMBIOSMemoryType"]);
-                                                    switch (smbiosType)
+                                                    uint typeCode = Convert.ToUInt32(obj["MemoryType"]);
+                                                    switch (typeCode)
                                                     {
                                                         case 20: memoryType = "DDR"; break;
                                                         case 21: memoryType = "DDR2"; break;
                                                         case 24: memoryType = "DDR3"; break;
                                                         case 26: memoryType = "DDR4"; break;
                                                         case 28: memoryType = "DDR5"; break;
+                                                        // 添加更多可能的类型编码
+                                                        case 1: memoryType = "其他"; break;
+                                                        case 2: memoryType = "DRAM"; break;
+                                                        case 3: memoryType = "SRAM"; break;
+                                                        case 4: memoryType = "VRAM"; break;
+                                                        case 5: memoryType = "EDRAM"; break;
+                                                        case 6: memoryType = "RAM"; break;
+                                                        case 7: memoryType = "ROM"; break;
+                                                        case 8: memoryType = "FLASH"; break;
+                                                        case 9: memoryType = "EEPROM"; break;
+                                                        case 10: memoryType = "FEPROM"; break;
+                                                        case 11: memoryType = "EPROM"; break;
+                                                        case 12: memoryType = "CDRAM"; break;
+                                                        case 13: memoryType = "3DRAM"; break;
+                                                        case 14: memoryType = "SDRAM"; break;
+                                                        case 15: memoryType = "SGRAM"; break;
+                                                        case 16: memoryType = "RDRAM"; break;
+                                                        case 17: memoryType = "DDR SDRAM"; break;
+                                                        case 18: memoryType = "GDDR SDRAM"; break;
+                                                        case 19: memoryType = "GDDR2 SDRAM"; break;
+                                                        case 22: memoryType = "DDR2 FB-DIMM"; break;
+                                                        case 25: memoryType = "DDR3 FB-DIMM"; break;
+                                                        case 27: memoryType = "LPDDR"; break;
+                                                        case 29: memoryType = "LPDDR2"; break;
+                                                        case 30: memoryType = "LPDDR3"; break;
+                                                        case 31: memoryType = "LPDDR4"; break;
+                                                        case 32: memoryType = "LPDDR5"; break;
+                                                        default: memoryType = "未知类型"; break;
                                                     }
                                                 }
                                                 catch { }
                                             }
                                             break;
+                                    }
+                                }
+                                catch { }
+                            }
+                            // 如果SMBIOSMemoryType获取失败，再尝试使用MemoryType
+                            else if (obj["MemoryType"] != null)
+                            {
+                                try
+                                {
+                                    uint typeCode = Convert.ToUInt32(obj["MemoryType"]);
+                                    switch (typeCode)
+                                    {
                                         case 20: memoryType = "DDR"; break;
                                         case 21: memoryType = "DDR2"; break;
                                         case 24: memoryType = "DDR3"; break;
@@ -895,7 +942,7 @@ namespace ImageRecognitionApp.Assets.UI
                                         case 30: memoryType = "LPDDR3"; break;
                                         case 31: memoryType = "LPDDR4"; break;
                                         case 32: memoryType = "LPDDR5"; break;
-                                        default: memoryType = $"DDR{typeCode}"; break;
+                                        default: memoryType = "未知类型"; break;
                                     }
                                 }
                                 catch { }
@@ -959,24 +1006,107 @@ namespace ImageRecognitionApp.Assets.UI
         }
 
         /// <summary>
-        /// 获取图形处理器信息
+        /// 获取图形处理器信息（物理显示适配器）
         /// </summary>
         /// <returns>GPU信息</returns>
         private string GetGpuInfo()
         {
             try
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController"))
+                StringBuilder gpuInfo = new StringBuilder();
+                
+                // 1. 首先尝试从Win32_VideoController获取基本信息
+                using (var searcher = new ManagementObjectSearcher("SELECT Name, AdapterCompatibility, AdapterRAM FROM Win32_VideoController"))
                 {
                     foreach (ManagementObject obj in searcher.Get())
                     {
-                        string gpuName = obj["Name"]?.ToString() ?? string.Empty;
-                        if (!string.IsNullOrEmpty(gpuName))
+                        try
                         {
-                            return gpuName;
+                            // 获取显卡名称
+                            string gpuName = obj["Name"]?.ToString() ?? "未知型号";
+                            
+                            // 获取显卡制造商（英文名称）
+                            string manufacturer = obj["AdapterCompatibility"]?.ToString() ?? "未知制造商";
+                            
+                            // 获取显存大小 - WMI中的AdapterRAM以字节为单位
+                            ulong videoRamBytes = 0;
+                            if (obj["AdapterRAM"] != null)
+                            {
+                                try
+                                {
+                                    videoRamBytes = Convert.ToUInt64(obj["AdapterRAM"]);
+                                }
+                                catch { }
+                            }
+                            
+                            // 判断是否为物理显示适配器（虚拟显示适配器通常没有显存）
+                            if (videoRamBytes > 0)
+                            {
+                                // 计算显存大小（GB）- 使用decimal确保精度
+                                // 注意：某些系统上WMI返回的显存值可能只是实际值的一半，需要乘以2进行修正
+                                decimal videoRamGB = Math.Round((decimal)videoRamBytes * 2 / (1024 * 1024 * 1024), 2);
+                                
+                                // 默认使用GB为单位，仅在小于1GB时使用MB为单位
+                                string videoRamInfo;
+                                if (videoRamGB < 1.0m)
+                                {
+                                    // 转换为MB单位显示
+                                    decimal videoRamMB = Math.Round((decimal)videoRamBytes * 2 / (1024 * 1024), 2);
+                                    videoRamInfo = $"{videoRamMB} MB";
+                                }
+                                else
+                                {
+                                    // 使用GB单位显示
+                                    videoRamInfo = $"{videoRamGB} GB";
+                                }
+                                
+                                // 构建显卡信息字符串
+                                string gpuDetails = $"{gpuName} ({manufacturer}) - {videoRamInfo}";
+                                
+                                if (gpuInfo.Length > 0)
+                                {
+                                    // 多个显卡之间换行显示
+                                    gpuInfo.Append(Environment.NewLine);
+                                }
+                                
+                                gpuInfo.Append(gpuDetails);
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            // 捕获单个显卡信息获取异常，继续处理其他显卡
                         }
                     }
                 }
+                
+                // 2. 如果上面没有获取到信息，尝试从Win32_PNPEntity获取额外信息
+                if (gpuInfo.Length == 0)
+                {
+                    using (var searcher = new ManagementObjectSearcher("SELECT Name, Manufacturer FROM Win32_PNPEntity WHERE Service='nvlddmkm' OR Service='amdkmdag' OR Service='igfx'"))
+                    {
+                        foreach (ManagementObject obj in searcher.Get())
+                        {
+                            try
+                            {
+                                string gpuName = obj["Name"]?.ToString() ?? "未知型号";
+                                string manufacturer = obj["Manufacturer"]?.ToString() ?? "未知制造商";
+                                
+                                string gpuDetails = $"{gpuName} ({manufacturer})";
+                                
+                                if (gpuInfo.Length > 0)
+                                {
+                                    gpuInfo.Append(Environment.NewLine);
+                                }
+                                gpuInfo.Append(gpuDetails);
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                
+                string result = gpuInfo.ToString();
+                // 确保结果不为空
+                return !string.IsNullOrEmpty(result) ? result : string.Empty;
             }
             catch { }
             return string.Empty;
@@ -1148,6 +1278,70 @@ namespace ImageRecognitionApp.Assets.UI
                 StringBuilder monitorInfo = new StringBuilder();
                 int monitorCount = 0;
 
+                // 首先收集所有显示适配器的信息，建立设备ID到分辨率和刷新率的映射
+                Dictionary<string, Tuple<string, string>> displayAdapterInfo = new Dictionary<string, Tuple<string, string>>();
+                try
+                {
+                    using (var videoControllerSearcher = new ManagementObjectSearcher("SELECT DeviceID, CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate FROM Win32_VideoController"))
+                    {
+                        foreach (ManagementObject videoObj in videoControllerSearcher.Get())
+                        {
+                            try
+                            {
+                                string deviceId = videoObj["DeviceID"]?.ToString() ?? "";
+                                string resolution = "未知分辨率";
+                                string refreshRate = "未知刷新率";
+
+                                if (videoObj["CurrentHorizontalResolution"] != null && videoObj["CurrentVerticalResolution"] != null)
+                                {
+                                    resolution = $"{videoObj["CurrentHorizontalResolution"]}×{videoObj["CurrentVerticalResolution"]}";
+                                }
+                                if (videoObj["CurrentRefreshRate"] != null)
+                                {
+                                    refreshRate = $"{videoObj["CurrentRefreshRate"]}Hz";
+                                }
+
+                                if (!string.IsNullOrEmpty(deviceId))
+                                {
+                                    displayAdapterInfo[deviceId] = new Tuple<string, string>(resolution, refreshRate);
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+
+                // 收集显示器尺寸信息，使用DeviceID或InstanceName建立关联
+                Dictionary<string, string> monitorSizeInfo = new Dictionary<string, string>();
+                try
+                {
+                    using (var wmiSearcher = new ManagementObjectSearcher("root\\WMI", "SELECT InstanceName, MaxHorizontalImageSize, MaxVerticalImageSize FROM WmiMonitorBasicDisplayParams"))
+                    {
+                        foreach (ManagementObject wmiObj in wmiSearcher.Get())
+                        {
+                            try
+                            {
+                                string instanceName = wmiObj["InstanceName"]?.ToString() ?? "";
+                                if (wmiObj["MaxHorizontalImageSize"] != null && wmiObj["MaxVerticalImageSize"] != null)
+                                {
+                                    double widthCm = Convert.ToDouble(wmiObj["MaxHorizontalImageSize"]);
+                                    double heightCm = Convert.ToDouble(wmiObj["MaxVerticalImageSize"]);
+                                    double diagonalCm = Math.Sqrt(widthCm * widthCm + heightCm * heightCm);
+                                    string size = $"{Math.Round(diagonalCm, 1)}cm";
+                                    
+                                    if (!string.IsNullOrEmpty(instanceName))
+                                    {
+                                        monitorSizeInfo[instanceName] = size;
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+                catch { }
+
                 // 方法1：尝试使用Win32_PnPEntity获取显示器信息
                 try
                 {
@@ -1158,36 +1352,38 @@ namespace ImageRecognitionApp.Assets.UI
                             try
                             {
                                 string caption = obj["Caption"]?.ToString() ?? "未知显示器";
+                                string pnpDeviceId = obj["PNPDeviceID"]?.ToString() ?? "";
 
                                 // 初始化显示器信息
                                 string resolution = "未知分辨率";
                                 string refreshRate = "未知刷新率";
                                 string size = "未知尺寸";
 
-                                // 尝试从Win32_VideoController获取分辨率和刷新率
-                                try
+                                // 尝试匹配显示适配器信息
+                                if (displayAdapterInfo.Count > 0)
                                 {
-                                    using (var displaySearcher = new ManagementObjectSearcher("SELECT CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate FROM Win32_VideoController"))
+                                    // 如果只有一个显示适配器，直接使用其信息
+                                    if (displayAdapterInfo.Count == 1)
                                     {
-                                        // 为所有显示控制器收集信息
-                                        foreach (ManagementObject displayObj in displaySearcher.Get())
+                                        var kvp = displayAdapterInfo.First();
+                                        resolution = kvp.Value.Item1;
+                                        refreshRate = kvp.Value.Item2;
+                                    }
+                                    // 如果有多个显示适配器，尝试通过PNPDeviceID部分匹配
+                                    else if (!string.IsNullOrEmpty(pnpDeviceId))
+                                    {
+                                        foreach (var kvp in displayAdapterInfo)
                                         {
-                                            try
+                                            if (kvp.Key.Contains(pnpDeviceId.Substring(0, Math.Min(10, pnpDeviceId.Length))) ||
+                                                pnpDeviceId.Contains(kvp.Key.Substring(0, Math.Min(10, kvp.Key.Length))))
                                             {
-                                                if (displayObj["CurrentHorizontalResolution"] != null && displayObj["CurrentVerticalResolution"] != null)
-                                                {
-                                                    resolution = $"{displayObj["CurrentHorizontalResolution"]}×{displayObj["CurrentVerticalResolution"]}";
-                                                }
-                                                if (displayObj["CurrentRefreshRate"] != null)
-                                                {
-                                                    refreshRate = $"{displayObj["CurrentRefreshRate"]}Hz";
-                                                }
+                                                resolution = kvp.Value.Item1;
+                                                refreshRate = kvp.Value.Item2;
+                                                break;
                                             }
-                                            catch { }
                                         }
                                     }
                                 }
-                                catch { }
 
                                 // 如果上面方法失败，尝试使用Win32_DisplayConfiguration
                                 if (resolution == "未知分辨率")
@@ -1203,6 +1399,7 @@ namespace ImageRecognitionApp.Assets.UI
                                                     if (configObj["CurrentHorizontalResolution"] != null && configObj["CurrentVerticalResolution"] != null)
                                                     {
                                                         resolution = $"{configObj["CurrentHorizontalResolution"]}×{configObj["CurrentVerticalResolution"]}";
+                                                        break;
                                                     }
                                                 }
                                                 catch { }
@@ -1212,27 +1409,30 @@ namespace ImageRecognitionApp.Assets.UI
                                     catch { }
                                 }
 
-                                // 尝试使用WmiMonitorBasicDisplayParams获取尺寸信息
-                                try
+                                // 尝试匹配尺寸信息
+                                if (monitorSizeInfo.Count > 0)
                                 {
-                                    using (var wmiSearcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM WmiMonitorBasicDisplayParams"))
+                                    // 如果只有一个显示器尺寸信息，直接使用
+                                    if (monitorSizeInfo.Count == 1)
                                     {
-                                        foreach (ManagementObject wmiObj in wmiSearcher.Get())
+                                        size = monitorSizeInfo.First().Value;
+                                    }
+                                    // 否则尝试通过InstanceName和PNPDeviceID的部分匹配
+                                    else if (!string.IsNullOrEmpty(pnpDeviceId))
+                                    {
+                                        foreach (var kvp in monitorSizeInfo)
                                         {
-                                            if (wmiObj["MaxHorizontalImageSize"] != null && wmiObj["MaxVerticalImageSize"] != null)
+                                            if (kvp.Key.Contains(pnpDeviceId.Substring(0, Math.Min(10, pnpDeviceId.Length))) ||
+                                                pnpDeviceId.Contains(kvp.Key.Substring(0, Math.Min(10, kvp.Key.Length))))
                                             {
-                                                double widthCm = Convert.ToDouble(wmiObj["MaxHorizontalImageSize"]);
-                                                double heightCm = Convert.ToDouble(wmiObj["MaxVerticalImageSize"]);
-                                                double diagonalCm = Math.Sqrt(widthCm * widthCm + heightCm * heightCm);
-                                                size = $"{Math.Round(diagonalCm, 1)}cm";
+                                                size = kvp.Value;
                                                 break;
                                             }
                                         }
                                     }
                                 }
-                                catch { }
 
-                                // 格式化显示器信息，减少空格以避免不必要的换行
+                                // 格式化显示器信息
                                 string monitorDetails = $"{caption} ({resolution}  {refreshRate}  {size})";
 
                                 if (monitorInfo.Length > 0)
