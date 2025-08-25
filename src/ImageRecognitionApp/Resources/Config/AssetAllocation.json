@@ -44,6 +44,18 @@
             {
                 "sign_id":10014,
                 "Asset":"Icons\\igoutu\\fold.png"
+            },
+            {
+                "sign_id":20007,
+                "Asset":"Icons\\igoutu\\icons8-chevron-down-90.png"
+            },
+            {
+                "sign_id":20008,
+                "Asset":"Icons\\igoutu\\icons8-chevron-up-90.png"
+            },
+            {
+                "sign_id":20025,
+                "Asset":"Icons\\igoutu\\icons8-aspect-ratio-64.png"
             }
         ]
     }

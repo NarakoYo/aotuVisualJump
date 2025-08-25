@@ -4,6 +4,10 @@ using System.Management;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp.Assets.UI
@@ -36,6 +40,119 @@ namespace ImageRecognitionApp.Assets.UI
 
             // 加载系统信息
             LoadSystemInformation();
+
+            // 窗口加载完成后设置折叠面板的箭头图标和动画
+            this.Loaded += SystemInfoWindow_Loaded;
+        }
+
+        /// <summary>
+        /// 窗口加载完成事件处理
+        /// </summary>
+        private void SystemInfoWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 为所有折叠面板添加箭头图标和动画
+            SetupExpanderIconsAndAnimations();
+        }
+
+        /// <summary>
+        /// 为折叠面板设置箭头图标和动画
+        /// </summary>
+        private void SetupExpanderIconsAndAnimations()
+        {
+            try
+            {
+                // 为系统信息折叠面板设置图标和动画
+                SetupExpander(SystemInfoExpander);
+                
+                // 为设备信息折叠面板设置图标和动画
+                SetupExpander(DeviceInfoExpander);
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"设置折叠面板图标时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 为单个折叠面板设置图标
+        /// </summary>
+        private void SetupExpander(Expander expander)
+        {
+            try
+            {
+                // 查找图标容器
+                Grid iconContainer = FindVisualChild<Grid>(expander, "IconContainer");
+                if (iconContainer != null)
+                {
+                    // 查找箭头图标
+                    Image arrowIcon = FindVisualChild<Image>(iconContainer, "ArrowIcon");
+                    if (arrowIcon != null)
+                    {
+                        // 根据当前展开状态设置图标
+                        UpdateArrowIcon(expander, arrowIcon);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"为单个折叠面板设置图标时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 更新箭头图标资源
+        /// </summary>
+        private void UpdateArrowIcon(Expander expander, Image arrowIcon)
+        {
+            try
+            {
+                if (expander != null && arrowIcon != null)
+                {
+                    // 根据展开状态设置不同的图标
+                    int iconId = expander.IsExpanded ? 20007 : 20008;
+                    BitmapImage iconImage = AssetHelper.Instance.GetImageAsset(iconId);
+                    arrowIcon.Source = iconImage;
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"更新箭头图标时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 查找指定名称的视觉子元素
+        /// </summary>
+        private T FindVisualChild<T>(DependencyObject parent, string name) where T : FrameworkElement
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T frameworkElement && frameworkElement.Name == name)
+                {
+                    return frameworkElement;
+                }
+                else
+                {
+                    T result = FindVisualChild<T>(child, name);
+                    if (result != null)
+                        return result;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 获取箭头图标的父级折叠面板
+        /// </summary>
+        private Expander GetParentExpander(DependencyObject child)
+        {
+            DependencyObject parent = VisualTreeHelper.GetParent(child);
+            while (parent != null && !(parent is Expander))
+            {
+                parent = VisualTreeHelper.GetParent(parent);
+            }
+            return parent as Expander;
         }
 
         /// <summary>
@@ -307,15 +424,18 @@ namespace ImageRecognitionApp.Assets.UI
                     NetworkCardValue.Text = GetLocalizedText(20016, "未正常获取");
                 }
 
-                // 获取显示器信息
+                // 显示显示器信息（包含比例图标）
                 try
                 {
-                    string monitor = GetMonitorInfo();
-                    MonitorValue.Text = string.IsNullOrEmpty(monitor) ? GetLocalizedText(20016, "未正常获取") : monitor;
+                    DisplayMonitorInfo();
                 }
                 catch (Exception)
                 {
-                    MonitorValue.Text = GetLocalizedText(20016, "未正常获取");
+                    MonitorValue.Children.Clear();
+                    TextBlock errorText = new TextBlock();
+                    errorText.Text = GetLocalizedText(20016, "未正常获取");
+                    errorText.Style = FindResource("InfoValueStyle") as Style;
+                    MonitorValue.Children.Add(errorText);
                 }
             }
             catch (Exception ex)
@@ -365,6 +485,163 @@ namespace ImageRecognitionApp.Assets.UI
             catch { }
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// 显示显示器信息，包括比例图标
+        /// </summary>
+        private void DisplayMonitorInfo()
+        {
+            try
+            {
+                MonitorValue.Children.Clear();
+                string monitorInfo = GetMonitorInfo();
+
+                // 如果没有显示器信息或获取失败，直接显示文本
+                if (string.IsNullOrEmpty(monitorInfo) || monitorInfo == "显示器信息获取失败")
+                {
+                    TextBlock textBlock = new TextBlock();
+                    textBlock.Text = GetLocalizedText(20016, "未正常获取");
+                    textBlock.Style = FindResource("InfoValueStyle") as Style;
+                    MonitorValue.Children.Add(textBlock);
+                    return;
+                }
+
+                // 按换行符分割显示器信息
+                string[] monitorLines = monitorInfo.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (string line in monitorLines)
+                {
+                    // 为每个显示器创建一个水平排列的容器
+                    StackPanel monitorItemPanel = new StackPanel();
+                    monitorItemPanel.Orientation = Orientation.Horizontal;
+                    monitorItemPanel.Margin = new Thickness(0, 2, 0, 2);
+
+                    // 创建显示文本的TextBlock
+                    TextBlock textBlock = new TextBlock();
+                    textBlock.Style = FindResource("InfoValueStyle") as Style;
+                    textBlock.TextWrapping = TextWrapping.Wrap;
+                    textBlock.VerticalAlignment = VerticalAlignment.Center;
+
+                    try
+                    {
+                        // 尝试解析显示器信息，将图标放在尺寸前面
+                        int sizeStartIndex = line.LastIndexOf('(');
+                        if (sizeStartIndex > 0)
+                        {
+                            // 显示括号前的内容
+                            string captionPart = line.Substring(0, sizeStartIndex).Trim();
+                            string detailsPart = line.Substring(sizeStartIndex);
+
+                            // 查找尺寸信息的位置
+                            int sizeIndex = detailsPart.IndexOf("cm");
+                            if (sizeIndex > 0)
+                            {
+                                // 向前查找最后一个空格（在'cm'前的空格）
+                                int lastSpaceBeforeSize = detailsPart.LastIndexOf(' ', sizeIndex);
+                                if (lastSpaceBeforeSize > 0)
+                                {
+                                    // 创建一个容器来组合文本和图标
+                                    StackPanel textContainer = new StackPanel();
+                                    textContainer.Orientation = Orientation.Vertical;
+
+                                    // 添加标题文本
+                                    TextBlock captionTextBlock = new TextBlock();
+                                    captionTextBlock.Text = captionPart;
+                                    captionTextBlock.Style = FindResource("InfoValueStyle") as Style;
+                                    captionTextBlock.Margin = new Thickness(0, 2, 0, 2); // 覆盖样式中的左边距，设置为0以与其他信息保持左对齐
+                                    textContainer.Children.Add(captionTextBlock);
+
+                                    // 创建一个水平容器来放置细节信息
+                                    StackPanel detailsPanel = new StackPanel();
+                                    detailsPanel.Orientation = Orientation.Horizontal;
+                                    detailsPanel.Margin = new Thickness(0, 0, 0, 0); // 设置为0边距，避免缩进，与其他信息保持左对齐
+
+                                    // 添加尺寸前的内容
+                                    string beforeSizePart = detailsPart.Substring(0, lastSpaceBeforeSize);
+                                    TextBlock beforeSizeTextBlock = new TextBlock();
+                                    beforeSizeTextBlock.Text = beforeSizePart;
+                                    beforeSizeTextBlock.Style = FindResource("InfoValueStyle") as Style;
+                                    beforeSizeTextBlock.Margin = new Thickness(0, 0, 5, 0); // 添加右边距
+                                    detailsPanel.Children.Add(beforeSizeTextBlock);
+
+                                    // 创建一个水平容器来放置图标和尺寸文本，确保它们完全拼接
+                                    StackPanel sizeContainer = new StackPanel();
+                                    sizeContainer.Orientation = Orientation.Horizontal;
+                                    sizeContainer.VerticalAlignment = VerticalAlignment.Center;
+
+                                    // 创建比例图标
+                                    Image ratioIcon = new Image();
+                                    ratioIcon.Width = 16;
+                                    ratioIcon.Height = 16;
+                                    ratioIcon.Margin = new Thickness(0, 0, 0, 0); // 无边距，实现完全拼接
+                                    ratioIcon.VerticalAlignment = VerticalAlignment.Center;
+                                    ratioIcon.Opacity = 0.6; // 降低40%透明度
+
+                                    // 使用AssetHelper获取比例图标资源(sign_id=20025)
+                                    BitmapImage ratioImage = AssetHelper.Instance.GetImageAsset(20025);
+                                    ratioIcon.Source = ratioImage;
+
+                                    // 添加尺寸部分（与图标连接）
+                                    string sizePart = detailsPart.Substring(lastSpaceBeforeSize).Trim();
+                                    TextBlock sizeTextBlock = new TextBlock();
+                                    sizeTextBlock.Text = sizePart;
+                                    sizeTextBlock.Style = FindResource("InfoValueStyle") as Style;
+                                    sizeTextBlock.VerticalAlignment = VerticalAlignment.Center;
+                                    sizeTextBlock.Margin = new Thickness(0, 0, 0, 0); // 无边距
+
+                                    // 将图标和尺寸文本添加到容器，共同组成{size}
+                                    sizeContainer.Children.Add(ratioIcon);
+                                    sizeContainer.Children.Add(sizeTextBlock);
+
+                                    // 将尺寸容器添加到细节面板
+                                    detailsPanel.Children.Add(sizeContainer);
+
+                                    // 将细节面板添加到文本容器
+                                    textContainer.Children.Add(detailsPanel);
+
+                                    // 将文本容器添加到主容器
+                                    monitorItemPanel.Children.Add(textContainer);
+                                }
+                                else
+                                {
+                                    // 无法找到尺寸前的空格，使用默认显示
+                                    textBlock.Text = line;
+                                    monitorItemPanel.Children.Add(textBlock);
+                                }
+                            }
+                            else
+                            {
+                                // 无法找到尺寸信息，使用默认显示
+                                textBlock.Text = line;
+                                monitorItemPanel.Children.Add(textBlock);
+                            }
+                        }
+                        else
+                        {
+                            // 无法解析显示器信息格式，使用默认显示
+                            textBlock.Text = line;
+                            monitorItemPanel.Children.Add(textBlock);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // 解析或图标加载失败时记录日志，使用默认显示
+                        (App.Current as App)?.LogMessage($"加载比例图标或解析显示器信息失败: {ex.Message}");
+                        textBlock.Text = line;
+                        monitorItemPanel.Children.Add(textBlock);
+                    }
+
+                    // 将显示器信息项添加到主容器
+                    MonitorValue.Children.Add(monitorItemPanel);
+                }
+            }
+            catch (Exception ex)
+            {
+                // 异常处理
+                (App.Current as App)?.LogMessage($"显示显示器信息失败: {ex.Message}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -555,7 +832,7 @@ namespace ImageRecognitionApp.Assets.UI
                         {
                             // 获取产品型号
                             string model = obj["PartNumber"]?.ToString() ?? "未知型号";
-                            
+
                             // 获取SDRAM技术版本
                             string memoryType = "未知类型";
                             if (obj["MemoryType"] != null)
@@ -566,7 +843,7 @@ namespace ImageRecognitionApp.Assets.UI
                                     // 扩展MemoryType编码映射，处理更多可能的值
                                     switch (typeCode)
                                     {
-                                        case 0: 
+                                        case 0:
                                             memoryType = "未知";
                                             // 尝试从SMBIOSMemoryType获取更准确的类型
                                             if (obj["SMBIOSMemoryType"] != null)
@@ -623,7 +900,7 @@ namespace ImageRecognitionApp.Assets.UI
                                 }
                                 catch { }
                             }
-                            
+
                             // 获取内存频率
                             string speed = "未知频率";
                             if (obj["Speed"] != null)
@@ -635,7 +912,7 @@ namespace ImageRecognitionApp.Assets.UI
                                 }
                                 catch { }
                             }
-                            
+
                             // 获取容量
                             string capacityInfo = "未知容量";
                             if (obj["Capacity"] != null)
@@ -648,16 +925,16 @@ namespace ImageRecognitionApp.Assets.UI
                                 }
                                 catch { }
                             }
-                            
+
                             // 格式化内存信息，包含SDRAM技术版本
                             string memoryDetails = $"{model} ({memoryType}  {speed}  {capacityInfo})";
-                            
+
                             if (memoryInfo.Length > 0)
                             {
                                 // 多个内存条之间换行显示
                                 memoryInfo.Append(Environment.NewLine);
                             }
-                            
+
                             memoryInfo.Append(memoryDetails);
                         }
                         catch (Exception)
@@ -672,7 +949,7 @@ namespace ImageRecognitionApp.Assets.UI
                         }
                     }
                 }
-                
+
                 string result = memoryInfo.ToString();
                 // 确保结果不为空
                 return !string.IsNullOrEmpty(result) ? result : string.Empty;
@@ -727,7 +1004,7 @@ namespace ImageRecognitionApp.Assets.UI
                             string interfaceType = obj["InterfaceType"]?.ToString() ?? "未知类型";
                             // 获取大小
                             string sizeInfo = "未知大小";
-                            
+
                             if (obj["Size"] != null)
                             {
                                 try
@@ -738,16 +1015,16 @@ namespace ImageRecognitionApp.Assets.UI
                                 }
                                 catch { }
                             }
-                            
+
                             // 格式化磁盘信息
                             string diskDetails = $"{model} ({interfaceType}  {sizeInfo})";
-                            
+
                             if (diskInfo.Length > 0)
                             {
                                 // 多个磁盘之间换行显示
                                 diskInfo.Append(Environment.NewLine);
                             }
-                            
+
                             diskInfo.Append(diskDetails);
                         }
                         catch (Exception)
@@ -762,7 +1039,7 @@ namespace ImageRecognitionApp.Assets.UI
                         }
                     }
                 }
-                
+
                 string result = diskInfo.ToString();
                 // 确保结果不为null且处理可能的特殊字符
                 return result.Replace("\0", string.Empty);
@@ -805,17 +1082,56 @@ namespace ImageRecognitionApp.Assets.UI
         {
             try
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_NetworkAdapter WHERE NetConnectionStatus=2"))
+                StringBuilder networkCards = new StringBuilder();
+                // 查询所有网卡，不限制连接状态，并获取更多属性
+                using (var searcher = new ManagementObjectSearcher("SELECT Name, Description, Manufacturer, PNPDeviceID FROM Win32_NetworkAdapter"))
                 {
                     foreach (ManagementObject obj in searcher.Get())
                     {
-                        string networkCardName = obj["Name"]?.ToString() ?? string.Empty;
-                        if (!string.IsNullOrEmpty(networkCardName))
+                        try
                         {
-                            return networkCardName;
+                            string name = obj["Name"]?.ToString() ?? "未知网卡名称";
+                            string description = obj["Description"]?.ToString() ?? string.Empty;
+                            string manufacturer = obj["Manufacturer"]?.ToString() ?? string.Empty;
+                            string pnpDeviceId = obj["PNPDeviceID"]?.ToString() ?? string.Empty;
+                            bool isPhysical = true;
+
+                            // 简单判断是否为物理网卡
+                            // 虚拟网卡通常包含特定关键词或PNPDeviceID格式不同
+                            if (!string.IsNullOrEmpty(name) &&
+                                (name.Contains("Virtual") ||
+                                 name.Contains("虚拟") ||
+                                 name.Contains("VPN") ||
+                                 name.Contains("VMware") ||
+                                 name.Contains("Hyper-V") ||
+                                 name.Contains("VirtualBox") ||
+                                 name.Contains("Loopback") ||
+                                 name.Contains("Microsoft") && name.Contains("Adapter")))
+                            {
+                                isPhysical = false;
+                            }
+
+                            // 格式化网卡信息，标记是否为物理网卡
+                            string cardType = isPhysical ? "(物理网卡)" : "(虚拟网卡)";
+                            string cardInfo = $"{name} {cardType}";
+
+                            if (!string.IsNullOrEmpty(description))
+                            {
+                                cardInfo += $" - {description}";
+                            }
+
+                            if (networkCards.Length > 0)
+                            {
+                                networkCards.Append(Environment.NewLine);
+                            }
+                            networkCards.Append(cardInfo);
                         }
+                        catch { }
                     }
                 }
+
+                string result = networkCards.ToString();
+                return !string.IsNullOrEmpty(result) ? result : "未找到网卡信息";
             }
             catch { }
             return string.Empty;
@@ -829,26 +1145,152 @@ namespace ImageRecognitionApp.Assets.UI
         {
             try
             {
-                using (var searcher = new ManagementObjectSearcher("SELECT Caption FROM Win32_DesktopMonitor"))
+                StringBuilder monitorInfo = new StringBuilder();
+                int monitorCount = 0;
+
+                // 方法1：尝试使用Win32_PnPEntity获取显示器信息
+                try
                 {
-                    StringBuilder monitorInfo = new StringBuilder();
-                    foreach (ManagementObject obj in searcher.Get())
+                    using (var searcher = new ManagementObjectSearcher("SELECT Caption, PNPDeviceID FROM Win32_PnPEntity WHERE Service='monitor'"))
                     {
-                        string monitorName = obj["Caption"]?.ToString() ?? string.Empty;
-                        if (!string.IsNullOrEmpty(monitorName))
+                        foreach (ManagementObject obj in searcher.Get())
                         {
-                            if (monitorInfo.Length > 0)
+                            try
                             {
-                                monitorInfo.Append(Environment.NewLine);
+                                string caption = obj["Caption"]?.ToString() ?? "未知显示器";
+
+                                // 初始化显示器信息
+                                string resolution = "未知分辨率";
+                                string refreshRate = "未知刷新率";
+                                string size = "未知尺寸";
+
+                                // 尝试从Win32_VideoController获取分辨率和刷新率
+                                try
+                                {
+                                    using (var displaySearcher = new ManagementObjectSearcher("SELECT CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate FROM Win32_VideoController"))
+                                    {
+                                        // 为所有显示控制器收集信息
+                                        foreach (ManagementObject displayObj in displaySearcher.Get())
+                                        {
+                                            try
+                                            {
+                                                if (displayObj["CurrentHorizontalResolution"] != null && displayObj["CurrentVerticalResolution"] != null)
+                                                {
+                                                    resolution = $"{displayObj["CurrentHorizontalResolution"]}×{displayObj["CurrentVerticalResolution"]}";
+                                                }
+                                                if (displayObj["CurrentRefreshRate"] != null)
+                                                {
+                                                    refreshRate = $"{displayObj["CurrentRefreshRate"]}Hz";
+                                                }
+                                            }
+                                            catch { }
+                                        }
+                                    }
+                                }
+                                catch { }
+
+                                // 如果上面方法失败，尝试使用Win32_DisplayConfiguration
+                                if (resolution == "未知分辨率")
+                                {
+                                    try
+                                    {
+                                        using (var displayConfigSearcher = new ManagementObjectSearcher("SELECT CurrentHorizontalResolution, CurrentVerticalResolution FROM Win32_DisplayConfiguration"))
+                                        {
+                                            foreach (ManagementObject configObj in displayConfigSearcher.Get())
+                                            {
+                                                try
+                                                {
+                                                    if (configObj["CurrentHorizontalResolution"] != null && configObj["CurrentVerticalResolution"] != null)
+                                                    {
+                                                        resolution = $"{configObj["CurrentHorizontalResolution"]}×{configObj["CurrentVerticalResolution"]}";
+                                                    }
+                                                }
+                                                catch { }
+                                            }
+                                        }
+                                    }
+                                    catch { }
+                                }
+
+                                // 尝试使用WmiMonitorBasicDisplayParams获取尺寸信息
+                                try
+                                {
+                                    using (var wmiSearcher = new ManagementObjectSearcher("root\\WMI", "SELECT * FROM WmiMonitorBasicDisplayParams"))
+                                    {
+                                        foreach (ManagementObject wmiObj in wmiSearcher.Get())
+                                        {
+                                            if (wmiObj["MaxHorizontalImageSize"] != null && wmiObj["MaxVerticalImageSize"] != null)
+                                            {
+                                                double widthCm = Convert.ToDouble(wmiObj["MaxHorizontalImageSize"]);
+                                                double heightCm = Convert.ToDouble(wmiObj["MaxVerticalImageSize"]);
+                                                double diagonalCm = Math.Sqrt(widthCm * widthCm + heightCm * heightCm);
+                                                size = $"{Math.Round(diagonalCm, 1)}cm";
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                catch { }
+
+                                // 格式化显示器信息，减少空格以避免不必要的换行
+                                string monitorDetails = $"{caption} ({resolution}  {refreshRate}  {size})";
+
+                                if (monitorInfo.Length > 0)
+                                {
+                                    // 多个显示器之间换行显示
+                                    monitorInfo.Append(Environment.NewLine);
+                                }
+
+                                monitorInfo.Append(monitorDetails);
+                                monitorCount++;
                             }
-                            monitorInfo.Append(monitorName);
+                            catch { }
                         }
                     }
-                    return monitorInfo.ToString();
                 }
+                catch { }
+
+                // 如果方法1失败，尝试使用Win32_DesktopMonitor作为备用
+                if (monitorCount == 0)
+                {
+                    using (var searcher = new ManagementObjectSearcher("SELECT Caption, MonitorManufacturer FROM Win32_DesktopMonitor"))
+                    {
+                        foreach (ManagementObject obj in searcher.Get())
+                        {
+                            try
+                            {
+                                string caption = obj["Caption"]?.ToString() ?? "未知显示器";
+                                string manufacturer = obj["MonitorManufacturer"]?.ToString() ?? "未知品牌";
+
+                                string monitorDetails = $"{caption} ({manufacturer})";
+
+                                if (monitorInfo.Length > 0)
+                                {
+                                    monitorInfo.Append(Environment.NewLine);
+                                }
+
+                                monitorInfo.Append(monitorDetails);
+                                monitorCount++;
+                            }
+                            catch { }
+                        }
+                    }
+                }
+
+                // 如果还是没有获取到信息，返回通用信息
+                string result = monitorInfo.ToString();
+                if (string.IsNullOrEmpty(result))
+                {
+                    return "显示器信息获取失败";
+                }
+
+                return result;
             }
-            catch { }
-            return string.Empty;
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取显示器信息错误: {ex.Message}");
+                return "显示器信息获取失败";
+            }
         }
 
         /// <summary>

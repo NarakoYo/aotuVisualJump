@@ -34,43 +34,72 @@
         
         <!-- 折叠面板样式 -->
         <Style x:Key="InfoExpanderStyle" TargetType="Expander">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Normal"/>
-            <Setter Property="Margin" Value="0,0,0,14"/>
-            <Setter Property="BorderBrush" Value="#3E3E42"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Expander">
-                        <Border CornerRadius="4" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                            <DockPanel>
-                                <ToggleButton x:Name="HeaderSite" Content="{TemplateBinding Header}" DockPanel.Dock="Top"
-                                              IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                              Background="Transparent"
-                                              BorderThickness="0"
-                                              Padding="0"
-                                              HorizontalContentAlignment="Left"
-                                              Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}" FontWeight="{TemplateBinding FontWeight}">
-                                    <ToggleButton.Template>
-                                        <ControlTemplate TargetType="ToggleButton">
-                                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                        </ControlTemplate>
-                                    </ToggleButton.Template>
-                                </ToggleButton>
-                                <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed" DockPanel.Dock="Bottom" HorizontalAlignment="Left"/>
-                            </DockPanel>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsExpanded" Value="True">
-                                <Setter Property="Visibility" TargetName="ExpandSite" Value="Visible"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="FontSize" Value="18"/>
+                <Setter Property="FontWeight" Value="Normal"/>
+                <Setter Property="Margin" Value="0,0,0,14"/>
+                <Setter Property="BorderBrush" Value="#3E3E42"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="10"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Expander">
+                            <Border CornerRadius="4" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                                <DockPanel>
+                                    <ToggleButton x:Name="HeaderSite" Content="{TemplateBinding Header}" DockPanel.Dock="Top"
+                                                  IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Padding="0"
+                                                  HorizontalContentAlignment="Left"
+                                                  Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}" FontWeight="{TemplateBinding FontWeight}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                                    <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                                    <Grid x:Name="IconContainer" Margin="10,0,0,0" Width="16" Height="16" HorizontalAlignment="Left">
+                                                        <!-- 箭头图标 -->
+                                                        <Image x:Name="ArrowIcon" Width="16" Height="16" RenderTransformOrigin="0.5, 0.5">
+                                                            <Image.RenderTransform>
+                                                                <RotateTransform Angle="0"/>
+                                                            </Image.RenderTransform>
+                                                        </Image>
+                                                    </Grid>
+                                                </StackPanel>
+                                                <ControlTemplate.Resources>
+                                                    <Storyboard x:Key="ExpandAnimation">
+                                                        <DoubleAnimation Storyboard.TargetName="ArrowIcon" Storyboard.TargetProperty="RenderTransform.Angle" From="0" To="180" Duration="0:0:0.3"/>
+                                                    </Storyboard>
+                                                    <Storyboard x:Key="CollapseAnimation">
+                                                        <DoubleAnimation Storyboard.TargetName="ArrowIcon" Storyboard.TargetProperty="RenderTransform.Angle" From="180" To="0" Duration="0:0:0.3"/>
+                                                    </Storyboard>
+                                                </ControlTemplate.Resources>
+                                                <ControlTemplate.Triggers>
+                                                    <!-- 动画触发器 -->
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Trigger.EnterActions>
+                                                            <BeginStoryboard Storyboard="{StaticResource ExpandAnimation}"/>
+                                                        </Trigger.EnterActions>
+                                                        <Trigger.ExitActions>
+                                                            <BeginStoryboard Storyboard="{StaticResource CollapseAnimation}"/>
+                                                        </Trigger.ExitActions>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                    <ContentPresenter x:Name="ExpandSite" Visibility="Collapsed" DockPanel.Dock="Bottom" HorizontalAlignment="Left"/>
+                                </DockPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsExpanded" Value="True">
+                                    <Setter Property="Visibility" TargetName="ExpandSite" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         
         <!-- 信息项样式 -->
         <Style x:Key="InfoItemStyle" TargetType="Grid">
@@ -85,13 +114,18 @@
             <Setter Property="FontWeight" Value="Normal"/>
         </Style>
         
-        <!-- 信息值样式 -->
+        <!-- 信息值样式 - TextBlock -->
         <Style x:Key="InfoValueStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="16,2,0,2"/>
             <Setter Property="Foreground" Value="#737780"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        
+        <!-- 信息值容器样式 - StackPanel -->
+        <Style x:Key="InfoContainerStyle" TargetType="StackPanel">
+            <Setter Property="Margin" Value="16,2,0,2"/>
         </Style>
         
         <Style x:Key="ScrollBarButtonStyle" TargetType="RepeatButton">
@@ -324,7 +358,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock x:Name="MonitorLabel" Grid.Column="0" Style="{StaticResource InfoLabelStyle}"/>
-                                <TextBlock x:Name="MonitorValue" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                                <StackPanel x:Name="MonitorValue" Grid.Column="1" Orientation="Vertical" Style="{StaticResource InfoContainerStyle}"/>
                             </Grid>
                                 </StackPanel>
                             </Expander>
