@@ -65,13 +65,43 @@ namespace ImageRecognitionApp.Assets.UI
             {
                 // 为系统信息折叠面板设置图标和动画
                 SetupExpander(SystemInfoExpander);
+                // 获取系统信息折叠面板的内容容器
+                Panel systemInfoContent = FindVisualChild<Panel>(SystemInfoExpander, "ContentStackPanel");
+                if (systemInfoContent == null)
+                {
+                    // 尝试直接获取折叠面板的内容
+                    if (SystemInfoExpander.Content is StackPanel)
+                    {
+                        systemInfoContent = SystemInfoExpander.Content as StackPanel;
+                    }
+                }
+                if (systemInfoContent != null)
+                {
+                    // 设置动画
+                    SystemInfoAnimation.SetupExpanderAnimation(SystemInfoExpander, systemInfoContent);
+                }
 
                 // 为设备信息折叠面板设置图标和动画
                 SetupExpander(DeviceInfoExpander);
+                // 获取设备信息折叠面板的内容容器
+                Panel deviceInfoContent = FindVisualChild<Panel>(DeviceInfoExpander, "ContentStackPanel");
+                if (deviceInfoContent == null)
+                {
+                    // 尝试直接获取折叠面板的内容
+                    if (DeviceInfoExpander.Content is StackPanel)
+                    {
+                        deviceInfoContent = DeviceInfoExpander.Content as StackPanel;
+                    }
+                }
+                if (deviceInfoContent != null)
+                {
+                    // 设置动画
+                    SystemInfoAnimation.SetupExpanderAnimation(DeviceInfoExpander, deviceInfoContent);
+                }
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"设置折叠面板图标时出错: {ex.Message}");
+                (App.Current as App)?.LogMessage($"设置折叠面板图标和动画时出错: {ex.Message}");
             }
         }
 
@@ -255,184 +285,41 @@ namespace ImageRecognitionApp.Assets.UI
         }
 
         /// <summary>
-        /// 加载系统信息
+        /// 加载系统信息并显示在界面上
         /// </summary>
+        /// <remarks>
+        /// 此方法通过调用一系列专用方法获取各种系统信息，并在对应的UI元素中显示
+        /// 每种信息的获取都包含异常处理机制，确保单个信息获取失败不会影响整体功能
+        /// </remarks>
         private void LoadSystemInformation()
         {
             try
             {
-                // 获取Windows版本
-                try
-                {
-                    string winVersion = GetWindowsVersion();
-                    WinVersionValue.Text = string.IsNullOrEmpty(winVersion) ? GetLocalizedText(20016, "未正常获取") : winVersion;
-                }
-                catch (Exception)
-                {
-                    WinVersionValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取Windows版本号
-                try
-                {
-                    string winBuild = GetWindowsBuildNumber();
-                    WinBuildValue.Text = string.IsNullOrEmpty(winBuild) ? GetLocalizedText(20016, "未正常获取") : winBuild;
-                }
-                catch (Exception)
-                {
-                    WinBuildValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取操作系统版本
-                try
-                {
-                    string osVersion = Environment.OSVersion.VersionString;
-                    OSVersionValue.Text = string.IsNullOrEmpty(osVersion) ? GetLocalizedText(20016, "未正常获取") : osVersion;
-                }
-                catch (Exception)
-                {
-                    OSVersionValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取设备名称
-                try
-                {
-                    string deviceName = Environment.MachineName;
-                    DeviceNameValue.Text = string.IsNullOrEmpty(deviceName) ? GetLocalizedText(20016, "未正常获取") : deviceName;
-                }
-                catch (Exception)
-                {
-                    DeviceNameValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取系统架构
-                try
-                {
-                    string architecture = Environment.Is64BitOperatingSystem ? "X86_64" : "X86_32";
-                    ArchitectureValue.Text = architecture;
-                }
-                catch (Exception)
-                {
-                    ArchitectureValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取设备ID
-                try
-                {
-                    string deviceId = GetDeviceId();
-                    DeviceIDValue.Text = string.IsNullOrEmpty(deviceId) ? GetLocalizedText(20016, "未正常获取") : deviceId;
-                }
-                catch (Exception)
-                {
-                    DeviceIDValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取产品ID
-                try
-                {
-                    string productId = GetProductId();
-                    ProductIDValue.Text = string.IsNullOrEmpty(productId) ? GetLocalizedText(20016, "未正常获取") : productId;
-                }
-                catch (Exception)
-                {
-                    ProductIDValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取设备型号
-                try
-                {
-                    string model = GetDeviceModel();
-                    ModelValue.Text = string.IsNullOrEmpty(model) ? GetLocalizedText(20016, "未正常获取") : model;
-                }
-                catch (Exception)
-                {
-                    ModelValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取中央处理器信息
-                try
-                {
-                    string cpu = GetCpuInfo();
-                    CpuValue.Text = string.IsNullOrEmpty(cpu) ? GetLocalizedText(20016, "未正常获取") : cpu;
-                }
-                catch (Exception)
-                {
-                    CpuValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取主板信息
-                try
-                {
-                    string motherboard = GetMotherboardInfo();
-                    MotherboardValue.Text = string.IsNullOrEmpty(motherboard) ? GetLocalizedText(20016, "未正常获取") : motherboard;
-                }
-                catch (Exception)
-                {
-                    MotherboardValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取内存信息
-                try
-                {
-                    string memory = GetMemoryInfo();
-                    MemoryValue.Text = string.IsNullOrEmpty(memory) ? GetLocalizedText(20016, "未正常获取") : memory;
-                }
-                catch (Exception)
-                {
-                    MemoryValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取图形处理器信息
-                try
-                {
-                    string gpu = GetGpuInfo();
-                    GpuValue.Text = string.IsNullOrEmpty(gpu) ? GetLocalizedText(20016, "未正常获取") : gpu;
-                }
-                catch (Exception)
-                {
-                    GpuValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取磁盘信息
-                try
-                {
-                    string disk = GetDiskInfo();
-                    DiskValue.Text = string.IsNullOrEmpty(disk) ? GetLocalizedText(20016, "未正常获取") : disk;
-                }
-                catch (Exception)
-                {
-                    DiskValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取声卡信息
-                try
-                {
-                    string audioCard = GetAudioCardInfo();
-                    AudioCardValue.Text = string.IsNullOrEmpty(audioCard) ? GetLocalizedText(20016, "未正常获取") : audioCard;
-                }
-                catch (Exception)
-                {
-                    AudioCardValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
-
-                // 获取网卡信息
-                try
-                {
-                    string networkCard = GetNetworkCardInfo();
-                    NetworkCardValue.Text = string.IsNullOrEmpty(networkCard) ? GetLocalizedText(20016, "未正常获取") : networkCard;
-                }
-                catch (Exception)
-                {
-                    NetworkCardValue.Text = GetLocalizedText(20016, "未正常获取");
-                }
+                // 使用辅助方法减少重复代码
+                SetTextWithErrorHandling(WinVersionValue, GetWindowsVersion, "Windows版本");
+                SetTextWithErrorHandling(WinBuildValue, GetWindowsBuildNumber, "Windows版本号");
+                SetTextWithErrorHandling(OSVersionValue, () => Environment.OSVersion.VersionString, "操作系统版本");
+                SetTextWithErrorHandling(DeviceNameValue, () => Environment.MachineName, "设备名称");
+                SetTextWithErrorHandling(ArchitectureValue, () => Environment.Is64BitOperatingSystem ? "X86_64" : "X86_32", "系统架构");
+                SetTextWithErrorHandling(DeviceIDValue, GetDeviceId, "设备ID");
+                SetTextWithErrorHandling(ProductIDValue, GetProductId, "产品ID");
+                SetTextWithErrorHandling(ModelValue, GetDeviceModel, "设备型号");
+                SetTextWithErrorHandling(CpuValue, GetCpuInfo, "中央处理器信息");
+                SetTextWithErrorHandling(MotherboardValue, GetMotherboardInfo, "主板信息");
+                SetTextWithErrorHandling(MemoryValue, GetMemoryInfo, "内存信息");
+                SetTextWithErrorHandling(GpuValue, GetGpuInfo, "图形处理器信息");
+                SetTextWithErrorHandling(DiskValue, GetDiskInfo, "磁盘信息");
+                SetTextWithErrorHandling(AudioCardValue, GetAudioCardInfo, "声卡信息");
+                SetTextWithErrorHandling(NetworkCardValue, GetNetworkCardInfo, "网卡信息");
 
                 // 显示显示器信息（包含比例图标）
                 try
                 {
                     DisplayMonitorInfo();
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    (App.Current as App)?.LogMessage($"显示显示器信息失败: {ex.Message}");
                     MonitorValue.Children.Clear();
                     TextBlock errorText = new TextBlock();
                     errorText.Text = GetLocalizedText(20016, "未正常获取");
@@ -444,6 +331,26 @@ namespace ImageRecognitionApp.Assets.UI
             {
                 // 记录错误但不影响应用运行
                 (App.Current as App)?.LogMessage($"加载系统信息时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 辅助方法：设置文本内容并处理异常
+        /// </summary>
+        /// <param name="textBlock">目标TextBlock控件</param>
+        /// <param name="getValueFunction">获取值的函数</param>
+        /// <param name="infoType">信息类型，用于日志记录</param>
+        private void SetTextWithErrorHandling(TextBlock textBlock, Func<string> getValueFunction, string infoType)
+        {
+            try
+            {
+                string value = getValueFunction();
+                textBlock.Text = string.IsNullOrEmpty(value) ? GetLocalizedText(20016, "未正常获取") : value;
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取{infoType}失败: {ex.Message}");
+                textBlock.Text = GetLocalizedText(20016, "未正常获取");
             }
         }
 
@@ -490,161 +397,398 @@ namespace ImageRecognitionApp.Assets.UI
         }
 
         /// <summary>
-        /// 显示显示器信息，包括比例图标
+        /// 显示显示器信息
         /// </summary>
+        /// <remarks>
+        /// 此方法负责在界面上显示显示器信息，包括品牌型号ID、分辨率及当前刷新率
+        /// 支持多个显示器的换行显示，仅展示实际读取到的内容
+        /// </remarks>
         private void DisplayMonitorInfo()
         {
             try
             {
+                // 清除现有内容
                 MonitorValue.Children.Clear();
-                string monitorInfo = GetMonitorInfo();
 
-                // 如果没有显示器信息或获取失败，直接显示文本
-                if (string.IsNullOrEmpty(monitorInfo) || monitorInfo == "显示器信息获取失败")
+                // 获取显示器信息
+                List<string> monitorInfos = GetMonitorInfo();
+
+                if (monitorInfos.Count > 0)
                 {
+                    // 添加每个显示器的信息
+                    for (int i = 0; i < monitorInfos.Count; i++)
+                    {
+                        string monitorInfo = monitorInfos[i];
+
+                        if (!string.IsNullOrEmpty(monitorInfo))
+                        {
+                            TextBlock textBlock = new TextBlock();
+                            textBlock.Text = monitorInfo;
+                            textBlock.Style = FindResource("InfoValueStyle") as Style;
+                            textBlock.Margin = new Thickness(0, 2, 0, 2); // 移除左边距，只保留上下边距
+
+                            // 添加到界面
+                            MonitorValue.Children.Add(textBlock);
+                        }
+                    }
+                }
+                else
+                {
+                    // 未找到显示器信息时显示默认文本
                     TextBlock textBlock = new TextBlock();
                     textBlock.Text = GetLocalizedText(20016, "未正常获取");
                     textBlock.Style = FindResource("InfoValueStyle") as Style;
+                    textBlock.Margin = new Thickness(0, 2, 0, 2); // 移除左边距，只保留上下边距
                     MonitorValue.Children.Add(textBlock);
-                    return;
-                }
-
-                // 按换行符分割显示器信息
-                string[] monitorLines = monitorInfo.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (string line in monitorLines)
-                {
-                    // 为每个显示器创建一个水平排列的容器
-                    StackPanel monitorItemPanel = new StackPanel();
-                    monitorItemPanel.Orientation = Orientation.Horizontal;
-                    monitorItemPanel.Margin = new Thickness(0, 2, 0, 2);
-
-                    // 创建显示文本的TextBlock
-                    TextBlock textBlock = new TextBlock();
-                    textBlock.Style = FindResource("InfoValueStyle") as Style;
-                    textBlock.TextWrapping = TextWrapping.Wrap;
-                    textBlock.VerticalAlignment = VerticalAlignment.Center;
-
-                    try
-                    {
-                        // 尝试解析显示器信息，将图标放在尺寸前面
-                        int sizeStartIndex = line.LastIndexOf('(');
-                        if (sizeStartIndex > 0)
-                        {
-                            // 显示括号前的内容
-                            string captionPart = line.Substring(0, sizeStartIndex).Trim();
-                            string detailsPart = line.Substring(sizeStartIndex);
-
-                            // 查找尺寸信息的位置
-                            int sizeIndex = detailsPart.IndexOf("cm");
-                            if (sizeIndex > 0)
-                            {
-                                // 向前查找最后一个空格（在'cm'前的空格）
-                                int lastSpaceBeforeSize = detailsPart.LastIndexOf(' ', sizeIndex);
-                                if (lastSpaceBeforeSize > 0)
-                                {
-                                    // 创建一个容器来组合文本和图标
-                                    StackPanel textContainer = new StackPanel();
-                                    textContainer.Orientation = Orientation.Vertical;
-
-                                    // 添加标题文本
-                                    TextBlock captionTextBlock = new TextBlock();
-                                    captionTextBlock.Text = captionPart;
-                                    captionTextBlock.Style = FindResource("InfoValueStyle") as Style;
-                                    captionTextBlock.Margin = new Thickness(0, 2, 0, 2); // 覆盖样式中的左边距，设置为0以与其他信息保持左对齐
-                                    textContainer.Children.Add(captionTextBlock);
-
-                                    // 创建一个水平容器来放置细节信息
-                                    StackPanel detailsPanel = new StackPanel();
-                                    detailsPanel.Orientation = Orientation.Horizontal;
-                                    detailsPanel.Margin = new Thickness(0, 0, 0, 0); // 设置为0边距，避免缩进，与其他信息保持左对齐
-
-                                    // 添加尺寸前的内容
-                                    string beforeSizePart = detailsPart.Substring(0, lastSpaceBeforeSize);
-                                    TextBlock beforeSizeTextBlock = new TextBlock();
-                                    beforeSizeTextBlock.Text = beforeSizePart;
-                                    beforeSizeTextBlock.Style = FindResource("InfoValueStyle") as Style;
-                                    beforeSizeTextBlock.Margin = new Thickness(0, 0, 5, 0); // 添加右边距
-                                    detailsPanel.Children.Add(beforeSizeTextBlock);
-
-                                    // 创建一个水平容器来放置图标和尺寸文本，确保它们完全拼接
-                                    StackPanel sizeContainer = new StackPanel();
-                                    sizeContainer.Orientation = Orientation.Horizontal;
-                                    sizeContainer.VerticalAlignment = VerticalAlignment.Center;
-
-                                    // 创建比例图标
-                                    Image ratioIcon = new Image();
-                                    ratioIcon.Width = 16;
-                                    ratioIcon.Height = 16;
-                                    ratioIcon.Margin = new Thickness(0, 0, 0, 0); // 无边距，实现完全拼接
-                                    ratioIcon.VerticalAlignment = VerticalAlignment.Center;
-                                    ratioIcon.Opacity = 0.6; // 降低40%透明度
-
-                                    // 使用AssetHelper获取比例图标资源(sign_id=20025)
-                                    BitmapImage ratioImage = AssetHelper.Instance.GetImageAsset(20025);
-                                    ratioIcon.Source = ratioImage;
-
-                                    // 添加尺寸部分（与图标连接）
-                                    string sizePart = detailsPart.Substring(lastSpaceBeforeSize).Trim();
-                                    TextBlock sizeTextBlock = new TextBlock();
-                                    sizeTextBlock.Text = sizePart;
-                                    sizeTextBlock.Style = FindResource("InfoValueStyle") as Style;
-                                    sizeTextBlock.VerticalAlignment = VerticalAlignment.Center;
-                                    sizeTextBlock.Margin = new Thickness(0, 0, 0, 0); // 无边距
-
-                                    // 将图标和尺寸文本添加到容器，共同组成{size}
-                                    sizeContainer.Children.Add(ratioIcon);
-                                    sizeContainer.Children.Add(sizeTextBlock);
-
-                                    // 将尺寸容器添加到细节面板
-                                    detailsPanel.Children.Add(sizeContainer);
-
-                                    // 将细节面板添加到文本容器
-                                    textContainer.Children.Add(detailsPanel);
-
-                                    // 将文本容器添加到主容器
-                                    monitorItemPanel.Children.Add(textContainer);
-                                }
-                                else
-                                {
-                                    // 无法找到尺寸前的空格，使用默认显示
-                                    textBlock.Text = line;
-                                    monitorItemPanel.Children.Add(textBlock);
-                                }
-                            }
-                            else
-                            {
-                                // 无法找到尺寸信息，使用默认显示
-                                textBlock.Text = line;
-                                monitorItemPanel.Children.Add(textBlock);
-                            }
-                        }
-                        else
-                        {
-                            // 无法解析显示器信息格式，使用默认显示
-                            textBlock.Text = line;
-                            monitorItemPanel.Children.Add(textBlock);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // 解析或图标加载失败时记录日志，使用默认显示
-                        (App.Current as App)?.LogMessage($"加载比例图标或解析显示器信息失败: {ex.Message}");
-                        textBlock.Text = line;
-                        monitorItemPanel.Children.Add(textBlock);
-                    }
-
-                    // 将显示器信息项添加到主容器
-                    MonitorValue.Children.Add(monitorItemPanel);
                 }
             }
             catch (Exception ex)
             {
                 // 异常处理
                 (App.Current as App)?.LogMessage($"显示显示器信息失败: {ex.Message}");
-                throw;
+                MonitorValue.Children.Clear();
+                TextBlock errorText = new TextBlock();
+                errorText.Text = GetLocalizedText(20016, "未正常获取");
+                errorText.Style = FindResource("InfoValueStyle") as Style;
+                errorText.Margin = new Thickness(0, 2, 0, 2); // 移除左边距，只保留上下边距
+                MonitorValue.Children.Add(errorText);
             }
         }
+
+        /// <summary>
+        /// 获取物理显示器的相关信息
+        /// </summary>
+        /// <returns>包含每个显示器信息的字符串列表</returns>
+        private List<string> GetMonitorInfo()
+        {
+            List<string> monitorInfos = new List<string>();
+            Dictionary<string, MonitorInfo> monitorInfoDict = new Dictionary<string, MonitorInfo>();
+
+            try
+            {
+                // 使用Win32_PnPEntity获取更详细的显示器信息（硬件ID、友好名称）
+                using (var searcher = new ManagementObjectSearcher("SELECT DeviceID, PNPDeviceID, Name, Description FROM Win32_PnPEntity WHERE Service='monitor'"))
+                {
+                    var monitors = searcher.Get();
+                    if (monitors.Count > 0)
+                    {
+                        foreach (ManagementObject monitor in monitors)
+                        {
+                            try
+                            {
+                                // 获取显示器基本信息
+                                string deviceId = monitor["DeviceID"]?.ToString() ?? "未知ID";
+                                string pnpDeviceId = monitor["PNPDeviceID"]?.ToString() ?? "未知硬件ID";
+                                string friendlyName = monitor["Name"]?.ToString() ?? "未知名称";
+                                string description = monitor["Description"]?.ToString() ?? "未知描述";
+
+                                // 创建显示器信息对象
+                                MonitorInfo info = new MonitorInfo
+                                {
+                                    DeviceName = deviceId,
+                                    HardwareId = pnpDeviceId,
+                                    FriendlyName = friendlyName,
+                                    Description = description
+                                };
+
+                                // 添加到字典中
+                                monitorInfoDict[deviceId] = info;
+                            }
+                            catch (Exception ex)
+                            {
+                                (App.Current as App)?.LogMessage($"解析单个显示器信息失败: {ex.Message}");
+                                // 继续处理下一个显示器
+                            }
+                        }
+                    }
+                }
+
+                // 使用Windows API获取显示器的分辨率、刷新率和HDR/SDR信息
+                GetDisplayInfo(monitorInfoDict, monitorInfos);
+
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取显示器信息失败: {ex.Message}");
+            }
+
+            return monitorInfos;
+        }
+
+        /// <summary>
+        /// 显示器信息类
+        /// </summary>
+        private class MonitorInfo
+        {
+            public string DeviceName { get; set; }
+            public string HardwareId { get; set; }
+            public string FriendlyName { get; set; }
+            public string Description { get; set; }
+            public string Resolution { get; set; }
+            public int RefreshRate { get; set; }
+            public string HdrSupport { get; set; }
+        }
+
+        /// <summary>
+        /// 使用Windows API获取显示器的分辨率、刷新率和HDR/SDR信息
+        /// </summary>
+        /// <param name="monitorInfoDict">显示器信息字典</param>
+        /// <param name="monitorInfos">显示器信息字符串列表</param>
+        private void GetDisplayInfo(Dictionary<string, MonitorInfo> monitorInfoDict, List<string> monitorInfos)
+        {
+            try
+            {
+                // 使用EnumDisplaySettings获取显示器信息
+                int displayIndex = 0;
+                DISPLAY_DEVICE dd = new DISPLAY_DEVICE();
+                dd.cb = Marshal.SizeOf(dd);
+
+                // 枚举所有显示器
+                while (EnumDisplayDevices(null, displayIndex, ref dd, 0))
+                {
+
+                    // 只处理实际的显示设备
+                    if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0 &&
+                        (dd.StateFlags & DISPLAY_DEVICE_MIRRORING_DRIVER) == 0)
+                    {
+                        DEVMODE dm = new DEVMODE();
+                        dm.dmSize = (short)Marshal.SizeOf(typeof(DEVMODE));
+
+                        // 获取当前显示设置
+                        if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, ref dm))
+                        {
+                            // 计算刷新率
+                            int refreshRate = dm.dmDisplayFrequency;
+                            if (dm.dmDisplayFrequency > 1)
+                            {
+                                refreshRate = dm.dmDisplayFrequency;
+                            }
+                            else
+                            {
+                                refreshRate = 60; // 默认刷新率
+                            }
+
+                            // 获取分辨率
+                            string resolution = $"{dm.dmPelsWidth}×{dm.dmPelsHeight}";
+
+                            // 检查HDR/SDR支持
+                            string hdrSupport = GetHdrSupportInfo(dd.DeviceName);
+
+                            // 查找对应的显示器信息
+                            MonitorInfo monitorInfo = null;
+                            string deviceKey = null;
+
+                            // 尝试通过设备名称匹配
+                            foreach (var key in monitorInfoDict.Keys)
+                            {
+                                if (key.Contains(dd.DeviceName.Replace(@"\\\", @"\\"))) // 处理路径中的反斜杠
+                                {
+                                    deviceKey = key;
+                                    monitorInfo = monitorInfoDict[key];
+                                    break;
+                                }
+                            }
+
+                            // 如果找不到对应的信息，创建新的
+                            if (monitorInfo == null)
+                            {
+                                monitorInfo = new MonitorInfo
+                                {
+                                    DeviceName = dd.DeviceName,
+                                    HardwareId = "未知硬件ID",
+                                    FriendlyName = dd.DeviceString,
+                                    Description = dd.DeviceString,
+                                    Resolution = resolution,
+                                    RefreshRate = refreshRate,
+                                    HdrSupport = hdrSupport
+                                };
+                            }
+                            else
+                            {
+                                // 更新已有信息
+                                monitorInfo.Resolution = resolution;
+                                monitorInfo.RefreshRate = refreshRate;
+                                monitorInfo.HdrSupport = hdrSupport;
+                            }
+
+                            // 构建显示器信息字符串
+                            StringBuilder infoBuilder = new StringBuilder();
+
+                            // 添加友好名称/描述
+                            if (!string.IsNullOrEmpty(monitorInfo.FriendlyName) && monitorInfo.FriendlyName != "未知名称")
+                            {
+                                infoBuilder.Append($"{monitorInfo.FriendlyName}");
+                            }
+                            else if (!string.IsNullOrEmpty(monitorInfo.Description) && monitorInfo.Description != "未知描述")
+                            {
+                                infoBuilder.Append($"{monitorInfo.Description}");
+                            }
+
+                            // 添加分辨率和刷新率
+                            infoBuilder.Append($", {monitorInfo.Resolution} @ {monitorInfo.RefreshRate}Hz");
+
+                            // 添加HDR/SDR支持信息（如果有）
+                            if (!string.IsNullOrEmpty(monitorInfo.HdrSupport))
+                            {
+                                infoBuilder.Append($", {monitorInfo.HdrSupport}");
+                            }
+
+                            // 添加到列表
+                            monitorInfos.Add(infoBuilder.ToString());
+
+                            // 如果是从字典中找到的，从字典中移除，避免重复添加
+                            if (deviceKey != null && monitorInfoDict.ContainsKey(deviceKey))
+                            {
+                                monitorInfoDict.Remove(deviceKey);
+                            }
+                        }
+                    }
+
+                    displayIndex++;
+                    dd.cb = Marshal.SizeOf(dd);
+                }
+
+                // 添加剩余未匹配的显示器信息
+                // foreach (var monitorInfo in monitorInfoDict.Values)
+                // {
+                //     StringBuilder infoBuilder = new StringBuilder();
+
+                //     if (!string.IsNullOrEmpty(monitorInfo.FriendlyName) && monitorInfo.FriendlyName != "未知名称")
+                //     {
+                //         infoBuilder.Append($"{monitorInfo.FriendlyName}");
+                //     }
+                //     else if (!string.IsNullOrEmpty(monitorInfo.Description) && monitorInfo.Description != "未知描述")
+                //     {
+                //         infoBuilder.Append($"{monitorInfo.Description}");
+                //     }
+
+                //     monitorInfos.Add(infoBuilder.ToString());
+                // }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"使用Windows API获取显示器信息失败: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 检查显示器的HDR/SDR支持信息
+        /// </summary>
+        /// <param name="deviceName">设备名称</param>
+        /// <returns>HDR/SDR支持信息，如果都不支持则返回空字符串</returns>
+        private string GetHdrSupportInfo(string deviceName)
+        {
+            try
+            {
+                // 注意：这个方法使用了Windows 10/11的HDR API，需要Windows 10 1709或更高版本
+                // 由于我们不能直接使用这些API（需要Windows SDK 10.0.16299.0或更高版本）
+                // 这里使用一种简化的方法来检测HDR支持
+
+                // 尝试通过WMI查询Win32_VideoController获取颜色深度和支持的颜色空间
+                using (var searcher = new ManagementObjectSearcher("SELECT VideoModeDescription, CurrentBitsPerPixel, CurrentNumberOfColors FROM Win32_VideoController"))
+                {
+                    foreach (ManagementObject videoController in searcher.Get())
+                    {
+                        try
+                        {
+                            // 检查颜色深度，HDR显示器通常支持更高的颜色深度
+                            int? bitsPerPixel = videoController["CurrentBitsPerPixel"] as int?;
+                            if (bitsPerPixel.HasValue && bitsPerPixel.Value >= 30) // 30位或更高通常支持HDR
+                            {
+                                return "HDR支持";
+                            }
+
+                            // 检查视频模式描述中是否包含HDR相关关键词
+                            string videoModeDesc = videoController["VideoModeDescription"]?.ToString() ?? "";
+                            if (!string.IsNullOrEmpty(videoModeDesc) &&
+                                (videoModeDesc.Contains("HDR", StringComparison.OrdinalIgnoreCase) ||
+                                 videoModeDesc.Contains("高动态范围", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                return "HDR支持";
+                            }
+                        }
+                        catch { }
+                    }
+                }
+
+                // 如果没有检测到HDR支持，可以尝试检查是否支持SDR（标准动态范围）
+                // 这里简单地认为如果不是HDR，就是SDR
+                // 但按照用户要求，如果都不是则不显示，所以这里返回空字符串
+
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"检查显示器HDR支持信息失败: {ex.Message}");
+            }
+
+            // 如果都不支持或检测失败，则返回空字符串
+            return string.Empty;
+        }
+
+        // Windows API常量和结构体
+        private const int ENUM_CURRENT_SETTINGS = -1;
+        private const int DISPLAY_DEVICE_ATTACHED_TO_DESKTOP = 0x1;
+        private const int DISPLAY_DEVICE_MIRRORING_DRIVER = 0x8;
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        private struct DISPLAY_DEVICE
+        {
+            [MarshalAs(UnmanagedType.U4)]
+            public int cb;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string DeviceName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string DeviceString;
+            [MarshalAs(UnmanagedType.U4)]
+            public int StateFlags;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string DeviceID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string DeviceKey;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+        private struct DEVMODE
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string dmDeviceName;
+            public short dmSpecVersion;
+            public short dmDriverVersion;
+            public short dmSize;
+            public short dmDriverExtra;
+            public int dmFields;
+            public int dmPositionX;
+            public int dmPositionY;
+            public int dmDisplayOrientation;
+            public int dmDisplayFixedOutput;
+            public short dmColor;
+            public short dmDuplex;
+            public short dmYResolution;
+            public short dmTTOption;
+            public short dmCollate;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+            public string dmFormName;
+            public short dmLogPixels;
+            public int dmBitsPerPel;
+            public int dmPelsWidth;
+            public int dmPelsHeight;
+            public int dmDisplayFlags;
+            public int dmDisplayFrequency;
+            public int dmICMMethod;
+            public int dmICMIntent;
+            public int dmMediaType;
+            public int dmDitherType;
+            public int dmReserved1;
+            public int dmReserved2;
+            public int dmPanningWidth;
+            public int dmPanningHeight;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumDisplayDevices(string lpDevice, int iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, int dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
 
         /// <summary>
         /// 获取Windows内部版本号
@@ -817,161 +961,24 @@ namespace ImageRecognitionApp.Assets.UI
         }
 
         /// <summary>
-        /// 获取内存信息
+        /// 获取物理内存信息
         /// </summary>
-        /// <returns>内存信息</returns>
+        /// <returns>内存信息字符串，包含每个内存条的型号、类型、频率和容量</returns>
         private string GetMemoryInfo()
         {
             try
             {
                 StringBuilder memoryInfo = new StringBuilder();
-                // 使用Win32_PhysicalMemory获取内存详细信息，添加MemoryType和SMBIOSMemoryType以获取更准确的SDRAM技术版本
-                using (var searcher = new ManagementObjectSearcher("SELECT PartNumber, Speed, Capacity, MemoryType, SMBIOSMemoryType FROM Win32_PhysicalMemory"))
+                using (var searcher = new ManagementObjectSearcher("SELECT SMBIOSMemoryType, MemoryType, Speed, Capacity, PartNumber FROM Win32_PhysicalMemory"))
                 {
                     foreach (ManagementObject obj in searcher.Get())
                     {
                         try
                         {
-                            // 获取产品型号
                             string model = obj["PartNumber"]?.ToString() ?? "未知型号";
-
-                            // 获取SDRAM技术版本
-                            string memoryType = "未知类型";
-                            
-                            // 优先尝试从SMBIOSMemoryType获取类型，因为它通常更准确
-                            if (obj["SMBIOSMemoryType"] != null)
-                            {
-                                try
-                                {
-                                    uint smbiosType = Convert.ToUInt32(obj["SMBIOSMemoryType"]);
-                                    switch (smbiosType)
-                                    {
-                                        case 20: memoryType = "DDR"; break;
-                                        case 21: memoryType = "DDR2"; break;
-                                        case 24: memoryType = "DDR3"; break;
-                                        case 26: memoryType = "DDR4"; break;
-                                        case 28: memoryType = "DDR5"; break;
-                                        default: 
-                                            // 如果SMBIOSMemoryType没有匹配的已知类型，再尝试使用MemoryType
-                                            if (obj["MemoryType"] != null)
-                                            {
-                                                try
-                                                {
-                                                    uint typeCode = Convert.ToUInt32(obj["MemoryType"]);
-                                                    switch (typeCode)
-                                                    {
-                                                        case 20: memoryType = "DDR"; break;
-                                                        case 21: memoryType = "DDR2"; break;
-                                                        case 24: memoryType = "DDR3"; break;
-                                                        case 26: memoryType = "DDR4"; break;
-                                                        case 28: memoryType = "DDR5"; break;
-                                                        // 添加更多可能的类型编码
-                                                        case 1: memoryType = "其他"; break;
-                                                        case 2: memoryType = "DRAM"; break;
-                                                        case 3: memoryType = "SRAM"; break;
-                                                        case 4: memoryType = "VRAM"; break;
-                                                        case 5: memoryType = "EDRAM"; break;
-                                                        case 6: memoryType = "RAM"; break;
-                                                        case 7: memoryType = "ROM"; break;
-                                                        case 8: memoryType = "FLASH"; break;
-                                                        case 9: memoryType = "EEPROM"; break;
-                                                        case 10: memoryType = "FEPROM"; break;
-                                                        case 11: memoryType = "EPROM"; break;
-                                                        case 12: memoryType = "CDRAM"; break;
-                                                        case 13: memoryType = "3DRAM"; break;
-                                                        case 14: memoryType = "SDRAM"; break;
-                                                        case 15: memoryType = "SGRAM"; break;
-                                                        case 16: memoryType = "RDRAM"; break;
-                                                        case 17: memoryType = "DDR SDRAM"; break;
-                                                        case 18: memoryType = "GDDR SDRAM"; break;
-                                                        case 19: memoryType = "GDDR2 SDRAM"; break;
-                                                        case 22: memoryType = "DDR2 FB-DIMM"; break;
-                                                        case 25: memoryType = "DDR3 FB-DIMM"; break;
-                                                        case 27: memoryType = "LPDDR"; break;
-                                                        case 29: memoryType = "LPDDR2"; break;
-                                                        case 30: memoryType = "LPDDR3"; break;
-                                                        case 31: memoryType = "LPDDR4"; break;
-                                                        case 32: memoryType = "LPDDR5"; break;
-                                                        default: memoryType = "未知类型"; break;
-                                                    }
-                                                }
-                                                catch { }
-                                            }
-                                            break;
-                                    }
-                                }
-                                catch { }
-                            }
-                            // 如果SMBIOSMemoryType获取失败，再尝试使用MemoryType
-                            else if (obj["MemoryType"] != null)
-                            {
-                                try
-                                {
-                                    uint typeCode = Convert.ToUInt32(obj["MemoryType"]);
-                                    switch (typeCode)
-                                    {
-                                        case 20: memoryType = "DDR"; break;
-                                        case 21: memoryType = "DDR2"; break;
-                                        case 24: memoryType = "DDR3"; break;
-                                        case 26: memoryType = "DDR4"; break;
-                                        case 28: memoryType = "DDR5"; break;
-                                        // 添加更多可能的类型编码
-                                        case 1: memoryType = "其他"; break;
-                                        case 2: memoryType = "DRAM"; break;
-                                        case 3: memoryType = "SRAM"; break;
-                                        case 4: memoryType = "VRAM"; break;
-                                        case 5: memoryType = "EDRAM"; break;
-                                        case 6: memoryType = "RAM"; break;
-                                        case 7: memoryType = "ROM"; break;
-                                        case 8: memoryType = "FLASH"; break;
-                                        case 9: memoryType = "EEPROM"; break;
-                                        case 10: memoryType = "FEPROM"; break;
-                                        case 11: memoryType = "EPROM"; break;
-                                        case 12: memoryType = "CDRAM"; break;
-                                        case 13: memoryType = "3DRAM"; break;
-                                        case 14: memoryType = "SDRAM"; break;
-                                        case 15: memoryType = "SGRAM"; break;
-                                        case 16: memoryType = "RDRAM"; break;
-                                        case 17: memoryType = "DDR SDRAM"; break;
-                                        case 18: memoryType = "GDDR SDRAM"; break;
-                                        case 19: memoryType = "GDDR2 SDRAM"; break;
-                                        case 22: memoryType = "DDR2 FB-DIMM"; break;
-                                        case 25: memoryType = "DDR3 FB-DIMM"; break;
-                                        case 27: memoryType = "LPDDR"; break;
-                                        case 29: memoryType = "LPDDR2"; break;
-                                        case 30: memoryType = "LPDDR3"; break;
-                                        case 31: memoryType = "LPDDR4"; break;
-                                        case 32: memoryType = "LPDDR5"; break;
-                                        default: memoryType = "未知类型"; break;
-                                    }
-                                }
-                                catch { }
-                            }
-
-                            // 获取内存频率
-                            string speed = "未知频率";
-                            if (obj["Speed"] != null)
-                            {
-                                try
-                                {
-                                    uint memorySpeed = Convert.ToUInt32(obj["Speed"]);
-                                    speed = $"{memorySpeed} MHz";
-                                }
-                                catch { }
-                            }
-
-                            // 获取容量
-                            string capacityInfo = "未知容量";
-                            if (obj["Capacity"] != null)
-                            {
-                                try
-                                {
-                                    ulong capacity = Convert.ToUInt64(obj["Capacity"]);
-                                    double capacityGB = Math.Round((double)capacity / (1024 * 1024 * 1024), 2);
-                                    capacityInfo = $"{capacityGB} GB";
-                                }
-                                catch { }
-                            }
+                            string memoryType = GetMemoryType(obj);
+                            string speed = GetMemorySpeed(obj);
+                            string capacityInfo = GetMemoryCapacity(obj);
 
                             // 格式化内存信息，包含SDRAM技术版本
                             string memoryDetails = $"{model} ({memoryType}  {speed}  {capacityInfo})";
@@ -984,8 +991,9 @@ namespace ImageRecognitionApp.Assets.UI
 
                             memoryInfo.Append(memoryDetails);
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            (App.Current as App)?.LogMessage($"获取内存信息失败: {ex.Message}");
                             // 捕获单个内存信息获取异常，继续处理其他内存
                             if (memoryInfo.Length == 0)
                             {
@@ -998,124 +1006,317 @@ namespace ImageRecognitionApp.Assets.UI
                 }
 
                 string result = memoryInfo.ToString();
-                // 确保结果不为空
-                return !string.IsNullOrEmpty(result) ? result : string.Empty;
+                // 确保结果不为null且处理可能的特殊字符
+                return result.Replace("\0", string.Empty);
             }
-            catch { }
-            return string.Empty;
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取内存信息时发生异常: {ex.Message}");
+                return string.Empty;
+            }
         }
 
         /// <summary>
-        /// 获取图形处理器信息（物理显示适配器）
+        /// 从ManagementObject获取内存类型
         /// </summary>
-        /// <returns>GPU信息</returns>
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>内存类型字符串</returns>
+        private string GetMemoryType(ManagementObject obj)
+        {
+            string memoryType = "未知类型";
+
+            // 首先尝试使用SMBIOSMemoryType
+            if (obj["SMBIOSMemoryType"] != null)
+            {
+                try
+                {
+                    uint typeCode = Convert.ToUInt32(obj["SMBIOSMemoryType"]);
+                    memoryType = GetMemoryTypeFromCode(typeCode);
+                }
+                catch (Exception ex)
+                {
+                    (App.Current as App)?.LogMessage($"解析SMBIOSMemoryType失败: {ex.Message}");
+                }
+            }
+            // 如果SMBIOSMemoryType获取失败，再尝试使用MemoryType
+            else if (obj["MemoryType"] != null)
+            {
+                try
+                {
+                    uint typeCode = Convert.ToUInt32(obj["MemoryType"]);
+                    memoryType = GetMemoryTypeFromCode(typeCode);
+                }
+                catch (Exception ex)
+                {
+                    (App.Current as App)?.LogMessage($"解析MemoryType失败: {ex.Message}");
+                }
+            }
+
+            return memoryType;
+        }
+
+        /// <summary>
+        /// 根据内存类型代码获取内存类型名称
+        /// </summary>
+        /// <param name="typeCode">内存类型代码</param>
+        /// <returns>内存类型名称</returns>
+        private string GetMemoryTypeFromCode(uint typeCode)
+        {
+            switch (typeCode)
+            {
+                case 1: return "其他";
+                case 2: return "DRAM";
+                case 3: return "SRAM";
+                case 4: return "VRAM";
+                case 5: return "EDRAM";
+                case 6: return "RAM";
+                case 7: return "ROM";
+                case 8: return "FLASH";
+                case 9: return "EEPROM";
+                case 10: return "FEPROM";
+                case 11: return "EPROM";
+                case 12: return "CDRAM";
+                case 13: return "3DRAM";
+                case 14: return "SDRAM";
+                case 15: return "SGRAM";
+                case 16: return "RDRAM";
+                case 17: return "DDR SDRAM";
+                case 18: return "GDDR SDRAM";
+                case 19: return "GDDR2 SDRAM";
+                case 20: return "DDR";
+                case 21: return "DDR2";
+                case 22: return "DDR2 FB-DIMM";
+                case 24: return "DDR3";
+                case 25: return "DDR3 FB-DIMM";
+                case 26: return "DDR4";
+                case 27: return "LPDDR";
+                case 28: return "DDR5";
+                case 29: return "LPDDR2";
+                case 30: return "LPDDR3";
+                case 31: return "LPDDR4";
+                case 32: return "LPDDR5";
+                default: return "未知类型";
+            }
+        }
+
+        /// <summary>
+        /// 从ManagementObject获取内存频率
+        /// </summary>
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>内存频率字符串</returns>
+        private string GetMemorySpeed(ManagementObject obj)
+        {
+            string speed = "未知频率";
+            if (obj["Speed"] != null)
+            {
+                try
+                {
+                    uint memorySpeed = Convert.ToUInt32(obj["Speed"]);
+                    speed = $"{memorySpeed} MHz";
+                }
+                catch (Exception ex)
+                {
+                    (App.Current as App)?.LogMessage($"解析内存频率失败: {ex.Message}");
+                }
+            }
+            return speed;
+        }
+
+        /// <summary>
+        /// 从ManagementObject获取内存容量
+        /// </summary>
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>内存容量字符串</returns>
+        private string GetMemoryCapacity(ManagementObject obj)
+        {
+            string capacityInfo = "未知容量";
+            if (obj["Capacity"] != null)
+            {
+                try
+                {
+                    ulong capacity = Convert.ToUInt64(obj["Capacity"]);
+                    double capacityGB = Math.Round((double)capacity / (1024 * 1024 * 1024), 2);
+                    capacityInfo = $"{capacityGB} GB";
+                }
+                catch (Exception ex)
+                {
+                    (App.Current as App)?.LogMessage($"解析内存容量失败: {ex.Message}");
+                }
+            }
+            return capacityInfo;
+        }
+
+        /// <summary>
+        /// 获取显卡(GPU)信息
+        /// </summary>
+        /// <returns>显卡信息字符串，包含显卡名称、制造商和显存大小</returns>
         private string GetGpuInfo()
+        {
+            StringBuilder gpuInfo = new StringBuilder();
+
+            try
+            {
+                // 首选通过Win32_VideoController获取详细显卡信息
+                if (GetVideoControllerInfo(gpuInfo))
+                {
+                    return gpuInfo.ToString();
+                }
+
+                // 如果Win32_VideoController获取失败，尝试使用Win32_PNPEntity作为备选
+                return GetPnpEntityGpuInfo(gpuInfo);
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取GPU信息时发生异常: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 通过Win32_VideoController获取显卡信息
+        /// </summary>
+        /// <param name="gpuInfo">StringBuilder对象，用于存储获取到的显卡信息</param>
+        /// <returns>是否成功获取到显卡信息</returns>
+        private bool GetVideoControllerInfo(StringBuilder gpuInfo)
         {
             try
             {
-                StringBuilder gpuInfo = new StringBuilder();
-                
-                // 1. 首先尝试从Win32_VideoController获取基本信息
                 using (var searcher = new ManagementObjectSearcher("SELECT Name, AdapterCompatibility, AdapterRAM FROM Win32_VideoController"))
                 {
-                    foreach (ManagementObject obj in searcher.Get())
+                    var gpuObjects = searcher.Get();
+                    if (gpuObjects.Count == 0)
+                    {
+                        return false;
+                    }
+
+                    foreach (ManagementObject obj in gpuObjects)
                     {
                         try
                         {
-                            // 获取显卡名称
                             string gpuName = obj["Name"]?.ToString() ?? "未知型号";
-                            
-                            // 获取显卡制造商（英文名称）
                             string manufacturer = obj["AdapterCompatibility"]?.ToString() ?? "未知制造商";
-                            
-                            // 获取显存大小 - WMI中的AdapterRAM以字节为单位
-                            ulong videoRamBytes = 0;
-                            if (obj["AdapterRAM"] != null)
-                            {
-                                try
-                                {
-                                    videoRamBytes = Convert.ToUInt64(obj["AdapterRAM"]);
-                                }
-                                catch { }
-                            }
-                            
+                            string videoRamInfo = GetVideoRamInfo(obj);
+
                             // 判断是否为物理显示适配器（虚拟显示适配器通常没有显存）
-                            if (videoRamBytes > 0)
+                            if (videoRamInfo != "未知显存")
                             {
-                                // 计算显存大小（GB）- 使用decimal确保精度
-                                // 注意：某些系统上WMI返回的显存值可能只是实际值的一半，需要乘以2进行修正
-                                decimal videoRamGB = Math.Round((decimal)videoRamBytes * 2 / (1024 * 1024 * 1024), 2);
-                                
-                                // 默认使用GB为单位，仅在小于1GB时使用MB为单位
-                                string videoRamInfo;
-                                if (videoRamGB < 1.0m)
-                                {
-                                    // 转换为MB单位显示
-                                    decimal videoRamMB = Math.Round((decimal)videoRamBytes * 2 / (1024 * 1024), 2);
-                                    videoRamInfo = $"{videoRamMB} MB";
-                                }
-                                else
-                                {
-                                    // 使用GB单位显示
-                                    videoRamInfo = $"{videoRamGB} GB";
-                                }
-                                
                                 // 构建显卡信息字符串
                                 string gpuDetails = $"{gpuName} ({manufacturer}) - {videoRamInfo}";
-                                
+
                                 if (gpuInfo.Length > 0)
                                 {
                                     // 多个显卡之间换行显示
                                     gpuInfo.Append(Environment.NewLine);
                                 }
-                                
+
                                 gpuInfo.Append(gpuDetails);
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            // 捕获单个显卡信息获取异常，继续处理其他显卡
+                            (App.Current as App)?.LogMessage($"解析单个GPU信息失败: {ex.Message}");
+                            // 继续处理下一个GPU，不中断整体流程
                         }
                     }
+                    return gpuInfo.Length > 0;
                 }
-                
-                // 2. 如果上面没有获取到信息，尝试从Win32_PNPEntity获取额外信息
-                if (gpuInfo.Length == 0)
-                {
-                    using (var searcher = new ManagementObjectSearcher("SELECT Name, Manufacturer FROM Win32_PNPEntity WHERE Service='nvlddmkm' OR Service='amdkmdag' OR Service='igfx'"))
-                    {
-                        foreach (ManagementObject obj in searcher.Get())
-                        {
-                            try
-                            {
-                                string gpuName = obj["Name"]?.ToString() ?? "未知型号";
-                                string manufacturer = obj["Manufacturer"]?.ToString() ?? "未知制造商";
-                                
-                                string gpuDetails = $"{gpuName} ({manufacturer})";
-                                
-                                if (gpuInfo.Length > 0)
-                                {
-                                    gpuInfo.Append(Environment.NewLine);
-                                }
-                                gpuInfo.Append(gpuDetails);
-                            }
-                            catch { }
-                        }
-                    }
-                }
-                
-                string result = gpuInfo.ToString();
-                // 确保结果不为空
-                return !string.IsNullOrEmpty(result) ? result : string.Empty;
             }
-            catch { }
-            return string.Empty;
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"通过Win32_VideoController获取GPU信息失败: {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
-        /// 获取磁盘信息
+        /// 从ManagementObject获取显存信息
         /// </summary>
-        /// <returns>磁盘信息</returns>
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>显存信息字符串</returns>
+        private string GetVideoRamInfo(ManagementObject obj)
+        {
+            try
+            {
+                if (obj["AdapterRAM"] != null)
+                {
+                    ulong videoRamBytes = Convert.ToUInt64(obj["AdapterRAM"]);
+
+                    // 判断是否为物理显示适配器（虚拟显示适配器通常没有显存）
+                    if (videoRamBytes > 0)
+                    {
+                        // 计算显存大小（GB）- 使用decimal确保精度
+                        // 注意：某些系统上WMI返回的显存值可能只是实际值的一半，需要乘以2进行修正
+                        decimal videoRamGB = Math.Round((decimal)videoRamBytes * 2 / (1024 * 1024 * 1024), 2);
+
+                        // 默认使用GB为单位，仅在小于1GB时使用MB为单位
+                        if (videoRamGB < 1.0m)
+                        {
+                            // 转换为MB单位显示
+                            decimal videoRamMB = Math.Round((decimal)videoRamBytes * 2 / (1024 * 1024), 2);
+                            return $"{videoRamMB} MB";
+                        }
+                        else
+                        {
+                            // 使用GB单位显示
+                            return $"{videoRamGB} GB";
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"解析显存大小失败: {ex.Message}");
+            }
+            return "未知显存";
+        }
+
+        /// <summary>
+        /// 通过Win32_PNPEntity获取显卡信息作为备选方案
+        /// </summary>
+        /// <param name="gpuInfo">StringBuilder对象，用于存储获取到的显卡信息</param>
+        /// <returns>显卡信息字符串</returns>
+        private string GetPnpEntityGpuInfo(StringBuilder gpuInfo)
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Name, Manufacturer FROM Win32_PNPEntity WHERE Service='nvlddmkm' OR Service='amdkmdag' OR Service='igfx'"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        try
+                        {
+                            string gpuName = obj["Name"]?.ToString() ?? "未知型号";
+                            string manufacturer = obj["Manufacturer"]?.ToString() ?? "未知制造商";
+
+                            string gpuDetails = $"{gpuName} ({manufacturer})";
+
+                            if (gpuInfo.Length > 0)
+                            {
+                                gpuInfo.Append(Environment.NewLine);
+                            }
+                            gpuInfo.Append(gpuDetails);
+                        }
+                        catch (Exception ex)
+                        {
+                            (App.Current as App)?.LogMessage($"解析PNP实体GPU信息失败: {ex.Message}");
+                        }
+                    }
+                }
+
+                // 如果获取到了信息，返回信息字符串，否则返回空字符串
+                return gpuInfo.Length > 0 ? gpuInfo.ToString() : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"通过Win32_PNPEntity获取GPU信息失败: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 获取物理磁盘信息
+        /// </summary>
+        /// <returns>磁盘信息字符串，包含每个磁盘的型号、接口类型和大小</returns>
         private string GetDiskInfo()
         {
             try
@@ -1124,27 +1325,20 @@ namespace ImageRecognitionApp.Assets.UI
                 // 使用Win32_DiskDrive获取物理磁盘信息，包括产品型号、接口类型和大小
                 using (var searcher = new ManagementObjectSearcher("SELECT Model, InterfaceType, Size FROM Win32_DiskDrive"))
                 {
-                    foreach (ManagementObject obj in searcher.Get())
+                    var diskObjects = searcher.Get();
+                    if (diskObjects.Count == 0)
+                    {
+                        (App.Current as App)?.LogMessage("未找到物理磁盘信息");
+                        return string.Empty;
+                    }
+
+                    foreach (ManagementObject obj in diskObjects)
                     {
                         try
                         {
-                            // 获取产品型号
-                            string model = obj["Model"]?.ToString() ?? "未知型号";
-                            // 获取接口类型
-                            string interfaceType = obj["InterfaceType"]?.ToString() ?? "未知类型";
-                            // 获取大小
-                            string sizeInfo = "未知大小";
-
-                            if (obj["Size"] != null)
-                            {
-                                try
-                                {
-                                    ulong size = Convert.ToUInt64(obj["Size"]);
-                                    double sizeGB = Math.Round((double)size / (1024 * 1024 * 1024), 2);
-                                    sizeInfo = $"{sizeGB} GB";
-                                }
-                                catch { }
-                            }
+                            string model = GetDiskModel(obj);
+                            string interfaceType = GetDiskInterfaceType(obj);
+                            string sizeInfo = GetDiskSize(obj);
 
                             // 格式化磁盘信息
                             string diskDetails = $"{model} ({interfaceType}  {sizeInfo})";
@@ -1157,8 +1351,9 @@ namespace ImageRecognitionApp.Assets.UI
 
                             diskInfo.Append(diskDetails);
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            (App.Current as App)?.LogMessage($"解析单个磁盘信息失败: {ex.Message}");
                             // 捕获单个磁盘信息获取异常，继续处理其他磁盘
                             if (diskInfo.Length == 0)
                             {
@@ -1174,322 +1369,261 @@ namespace ImageRecognitionApp.Assets.UI
                 // 确保结果不为null且处理可能的特殊字符
                 return result.Replace("\0", string.Empty);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                (App.Current as App)?.LogMessage($"获取磁盘信息时发生异常: {ex.Message}");
                 return string.Empty;
             }
         }
 
         /// <summary>
+        /// 从ManagementObject获取磁盘型号
+        /// </summary>
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>磁盘型号字符串</returns>
+        private string GetDiskModel(ManagementObject obj)
+        {
+            try
+            {
+                return obj["Model"]?.ToString()?.Trim() ?? "未知型号";
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"解析磁盘型号失败: {ex.Message}");
+                return "未知型号";
+            }
+        }
+
+        /// <summary>
+        /// 从ManagementObject获取磁盘接口类型
+        /// </summary>
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>磁盘接口类型字符串</returns>
+        private string GetDiskInterfaceType(ManagementObject obj)
+        {
+            try
+            {
+                string interfaceType = obj["InterfaceType"]?.ToString() ?? "未知类型";
+                // 规范化常见的接口类型名称
+                switch (interfaceType.ToUpper())
+                {
+                    case "IDE": return "IDE";
+                    case "SATA": return "SATA";
+                    case "SCSI": return "SCSI";
+                    case "USB": return "USB";
+                    case "NVME":
+                    case "PCIe":
+                    case "PCI EXPRESS": return "NVMe/PCIe";
+                    default: return interfaceType;
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"解析磁盘接口类型失败: {ex.Message}");
+                return "未知类型";
+            }
+        }
+
+        /// <summary>
+        /// 从ManagementObject获取磁盘大小
+        /// </summary>
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>磁盘大小字符串</returns>
+        private string GetDiskSize(ManagementObject obj)
+        {
+            try
+            {
+                if (obj["Size"] != null)
+                {
+                    ulong size = Convert.ToUInt64(obj["Size"]);
+                    double sizeGB = Math.Round((double)size / (1024 * 1024 * 1024), 2);
+                    return $"{sizeGB} GB";
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"解析磁盘大小失败: {ex.Message}");
+            }
+            return "未知大小";
+        }
+
+        /// <summary>
         /// 获取声卡信息
         /// </summary>
-        /// <returns>声卡信息</returns>
+        /// <returns>声卡名称字符串，如果无法获取则返回空字符串</returns>
         private string GetAudioCardInfo()
         {
             try
             {
                 using (var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_SoundDevice"))
                 {
-                    foreach (ManagementObject obj in searcher.Get())
+                    var soundDevices = searcher.Get();
+                    if (soundDevices.Count == 0)
                     {
-                        string audioCardName = obj["Name"]?.ToString() ?? string.Empty;
-                        if (!string.IsNullOrEmpty(audioCardName))
+                        (App.Current as App)?.LogMessage("未找到任何声卡设备");
+                        return string.Empty;
+                    }
+
+                    foreach (ManagementObject obj in soundDevices)
+                    {
+                        try
                         {
-                            return audioCardName;
+                            string audioCardName = GetAudioCardName(obj);
+                            if (!string.IsNullOrEmpty(audioCardName))
+                            {
+                                return audioCardName;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            (App.Current as App)?.LogMessage($"解析单个声卡信息失败: {ex.Message}");
                         }
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取声卡信息时发生异常: {ex.Message}");
+            }
             return string.Empty;
         }
 
         /// <summary>
-        /// 获取网卡信息
+        /// 从ManagementObject获取声卡名称
         /// </summary>
-        /// <returns>网卡信息</returns>
-        private string GetNetworkCardInfo()
+        /// <param name="obj">ManagementObject对象</param>
+        /// <returns>声卡名称字符串</returns>
+        private string GetAudioCardName(ManagementObject obj)
         {
             try
             {
-                StringBuilder networkCards = new StringBuilder();
-                // 查询所有网卡，不限制连接状态，并获取更多属性
-                using (var searcher = new ManagementObjectSearcher("SELECT Name, Description, Manufacturer, PNPDeviceID FROM Win32_NetworkAdapter"))
+                return obj["Name"]?.ToString()?.Trim() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"解析声卡名称失败: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 获取网络适配器信息
+        /// </summary>
+        /// <returns>网卡信息字符串，包含网卡名称和描述</returns>
+        private string GetNetworkCardInfo()
+        {
+            StringBuilder networkInfo = new StringBuilder();
+
+            try
+            {
+                // 首选获取物理网卡信息
+                if (GetPhysicalNetworkCards(networkInfo))
+                {
+                    return networkInfo.ToString();
+                }
+
+                // 如果没有找到物理网卡，尝试获取所有活动网卡
+                return GetActiveNetworkCards(networkInfo);
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取网卡信息时发生异常: {ex.Message}");
+                return "无法获取网卡信息";
+            }
+        }
+
+        /// <summary>
+        /// 获取物理网卡信息
+        /// </summary>
+        /// <param name="networkInfo">StringBuilder对象，用于存储获取到的网卡信息</param>
+        /// <returns>是否成功获取到物理网卡信息</returns>
+        private bool GetPhysicalNetworkCards(StringBuilder networkInfo)
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Name, Description FROM Win32_NetworkAdapter WHERE PhysicalAdapter = True AND NetConnectionStatus = 2"))
+                {
+                    var networkObjects = searcher.Get();
+                    if (networkObjects.Count == 0)
+                    {
+                        return false;
+                    }
+
+                    foreach (ManagementObject obj in networkObjects)
+                    {
+                        try
+                        {
+                            string name = obj["Name"]?.ToString() ?? "未知网卡";
+                            string description = obj["Description"]?.ToString() ?? "未知描述";
+
+                            // 网卡显示名称格式：型号 (描述)
+                            string networkDetails = $"{name} ({description})";
+
+                            if (networkInfo.Length > 0)
+                            {
+                                // 多个网卡之间换行显示
+                                networkInfo.Append(Environment.NewLine);
+                            }
+
+                            networkInfo.Append(networkDetails);
+                        }
+                        catch (Exception ex)
+                        {
+                            (App.Current as App)?.LogMessage($"解析单个物理网卡信息失败: {ex.Message}");
+                            // 继续处理下一个网卡
+                        }
+                    }
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"获取物理网卡信息失败: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 获取所有活动网卡信息
+        /// </summary>
+        /// <param name="networkInfo">StringBuilder对象，用于存储获取到的网卡信息</param>
+        /// <returns>网卡信息字符串</returns>
+        private string GetActiveNetworkCards(StringBuilder networkInfo)
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Name, Description FROM Win32_NetworkAdapter WHERE NetConnectionStatus = 2"))
                 {
                     foreach (ManagementObject obj in searcher.Get())
                     {
                         try
                         {
-                            string name = obj["Name"]?.ToString() ?? "未知网卡名称";
-                            string description = obj["Description"]?.ToString() ?? string.Empty;
-                            string manufacturer = obj["Manufacturer"]?.ToString() ?? string.Empty;
-                            string pnpDeviceId = obj["PNPDeviceID"]?.ToString() ?? string.Empty;
-                            bool isPhysical = true;
+                            string name = obj["Name"]?.ToString() ?? "未知网卡";
+                            string description = obj["Description"]?.ToString() ?? "未知描述";
 
-                            // 简单判断是否为物理网卡
-                            // 虚拟网卡通常包含特定关键词或PNPDeviceID格式不同
-                            if (!string.IsNullOrEmpty(name) &&
-                                (name.Contains("Virtual") ||
-                                 name.Contains("虚拟") ||
-                                 name.Contains("VPN") ||
-                                 name.Contains("VMware") ||
-                                 name.Contains("Hyper-V") ||
-                                 name.Contains("VirtualBox") ||
-                                 name.Contains("Loopback") ||
-                                 name.Contains("Microsoft") && name.Contains("Adapter")))
+                            string networkDetails = $"{name} ({description})";
+
+                            if (networkInfo.Length > 0)
                             {
-                                isPhysical = false;
+                                networkInfo.Append(Environment.NewLine);
                             }
 
-                            // 格式化网卡信息，标记是否为物理网卡
-                            string cardType = isPhysical ? "(物理网卡)" : "(虚拟网卡)";
-                            string cardInfo = $"{name} {cardType}";
-
-                            if (!string.IsNullOrEmpty(description))
-                            {
-                                cardInfo += $" - {description}";
-                            }
-
-                            if (networkCards.Length > 0)
-                            {
-                                networkCards.Append(Environment.NewLine);
-                            }
-                            networkCards.Append(cardInfo);
+                            networkInfo.Append(networkDetails);
                         }
-                        catch { }
-                    }
-                }
-
-                string result = networkCards.ToString();
-                return !string.IsNullOrEmpty(result) ? result : "未找到网卡信息";
-            }
-            catch { }
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// 获取显示器信息
-        /// </summary>
-        /// <returns>显示器信息</returns>
-        private string GetMonitorInfo()
-        {
-            try
-            {
-                StringBuilder monitorInfo = new StringBuilder();
-                int monitorCount = 0;
-
-                // 首先收集所有显示适配器的信息，建立设备ID到分辨率和刷新率的映射
-                Dictionary<string, Tuple<string, string>> displayAdapterInfo = new Dictionary<string, Tuple<string, string>>();
-                try
-                {
-                    using (var videoControllerSearcher = new ManagementObjectSearcher("SELECT DeviceID, CurrentHorizontalResolution, CurrentVerticalResolution, CurrentRefreshRate FROM Win32_VideoController"))
-                    {
-                        foreach (ManagementObject videoObj in videoControllerSearcher.Get())
+                        catch (Exception ex)
                         {
-                            try
-                            {
-                                string deviceId = videoObj["DeviceID"]?.ToString() ?? "";
-                                string resolution = "未知分辨率";
-                                string refreshRate = "未知刷新率";
-
-                                if (videoObj["CurrentHorizontalResolution"] != null && videoObj["CurrentVerticalResolution"] != null)
-                                {
-                                    resolution = $"{videoObj["CurrentHorizontalResolution"]}×{videoObj["CurrentVerticalResolution"]}";
-                                }
-                                if (videoObj["CurrentRefreshRate"] != null)
-                                {
-                                    refreshRate = $"{videoObj["CurrentRefreshRate"]}Hz";
-                                }
-
-                                if (!string.IsNullOrEmpty(deviceId))
-                                {
-                                    displayAdapterInfo[deviceId] = new Tuple<string, string>(resolution, refreshRate);
-                                }
-                            }
-                            catch { }
-                        }
-                    }
-                }
-                catch { }
-
-                // 收集显示器尺寸信息，使用DeviceID或InstanceName建立关联
-                Dictionary<string, string> monitorSizeInfo = new Dictionary<string, string>();
-                try
-                {
-                    using (var wmiSearcher = new ManagementObjectSearcher("root\\WMI", "SELECT InstanceName, MaxHorizontalImageSize, MaxVerticalImageSize FROM WmiMonitorBasicDisplayParams"))
-                    {
-                        foreach (ManagementObject wmiObj in wmiSearcher.Get())
-                        {
-                            try
-                            {
-                                string instanceName = wmiObj["InstanceName"]?.ToString() ?? "";
-                                if (wmiObj["MaxHorizontalImageSize"] != null && wmiObj["MaxVerticalImageSize"] != null)
-                                {
-                                    double widthCm = Convert.ToDouble(wmiObj["MaxHorizontalImageSize"]);
-                                    double heightCm = Convert.ToDouble(wmiObj["MaxVerticalImageSize"]);
-                                    double diagonalCm = Math.Sqrt(widthCm * widthCm + heightCm * heightCm);
-                                    string size = $"{Math.Round(diagonalCm, 1)}cm";
-                                    
-                                    if (!string.IsNullOrEmpty(instanceName))
-                                    {
-                                        monitorSizeInfo[instanceName] = size;
-                                    }
-                                }
-                            }
-                            catch { }
-                        }
-                    }
-                }
-                catch { }
-
-                // 方法1：尝试使用Win32_PnPEntity获取显示器信息
-                try
-                {
-                    using (var searcher = new ManagementObjectSearcher("SELECT Caption, PNPDeviceID FROM Win32_PnPEntity WHERE Service='monitor'"))
-                    {
-                        foreach (ManagementObject obj in searcher.Get())
-                        {
-                            try
-                            {
-                                string caption = obj["Caption"]?.ToString() ?? "未知显示器";
-                                string pnpDeviceId = obj["PNPDeviceID"]?.ToString() ?? "";
-
-                                // 初始化显示器信息
-                                string resolution = "未知分辨率";
-                                string refreshRate = "未知刷新率";
-                                string size = "未知尺寸";
-
-                                // 尝试匹配显示适配器信息
-                                if (displayAdapterInfo.Count > 0)
-                                {
-                                    // 如果只有一个显示适配器，直接使用其信息
-                                    if (displayAdapterInfo.Count == 1)
-                                    {
-                                        var kvp = displayAdapterInfo.First();
-                                        resolution = kvp.Value.Item1;
-                                        refreshRate = kvp.Value.Item2;
-                                    }
-                                    // 如果有多个显示适配器，尝试通过PNPDeviceID部分匹配
-                                    else if (!string.IsNullOrEmpty(pnpDeviceId))
-                                    {
-                                        foreach (var kvp in displayAdapterInfo)
-                                        {
-                                            if (kvp.Key.Contains(pnpDeviceId.Substring(0, Math.Min(10, pnpDeviceId.Length))) ||
-                                                pnpDeviceId.Contains(kvp.Key.Substring(0, Math.Min(10, kvp.Key.Length))))
-                                            {
-                                                resolution = kvp.Value.Item1;
-                                                refreshRate = kvp.Value.Item2;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // 如果上面方法失败，尝试使用Win32_DisplayConfiguration
-                                if (resolution == "未知分辨率")
-                                {
-                                    try
-                                    {
-                                        using (var displayConfigSearcher = new ManagementObjectSearcher("SELECT CurrentHorizontalResolution, CurrentVerticalResolution FROM Win32_DisplayConfiguration"))
-                                        {
-                                            foreach (ManagementObject configObj in displayConfigSearcher.Get())
-                                            {
-                                                try
-                                                {
-                                                    if (configObj["CurrentHorizontalResolution"] != null && configObj["CurrentVerticalResolution"] != null)
-                                                    {
-                                                        resolution = $"{configObj["CurrentHorizontalResolution"]}×{configObj["CurrentVerticalResolution"]}";
-                                                        break;
-                                                    }
-                                                }
-                                                catch { }
-                                            }
-                                        }
-                                    }
-                                    catch { }
-                                }
-
-                                // 尝试匹配尺寸信息
-                                if (monitorSizeInfo.Count > 0)
-                                {
-                                    // 如果只有一个显示器尺寸信息，直接使用
-                                    if (monitorSizeInfo.Count == 1)
-                                    {
-                                        size = monitorSizeInfo.First().Value;
-                                    }
-                                    // 否则尝试通过InstanceName和PNPDeviceID的部分匹配
-                                    else if (!string.IsNullOrEmpty(pnpDeviceId))
-                                    {
-                                        foreach (var kvp in monitorSizeInfo)
-                                        {
-                                            if (kvp.Key.Contains(pnpDeviceId.Substring(0, Math.Min(10, pnpDeviceId.Length))) ||
-                                                pnpDeviceId.Contains(kvp.Key.Substring(0, Math.Min(10, kvp.Key.Length))))
-                                            {
-                                                size = kvp.Value;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // 格式化显示器信息
-                                string monitorDetails = $"{caption} ({resolution}  {refreshRate}  {size})";
-
-                                if (monitorInfo.Length > 0)
-                                {
-                                    // 多个显示器之间换行显示
-                                    monitorInfo.Append(Environment.NewLine);
-                                }
-
-                                monitorInfo.Append(monitorDetails);
-                                monitorCount++;
-                            }
-                            catch { }
-                        }
-                    }
-                }
-                catch { }
-
-                // 如果方法1失败，尝试使用Win32_DesktopMonitor作为备用
-                if (monitorCount == 0)
-                {
-                    using (var searcher = new ManagementObjectSearcher("SELECT Caption, MonitorManufacturer FROM Win32_DesktopMonitor"))
-                    {
-                        foreach (ManagementObject obj in searcher.Get())
-                        {
-                            try
-                            {
-                                string caption = obj["Caption"]?.ToString() ?? "未知显示器";
-                                string manufacturer = obj["MonitorManufacturer"]?.ToString() ?? "未知品牌";
-
-                                string monitorDetails = $"{caption} ({manufacturer})";
-
-                                if (monitorInfo.Length > 0)
-                                {
-                                    monitorInfo.Append(Environment.NewLine);
-                                }
-
-                                monitorInfo.Append(monitorDetails);
-                                monitorCount++;
-                            }
-                            catch { }
+                            (App.Current as App)?.LogMessage($"解析单个活动网卡信息失败: {ex.Message}");
                         }
                     }
                 }
 
-                // 如果还是没有获取到信息，返回通用信息
-                string result = monitorInfo.ToString();
-                if (string.IsNullOrEmpty(result))
-                {
-                    return "显示器信息获取失败";
-                }
-
-                return result;
+                // 如果获取到了信息，返回信息字符串，否则返回错误提示
+                return networkInfo.Length > 0 ? networkInfo.ToString() : "无法获取网卡信息";
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"获取显示器信息错误: {ex.Message}");
-                return "显示器信息获取失败";
+                (App.Current as App)?.LogMessage($"获取活动网卡信息失败: {ex.Message}");
+                return "无法获取网卡信息";
             }
         }
 
