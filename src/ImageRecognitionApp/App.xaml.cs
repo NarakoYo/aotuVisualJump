@@ -19,6 +19,14 @@ public partial class App : Application
 
         // 初始化日志管理器
         LogManager.Instance.Initialize();
+        
+        // 处理命令行参数
+        if (ProcessCommandLineArgs(e.Args))
+        {
+            // 命令行模式执行完毕，直接退出
+            this.Shutdown();
+            return;
+        }
 
         // 初始化本地化工具
         try
@@ -78,6 +86,45 @@ public partial class App : Application
             LogMessage($"初始化进程时出错: {ex.Message}");
             LogException(ex);
         };
+    }
+    
+    /// <summary>
+    /// 处理命令行参数
+    /// </summary>
+    /// <param name="args">命令行参数数组</param>
+    /// <returns>是否已处理命令行参数并应退出应用程序</returns>
+    private bool ProcessCommandLineArgs(string[] args)
+    {
+        if (args.Length > 0)
+        {
+            // 检查是否为资产筛选命令
+            if (args[0].Equals("filter-assets", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    string projectPath = args.Length > 1 ? args[1] : AppDomain.CurrentDomain.BaseDirectory;
+                    string outputPath = args.Length > 2 ? args[2] : Path.Combine(projectPath, "filtered_assets");
+                    
+                    Console.WriteLine("开始筛选资产文件...");
+                    Console.WriteLine($"项目路径: {projectPath}");
+                    Console.WriteLine($"输出目录: {outputPath}");
+                    
+                    // 调用资产筛选工具
+                    AssetFilterHelper.FilterAssets(projectPath, outputPath);
+                    
+                    Console.WriteLine("资产筛选完成!");
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"资产筛选过程中发生错误: {ex.Message}");
+                    return true;
+                }
+            }
+            // 可以添加其他命令行参数的处理
+        }
+        
+        return false;
     }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)

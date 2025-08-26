@@ -24,7 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Resources\**\*">
+    <!-- 开发环境下复制所有资源 -->
+    <Content Include="Resources\**\*" Condition="'$(Configuration)' != 'Release'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Localization\**\*">
@@ -32,7 +33,34 @@
     </Content>
   </ItemGroup>
 
-  <Target Name="AfterBuild" Condition="'$(Configuration)' == 'Release'">
+  <!-- 开发环境下的构建目标 -->
+  <Target Name="AfterBuild" Condition="'$(Configuration)' != 'Release'">
     <Copy SourceFiles="$(ProjectDir)Resources\logo\logo.png" DestinationFolder="$(OutputPath)" />
+  </Target>
+
+  <!-- 发布环境下的资源筛选和构建目标 -->
+  <Target Name="FilterAssets" Condition="'$(Configuration)' == 'Release'">
+    <!-- 首先构建项目以确保筛选工具可用 -->
+    <Exec Command="dotnet build $(ProjectPath) -c Release -o $(OutputPath)\temp_build" />
+    
+    <!-- 运行资产筛选工具 -->
+    <Exec Command="powershell -ExecutionPolicy Bypass -File $(SolutionDir)..\FilterAssets.ps1 -ProjectPath $(ProjectDir)..\..\ -OutputPath $(OutputPath)\filtered_resources" />
+    
+    <!-- 复制筛选后的资源到输出目录 -->
+    <ItemGroup>
+      <FilteredResources Include="$(OutputPath)\filtered_resources\Resources\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FilteredResources)" DestinationFiles="@(FilteredResources->'$(OutputPath)\Resources\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    
+    <!-- 复制logo文件 -->
+    <Copy SourceFiles="$(ProjectDir)Resources\logo\logo.png" DestinationFolder="$(OutputPath)" />
+    
+    <!-- 清理临时文件 -->
+    <RemoveDir Directories="$(OutputPath)\temp_build;$(OutputPath)\filtered_resources" />
+  </Target>
+  
+  <!-- 确保在Release构建时执行资产筛选 -->
+  <Target Name="AfterBuild" Condition="'$(Configuration)' == 'Release'" DependsOnTargets="FilterAssets">
+    <Message Text="资产筛选和复制完成" />
   </Target>
 </Project>
