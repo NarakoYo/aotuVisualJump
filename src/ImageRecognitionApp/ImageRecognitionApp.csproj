@@ -44,7 +44,7 @@
     <Exec Command="dotnet build $(ProjectPath) -c Release -o $(OutputPath)\temp_build" />
     
     <!-- 运行资产筛选工具 -->
-    <Exec Command="powershell -ExecutionPolicy Bypass -File $(SolutionDir)..\FilterAssets.ps1 -ProjectPath $(ProjectDir)..\..\ -OutputPath $(OutputPath)\filtered_resources" />
+    <Exec Command="powershell -ExecutionPolicy Bypass -File $(SolutionDir)..\src\scripts\FilterAssets.ps1 -ProjectPath $(ProjectDir)..\..\ -OutputPath $(OutputPath)\filtered_resources" />
     
     <!-- 复制筛选后的资源到输出目录 -->
     <ItemGroup>
