@@ -9,6 +9,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Threading;
 using ImageRecognitionApp.unit;
+using System.Windows.Media; // 添加这个引用以使用VisualTreeHelper
+using ImageRecognitionApp; // 添加这个引用以使用MainWindow
 
 namespace ImageRecognitionApp.WinFun
 {
@@ -703,13 +705,90 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 LogMessage("TaskbarManager: 处理任务栏快捷方式右键点击");
-                ShowSystemMenu();
+                
+                // 获取当前鼠标位置
+                POINT cursorPos;
+                if (GetCursorPos(out cursorPos))
+                {
+                    // 将屏幕坐标转换为窗口客户区坐标
+                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                    if (mainWindow != null)
+                    {
+                        // 获取MainWindow实例
+                        var window = mainWindow as MainWindow;
+                        if (window != null)
+                        {
+                            // 查找标题栏元素
+                            var titleBar = window.FindName("TitleBar") as System.Windows.Controls.Border;
+                            if (titleBar != null)
+                            {
+                                // 获取标题栏在屏幕上的位置
+                                System.Windows.Point titleBarScreenPos = titleBar.PointToScreen(new System.Windows.Point(0, 0));
+                                System.Windows.Rect titleBarRect = new System.Windows.Rect(
+                                    titleBarScreenPos.X,
+                                    titleBarScreenPos.Y,
+                                    titleBar.ActualWidth,
+                                    titleBar.ActualHeight
+                                );
+                                
+                                // 检查鼠标是否在标题栏区域内
+                                if (titleBarRect.Contains(new System.Windows.Point(cursorPos.x, cursorPos.y)))
+                                {
+                                    // 将屏幕坐标转换为标题栏内的相对坐标
+                                    System.Windows.Point mouseInTitleBar = titleBar.PointFromScreen(new System.Windows.Point(cursorPos.x, cursorPos.y));
+                                    
+                                    // 检查鼠标是否在标题栏内（相对于标题栏的坐标）
+                                    if (mouseInTitleBar.X >= 0 &&
+                                        mouseInTitleBar.Y >= 0 &&
+                                        mouseInTitleBar.X <= titleBar.ActualWidth &&
+                                        mouseInTitleBar.Y <= titleBar.ActualHeight)
+                                    {
+                                        // 查找鼠标点击的元素
+                                        System.Windows.Media.HitTestResult hitTestResult = System.Windows.Media.VisualTreeHelper.HitTest(titleBar, mouseInTitleBar);
+                                        System.Windows.DependencyObject clickedElement = hitTestResult?.VisualHit;
+                                        
+                                        // 检查是否点击在按钮上
+                                        if (clickedElement != null)
+                                        {
+                                            // 向上遍历视觉树，检查是否在按钮或按钮子元素上
+                                            System.Windows.Controls.Button button = FindVisualParent<System.Windows.Controls.Button>(clickedElement);
+                                            if (button == null)
+                                            {
+                                                // 非按钮区域，显示系统菜单
+                                                ShowSystemMenu();
+                                                return;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                LogMessage("TaskbarManager: 右键点击不在标题栏非按钮区域，不显示系统菜单");
             }
             catch (Exception ex)
             {
                 LogMessage($"TaskbarManager: 处理任务栏快捷方式右键点击错误: {ex.Message}");
                 LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
             }
+        }
+        
+        /// <summary>
+        /// 查找视觉树中的父元素
+        /// </summary>
+        private T FindVisualParent<T>(System.Windows.DependencyObject child) where T : System.Windows.DependencyObject
+        {
+            System.Windows.DependencyObject parentObject = System.Windows.Media.VisualTreeHelper.GetParent(child);
+            if (parentObject == null)
+                return null;
+
+            T parent = parentObject as T;
+            if (parent != null)
+                return parent;
+            else
+                return FindVisualParent<T>(parentObject);
         }
 
         /// <summary>
