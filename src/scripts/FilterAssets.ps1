@@ -3,20 +3,26 @@
 
 param(
     [string]$ProjectPath = $PSScriptRoot,
-    [string]$OutputPath = Join-Path $PSScriptRoot "filtered_assets"
+    # 默认为编译后exe所在目录下的Resources目录
+    [string]$OutputPath = ""
 )
 
 # 显示帮助信息
 function Show-Help {
-    Write-Host "Usage: .\FilterAssets.ps1 [-ProjectPath <项目路径>] [-OutputPath <输出路径>]"
+    Write-Host "Usage: .\FilterAssets.ps1 [-ProjectPath <项目路径>] [-OutputPath <输出目录>]"
     Write-Host "  -ProjectPath: 项目根目录路径，默认为当前脚本所在目录"
-    Write-Host "  -OutputPath: 筛选后的资产输出目录，默认为当前目录下的filtered_assets文件夹"
+    Write-Host "  -OutputPath: 筛选后的资产输出目录，默认为编译后exe所在目录下的Resources目录"
     exit 0
 }
 
 # 检查是否需要显示帮助
 if ($args -contains "-help" -or $args -contains "--help" -or $args -contains "-h") {
     Show-Help
+}
+
+# 如果未指定输出路径，则自动设置为编译后exe所在目录下的Resources目录
+if ([string]::IsNullOrEmpty($OutputPath)) {
+    $OutputPath = Join-Path (Join-Path $PSScriptRoot "temp_build") "Resources"
 }
 
 # 检查项目路径是否存在
@@ -87,7 +93,7 @@ if (Test-Path $OutputPath -PathType Container) {
     $originalAssetCount = (Get-ChildItem -Path "$ProjectPath\Resources" -Recurse -File).Count
     $filteredAssetCount = (Get-ChildItem -Path $OutputPath -Recurse -File).Count
     
-    Write-Host "\n筛选统计信息:" -ForegroundColor Cyan
+    Write-Host "`n筛选统计信息:" -ForegroundColor Cyan
     Write-Host "原始资产文件数量: $originalAssetCount"
     Write-Host "筛选后资产文件数量: $filteredAssetCount"
     Write-Host "减少的文件数量: $($originalAssetCount - $filteredAssetCount)"
@@ -99,11 +105,11 @@ if (Test-Path $OutputPath -PathType Container) {
 }
 
 # 提示用户如何使用筛选后的资产
-Write-Host "\n使用说明:" -ForegroundColor Yellow
+Write-Host "`n使用说明:" -ForegroundColor Yellow
 Write-Host "1. 筛选后的资产已保存到: $OutputPath"
 Write-Host "2. 在发布时，可以用这个目录中的资源替换项目中的Resources目录"
 Write-Host "3. 这将有助于减小编译后文件的体积并缩短编译时间"
 
 # 完成提示
-Write-Host "\n操作已完成，请按任意键退出..." -ForegroundColor Green
+Write-Host "`n操作已完成，请按任意键退出..." -ForegroundColor Green
 Read-Host | Out-Null
