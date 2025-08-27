@@ -202,6 +202,7 @@ namespace ImageRecognitionApp.WinFun
         private const uint SC_MINIMIZE = 0xF020;       // 最小化窗口
         private const uint SC_MAXIMIZE = 0xF030;       // 最大化窗口
         private const uint SC_CLOSE = 0xF060;          // 关闭窗口
+        private const uint SC_SIZE = 0xF000;           // 调整窗口大小
         private const uint WM_LBUTTONDOWN = 0x0201;    // 鼠标左键按下
         private const uint WM_LBUTTONUP = 0x0202;      // 鼠标左键释放
         private const uint WM_RBUTTONUP = 0x0205;      // 鼠标右键释放
@@ -808,6 +809,12 @@ namespace ImageRecognitionApp.WinFun
                         // 禁用最大化菜单项
                         // SC_MAXIMIZE = 0xF030
                         EnableMenuItem(hMenu, SC_MAXIMIZE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+                        
+                        // 禁用大小菜单项
+                        EnableMenuItem(hMenu, SC_SIZE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+                        
+                        // 禁用还原菜单项
+                        EnableMenuItem(hMenu, SC_RESTORE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
                         // 获取当前鼠标位置
                         POINT cursorPos;
@@ -830,15 +837,15 @@ namespace ImageRecognitionApp.WinFun
                             // 如果用户选择了菜单项，则发送相应的系统命令
                             if (menuResult > 0)
                             {
-                                // 过滤掉最大化命令
-                                if (menuResult != SC_MAXIMIZE)
+                                // 过滤掉不允许的命令
+                                if (menuResult != SC_MAXIMIZE && menuResult != SC_SIZE && menuResult != SC_RESTORE)
                                 {
                                     PostMessage(_windowHandle, WM_SYSCOMMAND, (IntPtr)menuResult, IntPtr.Zero);
                                     LogMessage($"TaskbarManager: 用户选择了系统菜单项: {menuResult}");
                                 }
                                 else
                                 {
-                                    LogMessage("TaskbarManager: 忽略最大化菜单项选择");
+                                    LogMessage($"TaskbarManager: 忽略菜单项选择: {menuResult}");
                                 }
                             }
                         }
@@ -848,6 +855,7 @@ namespace ImageRecognitionApp.WinFun
             catch (Exception ex)
             {
                 LogMessage($"TaskbarManager: 显示系统菜单错误: {ex.Message}");
+                LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
             }
         }
         
