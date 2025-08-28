@@ -244,7 +244,7 @@
                                                         <Setter Property="Background" Value="Transparent"/>
                                                         <Style.Triggers>
                                                             <Trigger Property="Tag" Value="Selected">
-                                                                <Setter Property="Background" Value="#37373D"/>
+                                                                <Setter Property="Background" Value="#1FFFFFFF"/>
                                                             </Trigger>
                                                             <MultiTrigger>
                                                                 <MultiTrigger.Conditions>
@@ -281,23 +281,23 @@
                                         <Border x:Name="border" CornerRadius="5" 
                                                 Width="{TemplateBinding Width}" 
                                                 Height="{TemplateBinding Height}">
-                                            <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                            <Style.Triggers>
-                                                                <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#37373D"/>
-                                                                </Trigger>
-                                                                <MultiTrigger>
-                                                                    <MultiTrigger.Conditions>
-                                                                        <Condition Property="IsMouseOver" Value="True"/>
-                                                                        <Condition Property="Tag" Value="{x:Null}"/>
-                                                                    </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
-                                                                </MultiTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="Tag" Value="Selected">
+                                                            <Setter Property="Background" Value="#1FFFFFFF"/>
+                                                        </Trigger>
+                                                    <MultiTrigger>
+                                                        <MultiTrigger.Conditions>
+                                                            <Condition Property="IsMouseOver" Value="True"/>
+                                                            <Condition Property="Tag" Value="{x:Null}"/>
+                                                        </MultiTrigger.Conditions>
+                                                        <Setter Property="Background" Value="#11FFFFFF"/>
+                                                    </MultiTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
                                             <Grid>
                                                 <!-- 上边框线已移除 -->
                                                 <StackPanel Orientation="Horizontal" 
@@ -319,11 +319,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -351,7 +346,7 @@
                                                             <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
                                                                 </Trigger>
                                                                 <MultiTrigger>
                                                                     <MultiTrigger.Conditions>
@@ -384,11 +379,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -416,7 +406,7 @@
                                                             <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
                                                                 </Trigger>
                                                                 <MultiTrigger>
                                                                     <MultiTrigger.Conditions>
@@ -449,11 +439,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -481,7 +466,7 @@
                                                             <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
                                                                 </Trigger>
                                                                 <MultiTrigger>
                                                                     <MultiTrigger.Conditions>
@@ -514,11 +499,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -546,7 +526,7 @@
                                                             <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
                                                                 </Trigger>
                                                                 <MultiTrigger>
                                                                     <MultiTrigger.Conditions>
@@ -579,11 +559,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -611,7 +586,7 @@
                                                             <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#37373D"/>
+                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
                                                                 </Trigger>
                                                                 <MultiTrigger>
                                                                     <MultiTrigger.Conditions>
@@ -644,11 +619,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -676,8 +646,8 @@
                                                         <Setter Property="Background" Value="Transparent"/>
                                                         <Style.Triggers>
                                                             <Trigger Property="Tag" Value="Selected">
-                                                                <Setter Property="Background" Value="#37373D"/>
-                                                            </Trigger>
+                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
+                                                                </Trigger>
                                                             <MultiTrigger>
                                                                 <MultiTrigger.Conditions>
                                                                     <Condition Property="IsMouseOver" Value="True"/>
@@ -709,11 +679,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -774,11 +739,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
@@ -819,7 +779,7 @@
                                                     <Setter Property="Background" Value="Transparent"/>
                                                     <Style.Triggers>
                                                         <Trigger Property="Tag" Value="Selected">
-                                                            <Setter Property="Background" Value="#37373D"/>
+                                                            <Setter Property="Background" Value="#1FFFFFFF"/>
                                                         </Trigger>
                                                         <MultiTrigger>
                                                             <MultiTrigger.Conditions>
@@ -858,11 +818,6 @@
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
                                                                 <Setter Property="Foreground" Value="White"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
-                                                                        <Setter Property="Foreground" Value="#007ACC"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
