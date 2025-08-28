@@ -229,7 +229,7 @@
                         <Border Grid.Column="0"
                                 Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource SidebarWidthConverter}}"
                                 Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Border}}"
-                                Background="#1E1E1E"
+                                Background="Transparent"
                                 CornerRadius="10"
                                 Margin="8,0,0,0">
                             <!-- 侧边栏内容容器 -->
@@ -241,7 +241,7 @@
                                             <Border x:Name="border" CornerRadius="5" Width="40" Height="40">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                                        <Setter Property="Background" Value="Transparent"/>
                                                         <Style.Triggers>
                                                             <Trigger Property="Tag" Value="Selected">
                                                                 <Setter Property="Background" Value="#37373D"/>
@@ -251,7 +251,7 @@
                                                                     <Condition Property="IsMouseOver" Value="True"/>
                                                                     <Condition Property="Tag" Value="{x:Null}"/>
                                                                 </MultiTrigger.Conditions>
-                                                                <Setter Property="Background" Value="#2A2D2E"/>
+                                                                <Setter Property="Background" Value="#11FFFFFF"/>
                                                             </MultiTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -283,7 +283,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
                                                                     <Setter Property="Background" Value="#37373D"/>
@@ -293,7 +293,7 @@
                                                                         <Condition Property="IsMouseOver" Value="True"/>
                                                                         <Condition Property="Tag" Value="{x:Null}"/>
                                                                     </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
                                                                 </MultiTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -348,7 +348,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
                                                                     <Setter Property="Background" Value="#37373D"/>
@@ -358,7 +358,7 @@
                                                                         <Condition Property="IsMouseOver" Value="True"/>
                                                                         <Condition Property="Tag" Value="{x:Null}"/>
                                                                     </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
                                                                 </MultiTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -413,7 +413,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
                                                                     <Setter Property="Background" Value="#37373D"/>
@@ -423,7 +423,7 @@
                                                                         <Condition Property="IsMouseOver" Value="True"/>
                                                                         <Condition Property="Tag" Value="{x:Null}"/>
                                                                     </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
                                                                 </MultiTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -478,7 +478,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
                                                                     <Setter Property="Background" Value="#37373D"/>
@@ -488,7 +488,7 @@
                                                                         <Condition Property="IsMouseOver" Value="True"/>
                                                                         <Condition Property="Tag" Value="{x:Null}"/>
                                                                     </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
                                                                 </MultiTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -543,7 +543,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
                                                                     <Setter Property="Background" Value="#37373D"/>
@@ -553,7 +553,7 @@
                                                                         <Condition Property="IsMouseOver" Value="True"/>
                                                                         <Condition Property="Tag" Value="{x:Null}"/>
                                                                     </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
                                                                 </MultiTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -608,7 +608,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#1E1E1E"/>
+                                                            <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
                                                                 <Trigger Property="Tag" Value="Selected">
                                                                     <Setter Property="Background" Value="#37373D"/>
@@ -618,7 +618,7 @@
                                                                         <Condition Property="IsMouseOver" Value="True"/>
                                                                         <Condition Property="Tag" Value="{x:Null}"/>
                                                                     </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#2A2D2E"/>
+                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
                                                                 </MultiTrigger>
                                                             </Style.Triggers>
                                                         </Style>
@@ -673,7 +673,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                                        <Setter Property="Background" Value="Transparent"/>
                                                         <Style.Triggers>
                                                             <Trigger Property="Tag" Value="Selected">
                                                                 <Setter Property="Background" Value="#37373D"/>
@@ -683,7 +683,7 @@
                                                                     <Condition Property="IsMouseOver" Value="True"/>
                                                                     <Condition Property="Tag" Value="{x:Null}"/>
                                                                 </MultiTrigger.Conditions>
-                                                                <Setter Property="Background" Value="#2A2D2E"/>
+                                                                <Setter Property="Background" Value="#11FFFFFF"/>
                                                             </MultiTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -738,7 +738,7 @@
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
                                                     <Style TargetType="Border">
-                                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                                        <Setter Property="Background" Value="Transparent"/>
                                                         <Style.Triggers>
                                                             <Trigger Property="Tag" Value="Selected">
                                                                 <Setter Property="Background" Value="#37373D"/>
@@ -748,7 +748,7 @@
                                                                     <Condition Property="IsMouseOver" Value="True"/>
                                                                     <Condition Property="Tag" Value="{x:Null}"/>
                                                                 </MultiTrigger.Conditions>
-                                                                <Setter Property="Background" Value="#2A2D2E"/>
+                                                                <Setter Property="Background" Value="#19FFFFFF"/>
                                                             </MultiTrigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -816,7 +816,7 @@
                                                 VerticalAlignment="Bottom">
                                             <Border.Style>
                                                 <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="#1E1E1E"/>
+                                                    <Setter Property="Background" Value="Transparent"/>
                                                     <Style.Triggers>
                                                         <Trigger Property="Tag" Value="Selected">
                                                             <Setter Property="Background" Value="#37373D"/>
@@ -826,7 +826,7 @@
                                                                 <Condition Property="IsMouseOver" Value="True"/>
                                                                 <Condition Property="Tag" Value="{x:Null}"/>
                                                             </MultiTrigger.Conditions>
-                                                            <Setter Property="Background" Value="#2A2D2E"/>
+                                                            <Setter Property="Background" Value="#19FFFFFF"/>
                                                         </MultiTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -835,7 +835,7 @@
                                                 <!-- 上边框线 - 宽度为按钮的一半，水平居中 -->
                                                 <Border Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}, Converter={StaticResource MultiplyConverter}, ConverterParameter=0.5}"
                                                         Height="2"
-                                                        Background="#2A2D2E"
+                                                        Background="Transparent"
                                                         HorizontalAlignment="Center"
                                                         VerticalAlignment="Top"/>
                                                 <StackPanel Orientation="Horizontal"
