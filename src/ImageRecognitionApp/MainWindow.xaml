@@ -21,6 +21,10 @@
         <converters:SubtractConverter x:Key="SubtractConverter"/>
         <!-- 乘法转换器 - 用于计算值的乘积，如设置按钮上边框宽度 -->
         <converters:MultiplyConverter x:Key="MultiplyConverter"/>
+        <!-- 侧边栏宽度转换器 - 用于计算侧边栏宽度（窗口宽度的1/3减去12像素） -->
+        <converters:SidebarWidthConverter x:Key="SidebarWidthConverter"/>
+        <!-- 设置按钮间距转换器 - 用于计算设置按钮与上一个按钮的间距 -->
+        <converters:SettingButtonSpacingConverter x:Key="SettingButtonSpacingConverter"/>
         <!-- 标题栏按钮样式 - 定义标题栏按钮的基本外观和行为 -->
         <Style x:Key="TitleBarButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
@@ -216,17 +220,18 @@
                     </Border.Height>
                     <!-- 内容框内部布局 - 分为侧边栏和主内容区域 -->
                     <Grid>
-                        <!-- 内容区域列定义 - 1:3比例分割侧边栏和主内容区 -->
+                        <!-- 内容区域列定义 -->
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="1*"/>
-                            <ColumnDefinition Width="3*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <!-- 自定义菜单栏 -->
                         <Border Grid.Column="0"
+                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource SidebarWidthConverter}}"
                                 Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Border}}"
                                 Background="#1E1E1E"
                                 CornerRadius="10"
-                                Margin="0">
+                                Margin="8,0,0,0">
                             <!-- 侧边栏内容容器 -->
                             <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                 <!-- 折叠按钮 -->
@@ -266,7 +271,7 @@
                                 <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,0">
                             <!-- 启动按钮 -->
                             <Button x:Name="LaunchButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -331,7 +336,7 @@
 
                             <!-- 视觉脚本按钮 -->
                             <Button x:Name="VisualScriptButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -396,7 +401,7 @@
 
                             <!-- 辅助操控按钮 -->
                             <Button x:Name="AuxiliaryOperationButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -461,7 +466,7 @@
 
                             <!-- 屏幕录制按钮 -->
                             <Button x:Name="ScreenRecordingButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -526,7 +531,7 @@
 
                             <!-- 快捷键按钮 -->
                             <Button x:Name="ShortcutKeysButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -591,7 +596,7 @@
 
                             <!-- 目录管理按钮 -->
                             <Button x:Name="DirectoryManagementButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -656,7 +661,7 @@
 
                             <!-- 控制台按钮 -->
                             <Button x:Name="ConsoleButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -721,7 +726,7 @@
 
                             <!-- 小工具按钮 -->
                             <Button x:Name="ToolButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="60" 
+                                    Height="45" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -788,15 +793,20 @@
                         <!-- 占位元素，确保设置按钮位于底部 -->
                         <StackPanel Height="Auto" VerticalAlignment="Stretch"/>
                         
-                        <!-- 设置按钮 - 位于底部，忽略按钮间距规则 -->
+                        <!-- 设置按钮 - 位于底部，使用转换器计算间距 -->
                         <!-- 设置按钮 - 打开应用程序设置界面 -->
                         <Button x:Name="SettingButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SettingButton_Click"
-                                Height="60"
+                                Height="45"
                                 VerticalAlignment="Bottom"
                                 HorizontalAlignment="Stretch"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                Margin="0,5,0,0" Panel.ZIndex="10">
+                                Panel.ZIndex="10">
+                            <Button.Margin>
+                                <MultiBinding Converter="{StaticResource SettingButtonSpacingConverter}">
+                                    <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=Border}"/>
+                                </MultiBinding>
+                            </Button.Margin>
                             <Button.Template>
                                 <ControlTemplate TargetType="Button">
                                     <Border x:Name="border" CornerRadius="5"
