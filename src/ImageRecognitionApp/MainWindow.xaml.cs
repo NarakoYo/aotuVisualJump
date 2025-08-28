@@ -69,6 +69,21 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
     }
 
+    // Logo图片路径属性
+    private string _logoImagePath = string.Empty;
+    public string LogoImagePath
+    {
+        get => _logoImagePath;
+        set
+        {
+            if (_logoImagePath != value)
+            {
+                _logoImagePath = value;
+                OnPropertyChanged(nameof(LogoImagePath));
+            }
+        }
+    }
+
     // 侧边栏按钮文本属性
     private string _launchButtonText = string.Empty;
     public string LaunchButtonText
@@ -178,6 +193,64 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             {
                 _toolButtonText = value;
                 OnPropertyChanged(nameof(ToolButtonText));
+            }
+        }
+    }
+
+    // 下拉菜单按钮图标路径属性
+    private string _dropdownMenuButtonIconPath = string.Empty;
+    public string DropdownMenuButtonIconPath
+    {
+        get => _dropdownMenuButtonIconPath;
+        set
+        {
+            if (_dropdownMenuButtonIconPath != value)
+            {
+                _dropdownMenuButtonIconPath = value;
+                OnPropertyChanged(nameof(DropdownMenuButtonIconPath));
+            }
+        }
+    }
+
+    // 窗口控制按钮图标路径属性
+    private string _hideToTrayButtonIconPath = string.Empty;
+    public string HideToTrayButtonIconPath
+    {
+        get => _hideToTrayButtonIconPath;
+        set
+        {
+            if (_hideToTrayButtonIconPath != value)
+            {
+                _hideToTrayButtonIconPath = value;
+                OnPropertyChanged(nameof(HideToTrayButtonIconPath));
+            }
+        }
+    }
+
+    private string _minimizeWindowButtonIconPath = string.Empty;
+    public string MinimizeWindowButtonIconPath
+    {
+        get => _minimizeWindowButtonIconPath;
+        set
+        {
+            if (_minimizeWindowButtonIconPath != value)
+            {
+                _minimizeWindowButtonIconPath = value;
+                OnPropertyChanged(nameof(MinimizeWindowButtonIconPath));
+            }
+        }
+    }
+
+    private string _closeWindowButtonIconPath = string.Empty;
+    public string CloseWindowButtonIconPath
+    {
+        get => _closeWindowButtonIconPath;
+        set
+        {
+            if (_closeWindowButtonIconPath != value)
+            {
+                _closeWindowButtonIconPath = value;
+                OnPropertyChanged(nameof(CloseWindowButtonIconPath));
             }
         }
     }
@@ -567,9 +640,30 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             var assetHelper = AssetHelper.Instance;
 
+            // 设置窗口图标和Logo图片（通过AssetHelper获取sign_id=10001的图片资产）
+            try
+            {
+                string logoPath = assetHelper.GetAssetPath(10001);
+                this.Icon = new System.Windows.Media.Imaging.BitmapImage(new Uri(logoPath, UriKind.Absolute));
+                LogoImagePath = logoPath; // 设置标题栏Logo图片路径
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"设置窗口图标失败: {ex.Message}");
+            }
+
             // 设置按钮图标路径
             string settingIconPath = assetHelper.GetAssetPath(10003);
             SettingButtonIconPath = settingIconPath;
+
+            // 设置下拉菜单按钮图标路径
+            string dropdownMenuIconPath = assetHelper.GetAssetPath(10004);
+            DropdownMenuButtonIconPath = dropdownMenuIconPath;
+
+            // 设置窗口控制按钮图标路径
+            HideToTrayButtonIconPath = assetHelper.GetAssetPath(20006);
+            MinimizeWindowButtonIconPath = assetHelper.GetAssetPath(20005);
+            CloseWindowButtonIconPath = assetHelper.GetAssetPath(20004);
 
             // 侧边栏按钮图标路径
             LaunchButtonIconPath = assetHelper.GetAssetPath(10006);

@@ -14,6 +14,10 @@
                 "Asset":"Icons\\igoutu\\setting-gear.png"
             },
             {
+                "sign_id": 10004,
+                "Asset":"Icons\\igoutu\\aboutMenu.png"
+            },
+            {
                 "sign_id":10006,
                 "Asset":"Icons\\igoutu\\play-96.png"
             },

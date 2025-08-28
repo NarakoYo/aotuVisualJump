@@ -12,7 +12,6 @@
         Background="Transparent"
         Closing="Window_Closing"
         WindowStartupLocation="CenterScreen"
-        Icon="pack://application:,,,/Resources/logo/logo.png"
         ResizeMode="CanMinimize"
         StateChanged="Window_StateChanged"
         Activated="Window_Activated">
@@ -106,7 +105,7 @@
                             <!-- 标题栏左侧面板 - 包含logo和应用标题 -->
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="4,0,0,0">
                             <!-- 应用Logo - 显示应用程序图标 -->
-                            <Image Source="pack://application:,,,/Resources/logo/logo.png" Width="46" Height="46" Stretch="UniformToFill" VerticalAlignment="Center" Margin="0,0,15,0">
+                            <Image Source="{Binding LogoImagePath}" Width="46" Height="46" Stretch="UniformToFill" VerticalAlignment="Center" Margin="0,0,15,0">
                                 <Image.Clip>
                                     <RectangleGeometry RadiusX="8" RadiusY="8" Rect="0,0,46,46"/>
                                 </Image.Clip>
@@ -125,7 +124,7 @@
                                             </Border>
                                         </ControlTemplate>
                                     </Button.Template>
-                                    <Image Source="pack://application:,,,/Resources/Icons/igoutu/aboutMenu.png" Width="26.67" Height="26.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <Image Source="{Binding DropdownMenuButtonIconPath}" Width="26.67" Height="26.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Button>
 
                                 <!-- 下拉菜单Popup -->
@@ -179,15 +178,15 @@
                                 <Border Width="1" Height="25" Background="#535353" Margin="0,12.5,4,12.5" VerticalAlignment="Center"/>
                                 <!-- 隐藏到托盘按钮 - 点击后将应用窗口隐藏到系统托盘 -->
                                 <Button Click="HideToTray" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" Loaded="HideToTrayButton_Loaded">
-                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/hide-window.png" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                     <Image Source="{Binding HideToTrayButtonIconPath}" Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                   </Button>
                                   <!-- 最小化按钮 - 点击后将窗口最小化到任务栏 -->
                                   <Button Click="MinimizeWindow" Style="{StaticResource MinimizeButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,-1,0" Loaded="MinimizeWindowButton_Loaded">
-                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/minimize-window.png" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                     <Image Source="{Binding MinimizeWindowButtonIconPath}" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                   </Button>
                                   <!-- 关闭按钮 - 点击后关闭应用程序 -->
                                   <Button Click="CloseWindow" Style="{StaticResource CloseButtonStyle}" MouseLeftButtonDown="TitleBarButton_MouseLeftButtonDown" Margin="0,0,0,0" Loaded="CloseWindowButton_Loaded">
-                                     <Image Source="pack://application:,,,/Resources/Icons/igoutu/close-window.png" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                     <Image Source="{Binding CloseWindowButtonIconPath}" Width="30.67" Height="30.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                   </Button>
                             </StackPanel>
                         </Grid>
@@ -267,7 +266,7 @@
                                 <StackPanel HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="0,0,0,0">
                             <!-- 启动按钮 -->
                             <Button x:Name="LaunchButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -332,7 +331,7 @@
 
                             <!-- 视觉脚本按钮 -->
                             <Button x:Name="VisualScriptButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -397,7 +396,7 @@
 
                             <!-- 辅助操控按钮 -->
                             <Button x:Name="AuxiliaryOperationButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -462,7 +461,7 @@
 
                             <!-- 屏幕录制按钮 -->
                             <Button x:Name="ScreenRecordingButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -527,7 +526,7 @@
 
                             <!-- 快捷键按钮 -->
                             <Button x:Name="ShortcutKeysButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -592,7 +591,7 @@
 
                             <!-- 目录管理按钮 -->
                             <Button x:Name="DirectoryManagementButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -657,7 +656,7 @@
 
                             <!-- 控制台按钮 -->
                             <Button x:Name="ConsoleButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -722,7 +721,7 @@
 
                             <!-- 小工具按钮 -->
                             <Button x:Name="ToolButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
-                                    Height="40" 
+                                    Height="60" 
                                     HorizontalAlignment="Stretch" 
                                     Background="Transparent" 
                                     BorderThickness="0" 
@@ -792,7 +791,7 @@
                         <!-- 设置按钮 - 位于底部，忽略按钮间距规则 -->
                         <!-- 设置按钮 - 打开应用程序设置界面 -->
                         <Button x:Name="SettingButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SettingButton_Click"
-                                Height="40"
+                                Height="60"
                                 VerticalAlignment="Bottom"
                                 HorizontalAlignment="Stretch"
                                 Background="Transparent"
