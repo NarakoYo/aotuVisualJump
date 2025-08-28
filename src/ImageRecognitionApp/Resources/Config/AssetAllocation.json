@@ -2,8 +2,12 @@
         "Resources":"Resources",
         "AssetList":[
             {
-                "sign_id":10001,
+                "sign_id":10000,
                 "Asset":"logo\\logo.ico"
+            },
+            {
+                "sign_id":10001,
+                "Asset":"logo\\logo.png"
             },
             {
                 "sign_id": 10003,
@@ -44,6 +48,18 @@
             {
                 "sign_id":10014,
                 "Asset":"Icons\\igoutu\\fold.png"
+            },
+            {
+                "sign_id":20004,
+                "Asset":"Icons\\igoutu\\close-window.png"
+            },
+            {
+                "sign_id":20005,
+                "Asset":"Icons\\igoutu\\minimize-window.png"
+            },
+            {
+                "sign_id":20006,
+                "Asset":"Icons\\igoutu\\hide-window.png"
             },
             {
                 "sign_id":20007,
