@@ -43,16 +43,16 @@ namespace ImageRecognitionApp.Converters
                             otherButtonsHeightSum - otherButtonsSpacingSum - settingButtonHeight;
 
             // 使用日志管理器记录调试信息
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "===== SettingButtonSpacingConverter 调试信息 =====");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"侧边栏高度: {sidebarHeight}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"折叠按钮高度: {collapseButtonHeight}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"折叠按钮间距总和: {collapseButtonSpacing}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"其他按钮高度总和: {otherButtonsHeightSum}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"其他按钮间距总和: {otherButtonsSpacingSum}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"设置按钮高度: {settingButtonHeight}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"计算得到的间距: {spacing}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"返回的最终间距: {Math.Max(0.0, spacing)}");
-            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "==============================================");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "===== SettingButtonSpacingConverter 调试信息 =====");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"侧边栏高度: {sidebarHeight}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"折叠按钮高度: {collapseButtonHeight}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"折叠按钮间距总和: {collapseButtonSpacing}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"其他按钮高度总和: {otherButtonsHeightSum}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"其他按钮间距总和: {otherButtonsSpacingSum}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"设置按钮高度: {settingButtonHeight}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"计算得到的间距: {spacing}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, $"返回的最终间距: {Math.Max(0.0, spacing)}");
+            // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "==============================================");
 
             // 确保结果不为负数
             double topMargin = Math.Max(0.0, spacing);
