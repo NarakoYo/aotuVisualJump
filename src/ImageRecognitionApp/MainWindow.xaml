@@ -126,7 +126,8 @@
                                             <Border Background="{TemplateBinding Background}" CornerRadius="8" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                        </ControlTemplate>
+    
+                                    </ControlTemplate>
                                     </Button.Template>
                                     <Image Source="{Binding DropdownMenuButtonIconPath}" Width="26.67" Height="26.67" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Button>
@@ -281,25 +282,24 @@
                                         <Border x:Name="border" CornerRadius="5" 
                                                 Width="{TemplateBinding Width}" 
                                                 Height="{TemplateBinding Height}">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="Transparent"/>
-                                                <Style.Triggers>
-                                                    <Trigger Property="Tag" Value="Selected">
-                                                            <Setter Property="Background" Value="#1FFFFFFF"/>
-                                                        </Trigger>
-                                                    <MultiTrigger>
-                                                        <MultiTrigger.Conditions>
-                                                            <Condition Property="IsMouseOver" Value="True"/>
-                                                            <Condition Property="Tag" Value="{x:Null}"/>
-                                                        </MultiTrigger.Conditions>
-                                                        <Setter Property="Background" Value="#11FFFFFF"/>
-                                                    </MultiTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                            <Grid>
-                                                <!-- 上边框线已移除 -->
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Style.Triggers>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                                <Condition Property="Tag" Value="{x:Null}"/>
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter Property="Background" Value="#11FFFFFF"/>
+                                                        </MultiTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
                                                             VerticalAlignment="Center" 
@@ -325,6 +325,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -342,24 +348,23 @@
                                                 Width="{TemplateBinding Width}" 
                                                 Height="{TemplateBinding Height}">
                                             <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                            <Style.Triggers>
-                                                                <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
-                                                                </Trigger>
-                                                                <MultiTrigger>
-                                                                    <MultiTrigger.Conditions>
-                                                                        <Condition Property="IsMouseOver" Value="True"/>
-                                                                        <Condition Property="Tag" Value="{x:Null}"/>
-                                                                    </MultiTrigger.Conditions>
-                                                                    <Setter Property="Background" Value="#11FFFFFF"/>
-                                                                </MultiTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                            <Grid>
-                                                <!-- 上边框线已移除 -->
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Style.Triggers>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                                <Condition Property="Tag" Value="{x:Null}"/>
+                                                            </MultiTrigger.Conditions>
+                                                            <Setter Property="Background" Value="#11FFFFFF"/>
+                                                        </MultiTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
                                                             VerticalAlignment="Center" 
@@ -385,6 +390,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -405,9 +416,6 @@
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
-                                                                <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
-                                                                </Trigger>
                                                                 <MultiTrigger>
                                                                     <MultiTrigger.Conditions>
                                                                         <Condition Property="IsMouseOver" Value="True"/>
@@ -418,7 +426,10 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                            <Grid>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <!-- 上边框线已移除 -->
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
@@ -445,6 +456,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -465,9 +482,6 @@
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="Transparent"/>
                                                             <Style.Triggers>
-                                                                <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
-                                                                </Trigger>
                                                                 <MultiTrigger>
                                                                     <MultiTrigger.Conditions>
                                                                         <Condition Property="IsMouseOver" Value="True"/>
@@ -478,7 +492,10 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                            <Grid>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <!-- 上边框线已移除 -->
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
@@ -505,6 +522,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -538,7 +561,10 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                            <Grid>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <!-- 上边框线已移除 -->
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
@@ -565,6 +591,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -598,7 +630,10 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                            <Grid>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <!-- 上边框线已移除 -->
                                                 <StackPanel Orientation="Horizontal" 
                                                             HorizontalAlignment="Left" 
@@ -625,6 +660,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -645,9 +686,6 @@
                                                     <Style TargetType="Border">
                                                         <Setter Property="Background" Value="Transparent"/>
                                                         <Style.Triggers>
-                                                            <Trigger Property="Tag" Value="Selected">
-                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
-                                                                </Trigger>
                                                             <MultiTrigger>
                                                                 <MultiTrigger.Conditions>
                                                                     <Condition Property="IsMouseOver" Value="True"/>
@@ -658,7 +696,10 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                            <Grid>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <!-- 上边框线已移除 -->
                                                 <StackPanel Orientation="Horizontal"
                                                             HorizontalAlignment="Left"
@@ -685,6 +726,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -705,9 +752,6 @@
                                                     <Style TargetType="Border">
                                                         <Setter Property="Background" Value="Transparent"/>
                                                         <Style.Triggers>
-                                                            <Trigger Property="Tag" Value="Selected">
-                                                                <Setter Property="Background" Value="#37373D"/>
-                                                            </Trigger>
                                                             <MultiTrigger>
                                                                 <MultiTrigger.Conditions>
                                                                     <Condition Property="IsMouseOver" Value="True"/>
@@ -718,7 +762,10 @@
                                                         </Style.Triggers>
                                                     </Style>
                                                 </Border.Style>
-                                            <Grid>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <!-- 上边框线已移除 -->
                                                 <StackPanel Orientation="Horizontal"
                                                             HorizontalAlignment="Left"
@@ -745,6 +792,12 @@
                                                 </StackPanel>
                                             </Grid>
                                         </Border>
+                                        <ControlTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                                <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                                <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                            </DataTrigger>
+                                        </ControlTemplate.Triggers>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
@@ -778,9 +831,6 @@
                                                 <Style TargetType="Border">
                                                     <Setter Property="Background" Value="Transparent"/>
                                                     <Style.Triggers>
-                                                        <Trigger Property="Tag" Value="Selected">
-                                                            <Setter Property="Background" Value="#1FFFFFFF"/>
-                                                        </Trigger>
                                                         <MultiTrigger>
                                                             <MultiTrigger.Conditions>
                                                                 <Condition Property="IsMouseOver" Value="True"/>
@@ -791,7 +841,10 @@
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
-                                            <Grid>
+                                            <Grid x:Name="contentGrid">
+                                                <!-- 选中状态的左边框 -->
+                                                <Border x:Name="LeftBorder" Width="4" Height="22.5" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Background="#4293C9" Visibility="Collapsed"/>
                                                 <!-- 上边框线 - 宽度为按钮的一半，水平居中 -->
                                                 <Border Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}, Converter={StaticResource MultiplyConverter}, ConverterParameter=0.5}"
                                                         Height="2"
@@ -824,6 +877,12 @@
                                         </StackPanel>
                                     </Grid>
                                     </Border>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Tag, ElementName=border}" Value="Selected">
+                                            <Setter Property="Margin" Value="4,0,0,0" TargetName="contentGrid"/>
+                                            <Setter Property="Visibility" Value="Visible" TargetName="LeftBorder"/>
+                                        </DataTrigger>
+                                    </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Button.Template>
                         </Button>
