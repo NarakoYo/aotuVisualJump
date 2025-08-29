@@ -531,11 +531,27 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // 设置按钮点击事件处理程序
     private void SettingButton_Click(object sender, RoutedEventArgs e)
     {
+        var button = sender as Button;
+        if (button != null && button.Template != null)
+        {
+            var border = button.Template.FindName("border", button) as Border;
+            if (border != null)
+            {
+                // 检查按钮是否已经被选中
+                bool isAlreadySelected = border.Tag != null && border.Tag.ToString() == "Selected";
+                
+                // 如果按钮已经被选中，则不执行任何操作
+                if (isAlreadySelected)
+                {
+                    return;
+                }
+            }
+        }
+        
         // 重置所有侧边栏按钮状态（包括其他按钮和设置按钮）
         ResetAllSidebarButtonsState();
 
         // 设置当前点击按钮的状态
-        var button = sender as Button;
         if (button != null && button.Template != null)
         {
             var border = button.Template.FindName("border", button) as Border;
@@ -873,10 +889,16 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             if (isSelected)
             {
                 // 选中时：线从中间向两边延伸
-                leftBorder.Width = 4; // 重置宽度
-                // 如果当前边框是折叠状态，从0开始；否则保持当前高度
-                double fromHeight = leftBorder.Visibility == Visibility.Collapsed || leftBorder.ActualHeight == 0 ? 0 : leftBorder.ActualHeight;
+                // 确保基础属性设置正确
+                leftBorder.Visibility = Visibility.Visible; // 强制可见
+                leftBorder.Width = 4; // 设置宽度
                 leftBorder.Opacity = 1; // 完全不透明
+
+                // 获取当前高度，作为动画的起始值
+                double fromHeight = leftBorder.ActualHeight;
+
+                // 停止任何正在进行的动画
+                leftBorder.BeginAnimation(Border.HeightProperty, null);
 
                 // 创建高度动画（从中间向两边延伸的效果）
                 var heightAnimation = new DoubleAnimation
@@ -971,11 +993,27 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     /// </summary>
     private void SidebarButton_Click(object sender, RoutedEventArgs e)
     {
+        var button = sender as Button;
+        if (button != null && button.Template != null)
+        {
+            var border = button.Template.FindName("border", button) as Border;
+            if (border != null)
+            {
+                // 检查按钮是否已经被选中
+                bool isAlreadySelected = border.Tag != null && border.Tag.ToString() == "Selected";
+                
+                // 如果按钮已经被选中，则不执行任何操作
+                if (isAlreadySelected)
+                {
+                    return;
+                }
+            }
+        }
+        
         // 重置所有按钮状态
         ResetAllSidebarButtonsState();
 
         // 设置当前点击按钮的状态
-        var button = sender as Button;
         if (button != null && button.Template != null)
         {
             var border = button.Template.FindName("border", button) as Border;
