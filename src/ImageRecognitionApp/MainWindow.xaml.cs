@@ -857,6 +857,95 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
         // 应用动画
         translateTransform.BeginAnimation(TranslateTransform.XProperty, animation);
+
+        // 处理左边框动画
+        var leftBorder = contentGrid.FindName("LeftBorder") as Border;
+        if (leftBorder != null)
+        {
+            // 停止任何正在进行的左边框动画
+            leftBorder.BeginAnimation(Border.WidthProperty, null);
+            leftBorder.BeginAnimation(Border.HeightProperty, null);
+            leftBorder.BeginAnimation(Border.OpacityProperty, null);
+
+            // 确保边框可见
+            leftBorder.Visibility = Visibility.Visible;
+
+            if (isSelected)
+            {
+                // 选中时：线从中间向两边延伸
+                leftBorder.Width = 4; // 重置宽度
+                // 如果当前边框是折叠状态，从0开始；否则保持当前高度
+                double fromHeight = leftBorder.Visibility == Visibility.Collapsed || leftBorder.ActualHeight == 0 ? 0 : leftBorder.ActualHeight;
+                leftBorder.Opacity = 1; // 完全不透明
+
+                // 创建高度动画（从中间向两边延伸的效果）
+                var heightAnimation = new DoubleAnimation
+                {
+                    From = fromHeight,
+                    To = 22.5, // 最终高度
+                    Duration = new Duration(TimeSpan.FromMilliseconds(300)),
+                    FillBehavior = FillBehavior.HoldEnd,
+                    EasingFunction = new QuadraticEase() { EasingMode = EasingMode.EaseInOut }
+                };
+
+                // 应用高度动画
+                leftBorder.BeginAnimation(Border.HeightProperty, heightAnimation);
+            }
+            else
+            {
+                // 取消选中时：线继续延伸围绕按钮并且同时逐渐变细后消失
+                // 先创建一个故事板来协调多个动画
+                var storyboard = new Storyboard();
+
+                // 高度动画 - 继续延伸
+                var heightAnimation = new DoubleAnimation
+                {
+                    From = leftBorder.ActualHeight,
+                    To = 45, // 按钮完整高度
+                    Duration = new Duration(TimeSpan.FromMilliseconds(400)),
+                    FillBehavior = FillBehavior.HoldEnd
+                };
+                Storyboard.SetTarget(heightAnimation, leftBorder);
+                Storyboard.SetTargetProperty(heightAnimation, new PropertyPath(Border.HeightProperty));
+                storyboard.Children.Add(heightAnimation);
+
+                // 宽度动画 - 同时逐渐变细
+                var widthAnimation = new DoubleAnimation
+                {
+                    From = leftBorder.ActualWidth,
+                    To = 0,
+                    Duration = new Duration(TimeSpan.FromMilliseconds(400)),
+                    FillBehavior = FillBehavior.HoldEnd
+                };
+                Storyboard.SetTarget(widthAnimation, leftBorder);
+                Storyboard.SetTargetProperty(widthAnimation, new PropertyPath(Border.WidthProperty));
+                storyboard.Children.Add(widthAnimation);
+
+                // 透明度动画 - 逐渐消失
+                var opacityAnimation = new DoubleAnimation
+                {
+                    From = 1,
+                    To = 0,
+                    Duration = new Duration(TimeSpan.FromMilliseconds(400)),
+                    FillBehavior = FillBehavior.HoldEnd
+                };
+                Storyboard.SetTarget(opacityAnimation, leftBorder);
+                Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(Border.OpacityProperty));
+                storyboard.Children.Add(opacityAnimation);
+
+                // 动画完成后隐藏边框
+                storyboard.Completed += (s, eArgs) =>
+                {
+                    leftBorder.Visibility = Visibility.Collapsed;
+                    leftBorder.Opacity = 1; // 重置透明度，以便下次显示
+                    leftBorder.Width = 4; // 重置宽度
+                    leftBorder.Height = 0; // 重置高度
+                };
+
+                // 应用故事板动画
+                storyboard.Begin();
+            }
+        }
     }
 
     /// <summary>
