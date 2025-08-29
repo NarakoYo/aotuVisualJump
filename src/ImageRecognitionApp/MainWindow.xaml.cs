@@ -672,9 +672,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             // 设置窗口图标和Logo图片（通过AssetHelper获取sign_id=10001的图片资产）
             try
             {
-                string logoPath = assetHelper.GetAssetPath(10001);
-                this.Icon = new System.Windows.Media.Imaging.BitmapImage(new Uri(logoPath, UriKind.Absolute));
-                LogoImagePath = logoPath; // 设置标题栏Logo图片路径
+                // 直接使用AssetHelper获取图片资源，而不是只获取路径然后创建BitmapImage
+                System.Windows.Media.Imaging.BitmapImage logoImage = assetHelper.GetImageAsset(10001);
+                this.Icon = logoImage;
+                LogoImagePath = assetHelper.GetAssetPath(10001); // 设置标题栏Logo图片路径
             }
             catch (Exception ex)
             {
