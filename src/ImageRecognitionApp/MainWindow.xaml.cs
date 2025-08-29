@@ -900,6 +900,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 // 停止任何正在进行的动画
                 leftBorder.BeginAnimation(Border.HeightProperty, null);
 
+                // 为当前动画创建一个唯一标记，以防止旧动画影响新状态
+                string animationTag = "SelectedAnimation" + DateTime.Now.Ticks;
+                leftBorder.Tag = animationTag;
+
                 // 创建高度动画（从中间向两边延伸的效果）
                 var heightAnimation = new DoubleAnimation
                 {
@@ -908,6 +912,21 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                     Duration = new Duration(TimeSpan.FromMilliseconds(300)),
                     FillBehavior = FillBehavior.HoldEnd,
                     EasingFunction = new QuadraticEase() { EasingMode = EasingMode.EaseInOut }
+                };
+
+                // 添加完成事件处理程序
+                heightAnimation.Completed += (s, eArgs) =>
+                {
+                    // 检查动画标记，只有当它仍然是选中动画的标记时才执行操作
+                    if (leftBorder.Tag != null && leftBorder.Tag.ToString() == animationTag)
+                    {
+                        // 确保边框保持在最终状态
+                        leftBorder.Height = 22.5;
+                        leftBorder.Width = 4;
+                        leftBorder.Opacity = 1;
+                        leftBorder.Visibility = Visibility.Visible;
+                        leftBorder.Tag = null; // 清除标记
+                    }
                 };
 
                 // 应用高度动画
@@ -955,13 +974,23 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath(Border.OpacityProperty));
                 storyboard.Children.Add(opacityAnimation);
 
+                // 为当前动画创建一个唯一标记，以防止旧动画影响新状态
+                string animationTag = "DeselectedAnimation" + DateTime.Now.Ticks;
+                leftBorder.Tag = animationTag;
+
                 // 动画完成后隐藏边框
                 storyboard.Completed += (s, eArgs) =>
                 {
-                    leftBorder.Visibility = Visibility.Collapsed;
-                    leftBorder.Opacity = 1; // 重置透明度，以便下次显示
-                    leftBorder.Width = 4; // 重置宽度
-                    leftBorder.Height = 0; // 重置高度
+                    // 检查动画标记，只有当它仍然是取消选中动画的标记时才执行重置
+                    // 这可以防止旧的动画完成事件影响新的选中状态
+                    if (leftBorder.Tag != null && leftBorder.Tag.ToString() == animationTag)
+                    {
+                        leftBorder.Visibility = Visibility.Collapsed;
+                        leftBorder.Opacity = 1; // 重置透明度，以便下次显示
+                        leftBorder.Width = 4; // 重置宽度
+                        leftBorder.Height = 0; // 重置高度
+                        leftBorder.Tag = null; // 清除标记
+                    }
                 };
 
                 // 应用故事板动画
