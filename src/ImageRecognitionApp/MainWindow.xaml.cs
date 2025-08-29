@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.ComponentModel;
 using ImageRecognitionApp.WinFun;  // 导入WinFun命名空间
 using ImageRecognitionApp.unit;     // 导入unit命名空间
@@ -544,6 +545,9 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 border.Tag = "Selected";
                 border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
             }
+            
+            // 应用选中动画效果
+            ApplyButtonAnimation(button, true);
         }
 
         // 跟踪设置按钮被点击状态
@@ -583,7 +587,16 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             var border = SettingButton.Template.FindName("border", SettingButton) as Border;
             if (border != null)
             {
+                // 检查按钮是否被选中
+                bool wasSelected = border.Tag != null && border.Tag.ToString() == "Selected";
+                
                 border.Tag = null;
+                
+                // 如果按钮之前是选中状态，应用取消选中的动画效果
+                if (wasSelected)
+                {
+                    ApplyButtonAnimation(SettingButton, false);
+                }
             }
         }
 
@@ -800,6 +813,71 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     }
 
     /// <summary>
+    /// 应用于按钮的平滑动画效果
+    /// </summary>
+    private void ApplyButtonAnimation(Button button, bool isSelected)
+    {
+        if (button == null || button.Template == null) return;
+
+        var contentGrid = button.Template.FindName("contentGrid", button) as Grid;
+        if (contentGrid == null) return;
+
+        var stackPanel = FindVisualChild<StackPanel>(contentGrid);
+        if (stackPanel == null) return;
+
+        // 停止任何正在进行的动画
+        stackPanel.BeginAnimation(FrameworkElement.MarginProperty, null);
+        stackPanel.BeginAnimation(FrameworkElement.RenderTransformProperty, null);
+
+        // 设置RenderTransform（如果不存在）
+        if (stackPanel.RenderTransform == null || !(stackPanel.RenderTransform is TransformGroup))
+        {
+            var transformGroup = new TransformGroup();
+            transformGroup.Children.Add(new TranslateTransform());
+            stackPanel.RenderTransform = transformGroup;
+        }
+
+        // 获取TranslateTransform
+        var translateTransform = (stackPanel.RenderTransform as TransformGroup).Children[0] as TranslateTransform;
+        if (translateTransform == null) return;
+
+        // 计算平移量，设置为半个折叠按钮宽度的2/3 (40/2*2/3≈13.33)
+        double targetX = isSelected ? 13.33 : 0;
+        double currentX = translateTransform.X;
+
+        // 创建动画
+        var animation = new DoubleAnimation
+        {
+            From = currentX,
+            To = targetX,
+            Duration = new Duration(TimeSpan.FromMilliseconds(300)),
+            FillBehavior = FillBehavior.HoldEnd,
+            EasingFunction = new QuadraticEase() { EasingMode = EasingMode.EaseInOut }
+        };
+
+        // 应用动画
+        translateTransform.BeginAnimation(TranslateTransform.XProperty, animation);
+    }
+
+    /// <summary>
+    /// 查找视觉树中的子元素
+    /// </summary>
+    private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T childElement)
+                return childElement;
+            
+            T descendant = FindVisualChild<T>(child);
+            if (descendant != null)
+                return descendant;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// 侧边栏按钮点击事件处理程序
     /// </summary>
     private void SidebarButton_Click(object sender, RoutedEventArgs e)
@@ -818,6 +896,9 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 border.Tag = "Selected";
                 border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
             }
+            
+            // 应用选中动画效果
+            ApplyButtonAnimation(button, true);
         }
 
         // 这里可以添加按钮点击后的具体逻辑
@@ -852,10 +933,19 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             var border = button.Template.FindName("border", button) as Border;
             if (border != null)
             {
+                // 检查按钮是否被选中
+                bool wasSelected = border.Tag != null && border.Tag.ToString() == "Selected";
+                
                 // 只清除选中标记，不直接设置背景色，让XAML样式触发器自然应用效果
                 border.Tag = null;
                 // 移除直接设置的背景色，恢复样式触发器的控制权
                 border.ClearValue(Border.BackgroundProperty);
+                
+                // 如果按钮之前是选中状态，应用取消选中的动画效果
+                if (wasSelected)
+                {
+                    ApplyButtonAnimation(button, false);
+                }
             }
         }
     }
