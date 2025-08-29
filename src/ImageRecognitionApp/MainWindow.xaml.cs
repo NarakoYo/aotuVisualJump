@@ -705,6 +705,25 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             ConsoleButtonIconPath = assetHelper.GetAssetPath(10012);
             ToolButtonIconPath = assetHelper.GetAssetPath(10013);
             CollapseButtonIconPath = assetHelper.GetAssetPath(10014);
+
+            // 设置启动按钮默认选中状态
+            this.Loaded += (sender, e) =>
+            {
+                if (LaunchButton != null && LaunchButton.Template != null)
+                {
+                    var border = LaunchButton.Template.FindName("border", LaunchButton) as Border;
+                    if (border != null)
+                    {
+                        // 添加选中标记
+                        border.Tag = "Selected";
+                        border.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#37373D"));
+                        
+                        // 应用选中动画
+                        ApplyButtonAnimation(LaunchButton, true);
+                    }
+                }
+            };
+            
         }
         catch (Exception ex)
         {
