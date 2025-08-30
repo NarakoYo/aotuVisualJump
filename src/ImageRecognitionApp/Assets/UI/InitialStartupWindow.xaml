@@ -16,11 +16,14 @@
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     
     <Window.Resources>
-        <!-- 高度转换器：将窗口高度转换为4/5的高度 -->
-        <!-- <local:HeightConverter x:Key="HeightConverter"/> -->
+        <!-- 高度转换器：将窗口高度转换为指定比例的高度 -->
+        <local:HeightConverter x:Key="HeightConverter"/>
         
         <!-- 矩形转换器：用于动态创建背景图片的裁切区域 -->
         <converters:RectConverter x:Key="RectConverter"/>
+        
+        <!-- Thickness转换器：将四个数值参数转换为Thickness对象 -->
+        <converters:ThicknessConverter x:Key="ThicknessConverter"/>
         
         <!-- 进度条样式 -->
         <Style x:Key="CustomProgressBar" TargetType="ProgressBar">
@@ -84,13 +87,29 @@
                     </Border.Clip>
                 </Border>
                 
+                <!-- 底部黑色50%半透明蒙版 -->
+                <Border Width="{Binding Path=ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type Window}}}"
+                        Height="{Binding Path=ActualHeight, RelativeSource={RelativeSource AncestorType={x:Type Window}}, Converter={StaticResource HeightConverter}, ConverterParameter=0.2}"
+                        Background="#80000000" 
+                        VerticalAlignment="Bottom" 
+                        HorizontalAlignment="Center" 
+                        Margin="0"/>
+                
                 <!-- 应用Logo -->
                 <Image x:Name="AppLogo" Width="100" Height="100" Margin="0,40,0,0" HorizontalAlignment="Center"
                        Stretch="Uniform" Visibility="Collapsed"/>
                 
                 <!-- 应用标题 -->
-                <TextBlock x:Name="AppTitle" Style="{StaticResource AppTitleStyle}" Margin="0,160,0,0"
-                           Text="自动视觉跳转工具"/>
+                <TextBlock x:Name="AppTitle" Style="{StaticResource AppTitleStyle}" HorizontalAlignment="Left">
+                    <TextBlock.Margin>
+                        <MultiBinding Converter="{StaticResource ThicknessConverter}">
+                            <Binding Source="4"/>
+                            <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType={x:Type Window}}" Converter="{StaticResource HeightConverter}" ConverterParameter="0.8+4"/>
+                            <Binding Source="0"/>
+                            <Binding Source="0"/>
+                        </MultiBinding>
+                    </TextBlock.Margin>
+                </TextBlock>
                 
                 <!-- 初始化状态文本 -->
                 <TextBlock x:Name="StatusText" Style="{StaticResource StatusTextStyle}" Margin="4,0,20,14"

@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
@@ -10,7 +11,8 @@ using ImageRecognitionApp.unit;
 namespace ImageRecognitionApp.Assets.UI
 {
     /// <summary>
-    /// 高度转换器：将窗口高度转换为4/5的高度
+    /// 高度转换器：根据参数将窗口高度转换为指定比例的高度，可以选择性地添加偏移量
+    /// 参数格式："ratio[+offset]"，例如："0.8"表示高度的80%，"0.8+4"表示高度的80%再加上4像素
     /// </summary>
     public class HeightConverter : IValueConverter
     {
@@ -18,7 +20,35 @@ namespace ImageRecognitionApp.Assets.UI
         {
             if (value is double height)
             {
-                return height * 0.8; // 返回窗口高度的4/5
+                // 默认返回窗口高度的4/5
+                double ratio = 0.8;
+                double offset = 0;
+                
+                // 如果提供了参数，尝试解析比例值和可选的偏移量
+                if (parameter != null)
+                {
+                    string paramStr = parameter.ToString();
+                    // 检查是否包含偏移量
+                    if (paramStr.Contains('+'))
+                    {
+                        string[] parts = paramStr.Split('+');
+                        if (parts.Length > 0 && double.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedRatio))
+                        {
+                            ratio = parsedRatio;
+                        }
+                        if (parts.Length > 1 && double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedOffset))
+                        {
+                            offset = parsedOffset;
+                        }
+                    }
+                    // 只有比例值
+                    else if (double.TryParse(paramStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double parameterRatio))
+                    {
+                        ratio = parameterRatio;
+                    }
+                }
+                
+                return height * ratio + offset;
             }
             return value;
         }
@@ -42,6 +72,39 @@ namespace ImageRecognitionApp.Assets.UI
             InitializeComponent();
             _initializationManager = new InitializationManager();
             this.Loaded += InitialStartupWindow_Loaded;
+            
+            // 通过JsonLocalizationHelper获取本地化内容并设置应用标题
+            try
+            {
+                var localizationHelper = ImageRecognitionApp.unit.JsonLocalizationHelper.Instance;
+                // 确保本地化助手已初始化（虽然App.xaml.cs中应该已经初始化过）
+                localizationHelper.Initialize();
+                // 获取sign_id为10001的本地化内容
+                string localizedTitle = localizationHelper.GetString(10001);
+                // 设置应用标题文本
+                AppTitle.Text = localizedTitle;
+            }
+            catch (Exception ex)
+            {
+                // 如果获取失败，保留默认标题
+                System.Diagnostics.Debug.WriteLine($"获取本地化标题失败: {ex.Message}");
+            }
+            
+            // 获取并设置当前版本号
+            try
+            {
+                // 获取当前程序集
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                // 获取版本信息
+                Version version = assembly.GetName().Version;
+                // 设置版本号文本
+                VersionInfo.Text = $"v{version.Major}.{version.Minor}.{version.Build}";
+            }
+            catch (Exception ex)
+            {
+                // 如果获取失败，保留默认版本号
+                System.Diagnostics.Debug.WriteLine($"获取版本号失败: {ex.Message}");
+            }
             
             // 通过AssetHelper获取并设置Logo图片资源
             try
