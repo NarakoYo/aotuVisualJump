@@ -2,9 +2,9 @@
   <!-- 自定义输出目录配置 -->
   <PropertyGroup>
     <!-- 输出根目录 (默认为 bin) -->
-    <BaseOutputPath>..\..\temp\bin\</BaseOutputPath>
+    <BaseOutputPath>..\..\..\temp\bin\</BaseOutputPath>
     <!-- 中间文件根目录 (控制所有中间文件输出位置) -->
-    <BaseIntermediateOutputPath>..\..\temp\obj\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\..\temp\obj\</BaseIntermediateOutputPath>
     <!-- 项目扩展路径，确保NuGet相关文件也输出到自定义目录 -->
     <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
   </PropertyGroup>
