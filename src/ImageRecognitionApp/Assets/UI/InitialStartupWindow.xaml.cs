@@ -1,11 +1,34 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Threading;
 using ImageRecognitionApp.Assets.UICode;
+using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp.Assets.UI
 {
+    /// <summary>
+    /// 高度转换器：将窗口高度转换为4/5的高度
+    /// </summary>
+    public class HeightConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double height)
+            {
+                return height * 0.8; // 返回窗口高度的4/5
+            }
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     /// <summary>
     /// InitialStartupWindow.xaml 的交互逻辑
     /// </summary>
@@ -19,6 +42,33 @@ namespace ImageRecognitionApp.Assets.UI
             InitializeComponent();
             _initializationManager = new InitializationManager();
             this.Loaded += InitialStartupWindow_Loaded;
+            
+            // 通过AssetHelper获取并设置Logo图片资源
+            try
+            {
+                var assetHelper = AssetHelper.Instance;
+                // 假设Logo的sign_id为10001（与MainWindow中的设置保持一致）
+                System.Windows.Media.Imaging.BitmapImage logoImage = assetHelper.GetImageAsset(10001);
+                AppLogo.Source = logoImage;
+            }
+            catch (Exception ex)
+            {
+                // 如果获取失败，可以记录日志或使用默认图片
+                System.Diagnostics.Debug.WriteLine($"获取Logo图片失败: {ex.Message}");
+            }
+
+            // 通过AssetHelper获取并设置背景图片资源，sign_id为10015
+            try
+            {
+                var assetHelper = AssetHelper.Instance;
+                System.Windows.Media.Imaging.BitmapImage backgroundImage = assetHelper.GetImageAsset(10015);
+                BackgroundImage.Source = backgroundImage;
+            }
+            catch (Exception ex)
+            {
+                // 如果获取失败，可以记录日志
+                System.Diagnostics.Debug.WriteLine($"获取背景图片失败: {ex.Message}");
+            }
         }
 
         private async void InitialStartupWindow_Loaded(object sender, RoutedEventArgs e)

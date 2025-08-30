@@ -4,19 +4,27 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ImageRecognitionApp.Assets.UI"
+        xmlns:effects="clr-namespace:System.Windows.Media.Effects;assembly=PresentationCore"
+        xmlns:converters="clr-namespace:ImageRecognitionApp.Converters"
         mc:Ignorable="d"
-        Title="应用初始化" Height="400" Width="600"
+        Title="应用初始化" Height="514" Width="750"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
-        Background="#2D2D30"
+        Background="Transparent"
         ResizeMode="NoResize"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     
     <Window.Resources>
+        <!-- 高度转换器：将窗口高度转换为4/5的高度 -->
+        <!-- <local:HeightConverter x:Key="HeightConverter"/> -->
+        
+        <!-- 矩形转换器：用于动态创建背景图片的裁切区域 -->
+        <converters:RectConverter x:Key="RectConverter"/>
+        
         <!-- 进度条样式 -->
         <Style x:Key="CustomProgressBar" TargetType="ProgressBar">
-            <Setter Property="Height" Value="20"/>
+            <Setter Property="Height" Value="8"/>
             <Setter Property="Background" Value="#3C3C3E"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="#0078D7"/>
@@ -24,11 +32,11 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid x:Name="TemplateRoot">
-                            <Border Background="{TemplateBinding Background}" CornerRadius="10" BorderThickness="0"/>
-                            <Border x:Name="PART_Track" CornerRadius="10" BorderThickness="0"/>
-                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="10" Background="{TemplateBinding Foreground}" BorderThickness="0">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="4" BorderThickness="0"/>
+                            <Border x:Name="PART_Track" CornerRadius="4" BorderThickness="0"/>
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="4" Background="{TemplateBinding Foreground}" BorderThickness="0">
                                 <Grid x:Name="Foreground">
-                                    <Border Background="{TemplateBinding Foreground}" CornerRadius="10" BorderThickness="0"/>
+                                    <Border Background="{TemplateBinding Foreground}" CornerRadius="4" BorderThickness="0"/>
                                 </Grid>
                             </Border>
                         </Grid>
@@ -55,32 +63,50 @@
     </Window.Resources>
     
     <Grid>
-        <!-- 主内容面板 -->
-        <Border Background="#2D2D30" CornerRadius="10" Margin="0">
+        <!-- 主容器 - 圆角设计，包含所有内容 -->
+        <Border Background="Transparent" CornerRadius="10" Margin="0" ClipToBounds="True">
             <Grid>
+                <!-- 背景图片层 - 使用专用圆角容器确保图片被正确裁剪 -->
+                <Border CornerRadius="10" ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent">
+                    <Image x:Name="BackgroundImage" 
+                           Width="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualWidth}" 
+                           Height="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=ActualHeight}" 
+                           HorizontalAlignment="Stretch" 
+                           VerticalAlignment="Stretch" 
+                           Stretch="UniformToFill"/>
+                    <Border.Clip>
+                        <MultiBinding Converter="{StaticResource RectConverter}">
+                            <Binding Source="0"/>
+                            <Binding Source="0"/>
+                            <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"/>
+                            <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"/>
+                        </MultiBinding>
+                    </Border.Clip>
+                </Border>
+                
                 <!-- 应用Logo -->
                 <Image x:Name="AppLogo" Width="100" Height="100" Margin="0,40,0,0" HorizontalAlignment="Center"
-                       Source="../../../Resources/logo/logo.png" Stretch="Uniform"/>
+                       Stretch="Uniform" Visibility="Collapsed"/>
                 
                 <!-- 应用标题 -->
                 <TextBlock x:Name="AppTitle" Style="{StaticResource AppTitleStyle}" Margin="0,160,0,0"
                            Text="自动视觉跳转工具"/>
                 
                 <!-- 初始化状态文本 -->
-                <TextBlock x:Name="StatusText" Style="{StaticResource StatusTextStyle}" Margin="20,190,20,0"
-                           Text="正在初始化应用程序..."/>
+                <TextBlock x:Name="StatusText" Style="{StaticResource StatusTextStyle}" Margin="4,0,20,14"
+                           Text="正在初始化应用程序..." VerticalAlignment="Bottom" HorizontalAlignment="Left" TextAlignment="Left"/>
                 
                 <!-- 进度条 -->
                 <ProgressBar x:Name="InitializationProgress" Style="{StaticResource CustomProgressBar}"
-                             Minimum="0" Maximum="100" Value="0" Margin="40,220,40,0"/>
+                             Minimum="0" Maximum="100" Value="0" Margin="0,0,0,0" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"/>
                 
                 <!-- 进度百分比 -->
-                <TextBlock x:Name="ProgressPercentage" Style="{StaticResource StatusTextStyle}" Margin="0,245,0,0"
-                           Text="0%"/>
+                <TextBlock x:Name="ProgressPercentage" Style="{StaticResource StatusTextStyle}" Margin="4,0,20,26"
+                             Text="0%" VerticalAlignment="Bottom" HorizontalAlignment="Left" TextAlignment="Left" Visibility="Collapsed"/>
                 
                 <!-- 版本信息 -->
-                <TextBlock x:Name="VersionInfo" Style="{StaticResource StatusTextStyle}" Margin="0,270,0,0"
-                           Text="v0.0.1-dev"/>
+                <TextBlock x:Name="VersionInfo" Style="{StaticResource StatusTextStyle}" Margin="4,0,20,50"
+                           Text="v0.0.1-dev" VerticalAlignment="Bottom" HorizontalAlignment="Left" TextAlignment="Left"/>
             </Grid>
         </Border>
     </Grid>

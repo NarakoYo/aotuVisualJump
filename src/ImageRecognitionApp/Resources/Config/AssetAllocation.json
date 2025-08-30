@@ -54,6 +54,11 @@
                 "Asset":"Icons\\igoutu\\fold.png"
             },
             {
+                "sign_id":10015,
+                "Asset":"Background\\InitialStartupBg.png"
+            },
+
+            {
                 "sign_id":20004,
                 "Asset":"Icons\\igoutu\\close-window.png"
             },
