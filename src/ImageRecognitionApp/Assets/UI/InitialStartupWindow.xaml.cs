@@ -196,6 +196,14 @@ namespace ImageRecognitionApp.Assets.UI
                     if (backgroundImage != null)
                     {
                         BackgroundImage.Source = backgroundImage;
+                        
+                        // 设置背景图片来源文本
+                        if (BackgroundImageSource != null)
+                        {
+                            // 这里可以根据实际情况获取真实的图片来源信息
+                            // 目前设置为静态文本
+                            BackgroundImageSource.Text = "Created by ComfyUI-XL.Wai";
+                        }
                     }
                 }
             }

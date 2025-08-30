@@ -63,6 +63,29 @@
             <Setter Property="TextAlignment" Value="Center"/>
             <Setter Property="Margin" Value="0,10,0,0"/>
         </Style>
+        
+        <!-- 背景图片来源文本样式 -->
+        <Style x:Key="BackgroundImageSourceStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="Margin" Value="0,8,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <!-- 添加50%透明度的黑色背景 -->
+            <Setter Property="Background" Value="#80000000"/>
+            <Setter Property="Padding" Value="5,2,5,2"/>
+        </Style>
+
+        <!-- 底部版权信息文本样式 -->
+        <Style x:Key="CopyrightInfoStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#AAAAAA"/>
+            <Setter Property="TextAlignment" Value="Left"/>
+            <Setter Property="Margin" Value="4,0,20,36"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
     </Window.Resources>
     
     <Grid>
@@ -125,7 +148,15 @@
                 
                 <!-- 版本信息 -->
                 <TextBlock x:Name="VersionInfo" Style="{StaticResource StatusTextStyle}" Margin="4,0,20,50"
-                           Text="v0.0.1-dev" VerticalAlignment="Bottom" HorizontalAlignment="Left" TextAlignment="Left"/>
+                           Text="v0.0.1-dev" VerticalAlignment="Bottom" HorizontalAlignment="Left" TextAlignment="Left" Foreground="#AAAAAA"/>
+                
+                <!-- 背景图片来源文本 -->
+                <TextBlock x:Name="BackgroundImageSource" Style="{StaticResource BackgroundImageSourceStyle}"
+                           Text="Created by ComfyUI-XL.Wai" />
+
+                <!-- 底部版权信息 -->
+                <TextBlock x:Name="CopyrightInfo" Style="{StaticResource CopyrightInfoStyle}"
+                           Text="© 2025 NaraYo. All Rights Reserved" />
             </Grid>
         </Border>
     </Grid>
