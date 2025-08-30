@@ -1,0 +1,87 @@
+<Window x:Class="ImageRecognitionApp.Assets.UI.InitialStartupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ImageRecognitionApp.Assets.UI"
+        mc:Ignorable="d"
+        Title="应用初始化" Height="400" Width="600"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="#2D2D30"
+        ResizeMode="NoResize"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    
+    <Window.Resources>
+        <!-- 进度条样式 -->
+        <Style x:Key="CustomProgressBar" TargetType="ProgressBar">
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Background" Value="#3C3C3E"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#0078D7"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid x:Name="TemplateRoot">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="10" BorderThickness="0"/>
+                            <Border x:Name="PART_Track" CornerRadius="10" BorderThickness="0"/>
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="10" Background="{TemplateBinding Foreground}" BorderThickness="0">
+                                <Grid x:Name="Foreground">
+                                    <Border Background="{TemplateBinding Foreground}" CornerRadius="10" BorderThickness="0"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- 应用标题样式 -->
+        <Style x:Key="AppTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+        </Style>
+        
+        <!-- 状态文本样式 -->
+        <Style x:Key="StatusTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#CCCCCC"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,10,0,0"/>
+        </Style>
+    </Window.Resources>
+    
+    <Grid>
+        <!-- 主内容面板 -->
+        <Border Background="#2D2D30" CornerRadius="10" Margin="0">
+            <Grid>
+                <!-- 应用Logo -->
+                <Image x:Name="AppLogo" Width="100" Height="100" Margin="0,40,0,0" HorizontalAlignment="Center"
+                       Source="../../../Resources/logo/logo.png" Stretch="Uniform"/>
+                
+                <!-- 应用标题 -->
+                <TextBlock x:Name="AppTitle" Style="{StaticResource AppTitleStyle}" Margin="0,160,0,0"
+                           Text="自动视觉跳转工具"/>
+                
+                <!-- 初始化状态文本 -->
+                <TextBlock x:Name="StatusText" Style="{StaticResource StatusTextStyle}" Margin="20,190,20,0"
+                           Text="正在初始化应用程序..."/>
+                
+                <!-- 进度条 -->
+                <ProgressBar x:Name="InitializationProgress" Style="{StaticResource CustomProgressBar}"
+                             Minimum="0" Maximum="100" Value="0" Margin="40,220,40,0"/>
+                
+                <!-- 进度百分比 -->
+                <TextBlock x:Name="ProgressPercentage" Style="{StaticResource StatusTextStyle}" Margin="0,245,0,0"
+                           Text="0%"/>
+                
+                <!-- 版本信息 -->
+                <TextBlock x:Name="VersionInfo" Style="{StaticResource StatusTextStyle}" Margin="0,270,0,0"
+                           Text="v0.0.1-dev"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
