@@ -233,8 +233,8 @@ namespace ImageRecognitionApp.Assets.UICode
                             // 获取文件名
                             string fileName = Path.GetFileName(assetFilePath);
                             
-                            // 更新状态到初始化文本
-                            UpdateStatusCallback?.Invoke($"Loading: {relativePath}", 45 + (processedAssets * 50 / totalAssets));
+                            // 更新状态到初始化文本，减少每个资产的进度增量，让进度条动画更平滑
+                            UpdateStatusCallback?.Invoke($"Loading: {relativePath}", 45 + (processedAssets * 10 / totalAssets));
                             // _logManager.WriteLog(LogManager.LogLevel.Info, $"Loading: {relativePath}");
                             
                             // 模拟资产加载延迟
@@ -257,7 +257,7 @@ namespace ImageRecognitionApp.Assets.UICode
                 // 模拟异步处理时间
                 await Task.Delay(100).ConfigureAwait(false);
                 
-                UpdateStatusCallback?.Invoke("Asset resources initialization completed", 95);
+                UpdateStatusCallback?.Invoke("Asset resources initialization completed", 60);
                 _logManager.WriteLog(LogManager.LogLevel.Info, "Project all asset resources initialization completed");
             }
             catch (Exception ex)

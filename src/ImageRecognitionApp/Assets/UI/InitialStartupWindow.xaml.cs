@@ -288,7 +288,7 @@ namespace ImageRecognitionApp.Assets.UI
         private void UpdateStatus(string statusText, int progressValue)
         {
             // 立即执行UI更新
-            this.Dispatcher.Invoke(() =>
+            this.Dispatcher.Invoke(async () =>
             {
                 if (StatusText != null)
                 {
@@ -300,11 +300,11 @@ namespace ImageRecognitionApp.Assets.UI
                     ProgressPercentage.Text = $"{progressValue}%";
                 }
                 
-                // 对于回调中的进度更新，使用同步方式直接设置进度值
-                // 以避免在后台线程中使用异步操作可能导致的问题
-                if (InitializationProgress != null)
+                // 使用动画平滑更新进度条值
+                // 将异步操作包装在同步方法中执行
+                if (InitializationProgress != null && _animationManager != null)
                 {
-                    InitializationProgress.Value = progressValue;
+                    await _animationManager.AnimateProgressBarAsync(InitializationProgress, progressValue);
                 }
             }, System.Windows.Threading.DispatcherPriority.Background);
         }
