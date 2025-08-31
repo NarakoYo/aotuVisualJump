@@ -358,6 +358,8 @@ namespace ImageRecognitionApp.Assets.UI
                         
                         // 创建并显示主窗口
                         var mainWindow = new MainWindow();
+                        // 显式设置Application.Current.MainWindow以确保正确的引用
+                        Application.Current.MainWindow = mainWindow;
                         mainWindow.Show();
                         
                         // 关闭当前窗口

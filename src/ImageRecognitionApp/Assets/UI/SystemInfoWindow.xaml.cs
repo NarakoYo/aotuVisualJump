@@ -22,27 +22,54 @@ namespace ImageRecognitionApp.Assets.UI
         /// <summary>
         /// 构造函数
         /// </summary>
-        public SystemInfoWindow()
+        /// <param name="owner">可选的所有者窗口参数，用于避免依赖Application.Current.MainWindow的自动设置</param>
+        public SystemInfoWindow(Window owner = null)
         {
             InitializeComponent();
 
-            // 设置窗口为模态窗口，添加安全检查以避免Owner属性设置为自身的错误
-            if (Application.Current.MainWindow != null && Application.Current.MainWindow != this)
+            // 添加日志记录以调试窗口状态
+            (App.Current as App)?.LogMessage($"SystemInfoWindow constructor: MainWindow reference {(Application.Current.MainWindow == null ? "null" : "exists")}");
+
+            // 检查MainWindow和当前窗口的引用关系
+            bool isSameReference = Application.Current.MainWindow == this;
+            (App.Current as App)?.LogMessage($"SystemInfoWindow constructor: MainWindow == this? {isSameReference}");
+            (App.Current as App)?.LogMessage($"SystemInfoWindow constructor: MainWindow type: {Application.Current.MainWindow?.GetType().Name ?? "null"}, Current window type: {this.GetType().Name}");
+
+            // 设置窗口为模态窗口，改进判断逻辑以确保能够动态设置窗口大小
+            // 优先使用传入的owner参数，如果没有传入则尝试使用Application.Current.MainWindow
+            if (owner != null)
             {
+                // 如果明确传入了owner参数，直接使用它
+                this.Owner = owner;
+                this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+                // 设置窗口大小为2/3主窗口大小
+                this.Width = owner.ActualWidth * 2 / 3;
+                this.Height = owner.ActualHeight * 2 / 3;
+                
+                (App.Current as App)?.LogMessage($"SystemInfoWindow size set to: {this.Width}x{this.Height} (based on Owner window size: {owner.ActualWidth}x{owner.ActualHeight})");
+            }
+            else if (Application.Current.MainWindow != null && !(Application.Current.MainWindow is SystemInfoWindow))
+            {
+                // 如果没有传入owner参数，但有可用的MainWindow且不是SystemInfoWindow类型，则使用MainWindow
                 this.Owner = Application.Current.MainWindow;
                 this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
                 // 设置窗口大小为2/3主窗口大小
                 this.Width = Application.Current.MainWindow.ActualWidth * 2 / 3;
                 this.Height = Application.Current.MainWindow.ActualHeight * 2 / 3;
+                
+                (App.Current as App)?.LogMessage($"SystemInfoWindow size set to: {this.Width}x{this.Height} (based on MainWindow size: {Application.Current.MainWindow.ActualWidth}x{Application.Current.MainWindow.ActualHeight})");
             }
             else
             {
-                // 如果没有主窗口或主窗口就是当前窗口，使用默认居中位置
+                // 如果没有有效的owner窗口，使用默认居中位置
                 this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 // 设置默认窗口大小
                 this.Width = 800;
                 this.Height = 600;
+                
+                (App.Current as App)?.LogMessage("SystemInfoWindow using default size: 800x600, CenterScreen location");
             }
 
             // 加载本地化文本
@@ -1458,7 +1485,7 @@ namespace ImageRecognitionApp.Assets.UI
         /// <summary>
         /// 获取声卡信息
         /// </summary>
-        /// <returns>声卡名称字符串，如果无法获取则返回空字符串</returns>
+        /// <returns>声卡信息字符串，如果无法获取则返回空字符串</returns>
         private string GetAudioCardInfo()
         {
             try

@@ -16,8 +16,8 @@ namespace ImageRecognitionApp.Assets.UICode
         {
             try
             {
-                // 创建并显示系统信息窗口
-                SystemInfoWindow systemInfoWindow = new SystemInfoWindow();
+                // 创建并显示系统信息窗口，传递主窗口作为owner以确保正确的大小和位置
+                SystemInfoWindow systemInfoWindow = new SystemInfoWindow(Application.Current.MainWindow);
 
                 // 设置为模态窗口，这样在关闭之前无法操作主窗口
                 systemInfoWindow.ShowDialog();

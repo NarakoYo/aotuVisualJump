@@ -5,9 +5,10 @@
         Title="系统信息"
         WindowStyle="None"
         ResizeMode="NoResize"
-        Background="#1E1E1E"
+        Background="Transparent"
         Foreground="White"
-        ShowInTaskbar="False">
+        ShowInTaskbar="False"
+        AllowsTransparency="True">
     <Window.Resources>
         <Style x:Key="CloseButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
@@ -19,7 +20,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="0,8,0,0" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="0,10,0,0" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -179,7 +180,7 @@
         </Style>
     </Window.Resources>
     <Grid>
-        <Border Background="#1E1E1E" CornerRadius="8" BorderBrush="#2D2D2D" BorderThickness="1">
+        <Border Background="#1E1E1E" CornerRadius="10" BorderBrush="#4DFFFFFF" BorderThickness="1">
             <Grid>
                 <!-- 标题栏 - 只包含关闭按钮 -->
                 <Border Height="40" VerticalAlignment="Top" Background="#252526" CornerRadius="8,8,0,0">
