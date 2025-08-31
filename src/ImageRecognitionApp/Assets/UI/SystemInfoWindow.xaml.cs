@@ -26,15 +26,23 @@ namespace ImageRecognitionApp.Assets.UI
         {
             InitializeComponent();
 
-            // 设置窗口为模态窗口
-            this.Owner = Application.Current.MainWindow;
-            this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-
-            // 设置窗口大小为2/3主窗口大小
-            if (Application.Current.MainWindow != null)
+            // 设置窗口为模态窗口，添加安全检查以避免Owner属性设置为自身的错误
+            if (Application.Current.MainWindow != null && Application.Current.MainWindow != this)
             {
+                this.Owner = Application.Current.MainWindow;
+                this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+                // 设置窗口大小为2/3主窗口大小
                 this.Width = Application.Current.MainWindow.ActualWidth * 2 / 3;
                 this.Height = Application.Current.MainWindow.ActualHeight * 2 / 3;
+            }
+            else
+            {
+                // 如果没有主窗口或主窗口就是当前窗口，使用默认居中位置
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                // 设置默认窗口大小
+                this.Width = 800;
+                this.Height = 600;
             }
 
             // 加载本地化文本
