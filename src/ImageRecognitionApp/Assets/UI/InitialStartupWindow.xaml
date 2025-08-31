@@ -136,7 +136,7 @@
                 
                 <!-- 初始化状态文本 -->
                 <TextBlock x:Name="StatusText" Style="{StaticResource StatusTextStyle}" Margin="4,0,20,14"
-                           Text="正在初始化应用程序..." VerticalAlignment="Bottom" HorizontalAlignment="Left" TextAlignment="Left"/>
+                           Text="Initializing..." VerticalAlignment="Bottom" HorizontalAlignment="Left" TextAlignment="Left"/>
                 
                 <!-- 进度条 -->
                 <ProgressBar x:Name="InitializationProgress" Style="{StaticResource CustomProgressBar}"

@@ -87,6 +87,7 @@ namespace ImageRecognitionApp.Assets.UI
     public partial class InitialStartupWindow : Window
     {
         private readonly InitialStartupManager _initializationManager;
+        private readonly InitialStartupAnimation _animationManager;
         private const int TotalInitializationSteps = 5;
 
         /// <summary>
@@ -96,6 +97,7 @@ namespace ImageRecognitionApp.Assets.UI
         {
             InitializeComponent();
             _initializationManager = new InitialStartupManager();
+            _animationManager = new InitialStartupAnimation(this);
             // 设置状态更新回调
             _initializationManager.UpdateStatusCallback = UpdateStatus;
             this.Loaded += InitialStartupWindow_Loaded;
@@ -222,7 +224,9 @@ namespace ImageRecognitionApp.Assets.UI
         /// <param name="e">事件参数</param>
         private async void InitialStartupWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            await PerformInitializationAsync().ConfigureAwait(false);
+            // 在窗口加载后开始初始化过程，先播放淡入动画
+            await _animationManager.PlayWindowFadeInAsync();
+            await PerformInitializationAsync();
         }
 
         /// <summary>
@@ -237,12 +241,12 @@ namespace ImageRecognitionApp.Assets.UI
                 // Step 1: Checking system environment
                 UpdateStatus("Checking system environment...", 0);
                 await _initializationManager.CheckSystemEnvironmentAsync().ConfigureAwait(false);
-                await Task.Delay(600).ConfigureAwait(false); // Simulate time-consuming operation
+                await Task.Delay(300).ConfigureAwait(false); // Simulate time-consuming operation
 
                 // Step 2: Loading configuration files
                 UpdateStatus("Loading configuration files...", 20);
                 await _initializationManager.LoadConfigurationAsync().ConfigureAwait(false);
-                await Task.Delay(600).ConfigureAwait(false);
+                await Task.Delay(300).ConfigureAwait(false);
 
                 // Step 3: Initializing resources
                 UpdateStatus("Initializing resources...", 40);
@@ -252,7 +256,7 @@ namespace ImageRecognitionApp.Assets.UI
                 // Step 4: Preparing main window data
                 UpdateStatus("Preparing main window data...", 60);
                 await _initializationManager.PrepareMainWindowDataAsync().ConfigureAwait(false);
-                await Task.Delay(300).ConfigureAwait(false);
+                await Task.Delay(100).ConfigureAwait(false);
 
                 // Step 5: Initialization completed
                 UpdateStatus("Initialization completed, starting application...", 99);
@@ -286,14 +290,17 @@ namespace ImageRecognitionApp.Assets.UI
             // 在UI线程上更新状态
             this.Dispatcher.Invoke(() =>
             {
+                if (InitializationProgress != null && InitializationProgress.Value != progressValue)
+                {
+                    // 直接更新进度值，因为动画已经在InitialStartupAnimation类中处理
+                    InitializationProgress.Value = progressValue;
+                }
+                
                 if (StatusText != null)
                 {
                     StatusText.Text = statusText;
                 }
-                if (InitializationProgress != null)
-                {
-                    InitializationProgress.Value = progressValue;
-                }
+                
                 if (ProgressPercentage != null)
                 {
                     ProgressPercentage.Text = $"{progressValue}%";
@@ -306,25 +313,35 @@ namespace ImageRecognitionApp.Assets.UI
         /// </summary>
         private void SwitchToMainWindow()
         {
-            this.Dispatcher.Invoke(() =>
+            // 创建一个任务来执行异步操作
+            Task.Run(async () =>
             {
                 try
                 {
-                    // 关闭初始化窗口
-                    this.Hide();
+                    // 播放淡出动画
+                    await _animationManager.PlayWindowFadeOutAsync();
                     
-                    // 创建并显示主窗口
-                    var mainWindow = new MainWindow();
-                    mainWindow.Show();
-                    
-                    // 关闭当前窗口
-                    this.Close();
+                    // 在UI线程上隐藏窗口和显示主窗口
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        this.Hide();
+                        
+                        // 创建并显示主窗口
+                        var mainWindow = new MainWindow();
+                        mainWindow.Show();
+                        
+                        // 关闭当前窗口
+                        this.Close();
+                    });
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"切换到主窗口失败: {ex.Message}");
-                    MessageBox.Show($"切换到主窗口失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    this.Close();
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        MessageBox.Show($"切换到主窗口失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                        this.Close();
+                    });
                 }
             });
         }
