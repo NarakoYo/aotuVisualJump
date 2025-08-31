@@ -86,7 +86,7 @@ namespace ImageRecognitionApp.Assets.UI
     /// </remarks>
     public partial class InitialStartupWindow : Window
     {
-        private readonly InitializationManager _initializationManager;
+        private readonly InitialStartupManager _initializationManager;
         private const int TotalInitializationSteps = 5;
 
         /// <summary>
@@ -95,7 +95,9 @@ namespace ImageRecognitionApp.Assets.UI
         public InitialStartupWindow()
         {
             InitializeComponent();
-            _initializationManager = new InitializationManager();
+            _initializationManager = new InitialStartupManager();
+            // 设置状态更新回调
+            _initializationManager.UpdateStatusCallback = UpdateStatus;
             this.Loaded += InitialStartupWindow_Loaded;
             
             // 初始化UI资源
@@ -232,29 +234,31 @@ namespace ImageRecognitionApp.Assets.UI
             try
             {
                 // 使用ConfigureAwait(false)避免不必要的UI上下文切换，提高性能
-                // 第1步：检查系统环境
-                UpdateStatus("检查系统环境...", 0);
+                // Step 1: Checking system environment
+                UpdateStatus("Checking system environment...", 0);
                 await _initializationManager.CheckSystemEnvironmentAsync().ConfigureAwait(false);
-                await Task.Delay(300).ConfigureAwait(false); // 模拟耗时操作
+                await Task.Delay(600).ConfigureAwait(false); // Simulate time-consuming operation
 
-                // 第2步：加载配置文件
-                UpdateStatus("加载配置文件...", 20);
+                // Step 2: Loading configuration files
+                UpdateStatus("Loading configuration files...", 20);
                 await _initializationManager.LoadConfigurationAsync().ConfigureAwait(false);
-                await Task.Delay(300).ConfigureAwait(false);
+                await Task.Delay(600).ConfigureAwait(false);
 
-                // 第3步：初始化资源
-                UpdateStatus("初始化资源...", 40);
+                // Step 3: Initializing resources
+                UpdateStatus("Initializing resources...", 40);
                 await _initializationManager.InitializeResourcesAsync().ConfigureAwait(false);
                 await Task.Delay(300).ConfigureAwait(false);
 
-                // 第4步：准备主窗口数据
-                UpdateStatus("准备主窗口数据...", 60);
+                // Step 4: Preparing main window data
+                UpdateStatus("Preparing main window data...", 60);
                 await _initializationManager.PrepareMainWindowDataAsync().ConfigureAwait(false);
                 await Task.Delay(300).ConfigureAwait(false);
 
-                // 第5步：初始化完成
-                UpdateStatus("初始化完成，正在启动应用...", 100);
-                await Task.Delay(500).ConfigureAwait(false);
+                // Step 5: Initialization completed
+                UpdateStatus("Initialization completed, starting application...", 99);
+                await Task.Delay(2000).ConfigureAwait(false); // Simulate time-consuming operation
+                // Initialization completed
+                UpdateStatus("Initialization completed, starting application...", 100);
 
                 // 切换到主窗口
                 SwitchToMainWindow();

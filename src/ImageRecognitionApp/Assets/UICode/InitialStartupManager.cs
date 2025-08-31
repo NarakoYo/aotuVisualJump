@@ -4,14 +4,21 @@ using System.Management;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
+using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp.Assets.UICode
 {
     /// <summary>
     /// 初始化管理器，负责应用程序的所有初始化操作
     /// </summary>
-    public class InitializationManager
+    public class InitialStartupManager
     {
+        private readonly LogManager _logManager = LogManager.Instance;
+        
+        /// <summary>
+        /// 用于更新初始化状态的委托
+        /// </summary>
+        public Action<string, int> UpdateStatusCallback { get; set; }
         /// <summary>
         /// 检查系统环境
         /// </summary>
@@ -66,8 +73,8 @@ namespace ImageRecognitionApp.Assets.UICode
         {
             try
             {
-                // 初始化图像资源
-                await InitializeImageResourcesAsync();
+                // 初始化所有资产资源
+                await InitializeAllAssetResourcesAsync();
                 
                 // 初始化语言资源
                 InitializeLanguageResources();
@@ -186,11 +193,79 @@ namespace ImageRecognitionApp.Assets.UICode
             // 实际项目中，这里应该验证配置的完整性和正确性
         }
 
-        private async Task InitializeImageResourcesAsync()
+        /// <summary>
+        /// 初始化项目所有资产资源
+        /// </summary>
+        /// <returns>异步任务</returns>
+        private async Task InitializeAllAssetResourcesAsync()
         {
-            // 模拟初始化图像资源
-            await Task.Delay(100);
-            // 实际项目中，这里应该预加载和初始化应用程序需要的图像资源
+            // 初始化项目所有资产资源
+            try
+            {
+                _logManager.WriteLog(LogManager.LogLevel.Info, "Starting to initialize all project asset resources");
+                
+                // 初始化AssetHelper单例
+                var assetHelper = AssetHelper.Instance;
+                
+                // 获取资源文件夹路径
+                string resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
+                _logManager.WriteLog(LogManager.LogLevel.Info, $"Resource folder path: {resourcesPath}");
+                
+                // 检查资源文件夹是否存在
+                if (Directory.Exists(resourcesPath))
+                {
+                    // 遍历资源文件夹中的所有文件
+                    string[] allAssetFiles = Directory.GetFiles(resourcesPath, "*.*", SearchOption.AllDirectories);
+                    int totalAssets = allAssetFiles.Length;
+                    int processedAssets = 0;
+                    
+                    // 输出到UI文本
+                    UpdateStatusCallback?.Invoke($"Found {totalAssets} asset files", 45);
+                    _logManager.WriteLog(LogManager.LogLevel.Info, $"Found {totalAssets} asset files");
+                    
+                    // 遍历并处理每个资产文件
+                    foreach (string assetFilePath in allAssetFiles)
+                    {
+                        try
+                        {
+                            // 获取相对路径（从Resources文件夹开始）
+                            string relativePath = assetFilePath.Substring(resourcesPath.Length + 1);
+                            // 获取文件名
+                            string fileName = Path.GetFileName(assetFilePath);
+                            
+                            // 更新状态到初始化文本
+                            UpdateStatusCallback?.Invoke($"Loading: {relativePath}", 45 + (processedAssets * 50 / totalAssets));
+                            // _logManager.WriteLog(LogManager.LogLevel.Info, $"Loading: {relativePath}");
+                            
+                            // 模拟资产加载延迟
+                            await Task.Delay(10).ConfigureAwait(false);
+                            
+                            processedAssets++;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logManager.WriteLog(LogManager.LogLevel.Warning, $"Error loading asset {assetFilePath}: {ex.Message}");
+                        }
+                    }
+                }
+                else
+                {
+                    UpdateStatusCallback?.Invoke("Resource folder not found", 50);
+                    _logManager.WriteLog(LogManager.LogLevel.Warning, $"Resource folder not found: {resourcesPath}");
+                }
+                
+                // 模拟异步处理时间
+                await Task.Delay(100).ConfigureAwait(false);
+                
+                UpdateStatusCallback?.Invoke("Asset resources initialization completed", 95);
+                _logManager.WriteLog(LogManager.LogLevel.Info, "Project all asset resources initialization completed");
+            }
+            catch (Exception ex)
+            {
+                _logManager.WriteLog(LogManager.LogLevel.Error, $"Error initializing project asset resources: {ex.Message}");
+                UpdateStatusCallback?.Invoke($"Error initializing assets: {ex.Message}", 0);
+                throw;
+            }
         }
 
         private void InitializeLanguageResources()
