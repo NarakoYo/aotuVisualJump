@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:ImageRecognitionApp.Assets.UI"
         xmlns:effects="clr-namespace:System.Windows.Media.Effects;assembly=PresentationCore"
         xmlns:converters="clr-namespace:ImageRecognitionApp.Converters"
+        xmlns:animation="clr-namespace:System.Windows.Media.Animation;assembly=PresentationCore"
         mc:Ignorable="d"
         Title="应用初始化" Height="514" Width="750"
         WindowStartupLocation="CenterScreen"
@@ -25,22 +26,73 @@
         <!-- Thickness转换器：将四个数值参数转换为Thickness对象 -->
         <converters:ThicknessConverter x:Key="ThicknessConverter"/>
         
-        <!-- 进度条样式 -->
+        <!-- 进度条样式 - 灰白相间滚筒效果 -->
         <Style x:Key="CustomProgressBar" TargetType="ProgressBar">
             <Setter Property="Height" Value="8"/>
             <Setter Property="Background" Value="#3C3C3E"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="#0078D7"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ProgressBar">
                         <Grid x:Name="TemplateRoot">
                             <Border Background="{TemplateBinding Background}" CornerRadius="4" BorderThickness="0"/>
                             <Border x:Name="PART_Track" CornerRadius="4" BorderThickness="0"/>
-                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="4" Background="{TemplateBinding Foreground}" BorderThickness="0">
-                                <Grid x:Name="Foreground">
-                                    <Border Background="{TemplateBinding Foreground}" CornerRadius="4" BorderThickness="0"/>
+                            <Border x:Name="PART_Indicator" HorizontalAlignment="Left" CornerRadius="4" BorderThickness="0">
+                                <!-- 背景彩色渐变 -->
+                                <Border.Background>
+                                      <LinearGradientBrush StartPoint="0,0" EndPoint="2,0">
+                                        <GradientStop Color="#FF0000" Offset="0"/>
+                                        <GradientStop Color="#FF7F00" Offset="0.166"/>
+                                        <GradientStop Color="#FFFF00" Offset="0.333"/>
+                                        <GradientStop Color="#00FF00" Offset="0.5"/>
+                                        <GradientStop Color="#0000FF" Offset="0.666"/>
+                                        <GradientStop Color="#4B0082" Offset="0.833"/>
+                                        <GradientStop Color="#9400D3" Offset="1"/>
+                                        <LinearGradientBrush.RelativeTransform>
+                                            <TranslateTransform x:Name="RainbowTransform" X="0"/>
+                                        </LinearGradientBrush.RelativeTransform>
+                                      </LinearGradientBrush>
+                                  </Border.Background>
+                                <!-- 流光效果覆盖层 -->
+                                <Grid>
+                                    <Border x:Name="ShineEffect" CornerRadius="4" Opacity="0.7">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="-1,0" EndPoint="2,0">
+                                                <GradientStop Color="Transparent" Offset="0"/>
+                                                <GradientStop Color="White" Offset="0.5"/>
+                                                <GradientStop Color="Transparent" Offset="1"/>
+                                                <LinearGradientBrush.RelativeTransform>
+                                                    <TranslateTransform x:Name="ShineTransform" X="0"/>
+                                                </LinearGradientBrush.RelativeTransform>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
                                 </Grid>
+                                <Border.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <!-- 流光动画 -->
+                                                <!-- 七彩层流动动画 - 往返流动 -->
+                                                  <DoubleAnimation 
+                                                    Storyboard.TargetName="RainbowTransform" 
+                                                    Storyboard.TargetProperty="X" 
+                                                    From="-1" To="0" 
+                                                    Duration="0:0:6" 
+                                                    AutoReverse="True" 
+                                                    RepeatBehavior="Forever"/>
+                                                  <!-- 流光层流动动画 - 往返流动 -->
+                                                  <DoubleAnimation 
+                                                    Storyboard.TargetName="ShineTransform" 
+                                                    Storyboard.TargetProperty="X" 
+                                                    From="-1" To="1" 
+                                                    Duration="0:0:2" 
+                                                    AutoReverse="True" 
+                                                    RepeatBehavior="Forever"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Border.Triggers>
                             </Border>
                         </Grid>
                     </ControlTemplate>

@@ -239,30 +239,30 @@ namespace ImageRecognitionApp.Assets.UI
             {
                 // 使用ConfigureAwait(false)避免不必要的UI上下文切换，提高性能
                 // Step 1: Checking system environment
-                UpdateStatus("Checking system environment...", 0);
+                await UpdateStatusAsync("Checking system environment...", 0);
                 await _initializationManager.CheckSystemEnvironmentAsync().ConfigureAwait(false);
                 await Task.Delay(300).ConfigureAwait(false); // Simulate time-consuming operation
 
                 // Step 2: Loading configuration files
-                UpdateStatus("Loading configuration files...", 20);
+                await UpdateStatusAsync("Loading configuration files...", 20);
                 await _initializationManager.LoadConfigurationAsync().ConfigureAwait(false);
                 await Task.Delay(300).ConfigureAwait(false);
 
                 // Step 3: Initializing resources
-                UpdateStatus("Initializing resources...", 40);
+                await UpdateStatusAsync("Initializing resources...", 40);
                 await _initializationManager.InitializeResourcesAsync().ConfigureAwait(false);
                 await Task.Delay(300).ConfigureAwait(false);
 
                 // Step 4: Preparing main window data
-                UpdateStatus("Preparing main window data...", 60);
+                await UpdateStatusAsync("Preparing main window data...", 60);
                 await _initializationManager.PrepareMainWindowDataAsync().ConfigureAwait(false);
                 await Task.Delay(100).ConfigureAwait(false);
 
                 // Step 5: Initialization completed
-                UpdateStatus("Initialization completed, starting application...", 99);
+                await UpdateStatusAsync("Initialization completed, starting application...", 99);
                 await Task.Delay(2000).ConfigureAwait(false); // Simulate time-consuming operation
                 // Initialization completed
-                UpdateStatus("Initialization completed, starting application...", 100);
+                await UpdateStatusAsync("Initialization completed, starting application...", 100);
 
                 // 切换到主窗口
                 SwitchToMainWindow();
@@ -270,7 +270,7 @@ namespace ImageRecognitionApp.Assets.UI
             catch (Exception ex)
             {
                 // 处理初始化过程中的异常
-                UpdateStatus($"初始化失败：{ex.Message}", 0);
+                await UpdateStatusAsync($"初始化失败：{ex.Message}", 0);
                 // 在UI线程上显示错误消息
                 this.Dispatcher.Invoke(() =>
                 {
@@ -281,21 +281,45 @@ namespace ImageRecognitionApp.Assets.UI
         }
 
         /// <summary>
-        /// 更新初始化状态和进度
+        /// 更新初始化状态和进度（同步方法，用于回调）
         /// </summary>
         /// <param name="statusText">状态文本</param>
         /// <param name="progressValue">进度值(0-100)</param>
         private void UpdateStatus(string statusText, int progressValue)
         {
-            // 在UI线程上更新状态
+            // 立即执行UI更新
             this.Dispatcher.Invoke(() =>
             {
-                if (InitializationProgress != null && InitializationProgress.Value != progressValue)
+                if (StatusText != null)
                 {
-                    // 直接更新进度值，因为动画已经在InitialStartupAnimation类中处理
-                    InitializationProgress.Value = progressValue;
+                    StatusText.Text = statusText;
                 }
                 
+                if (ProgressPercentage != null)
+                {
+                    ProgressPercentage.Text = $"{progressValue}%";
+                }
+                
+                // 对于回调中的进度更新，使用同步方式直接设置进度值
+                // 以避免在后台线程中使用异步操作可能导致的问题
+                if (InitializationProgress != null)
+                {
+                    InitializationProgress.Value = progressValue;
+                }
+            }, System.Windows.Threading.DispatcherPriority.Background);
+        }
+        
+        /// <summary>
+        /// 更新初始化状态和进度（异步方法，用于主线程调用）
+        /// </summary>
+        /// <param name="statusText">状态文本</param>
+        /// <param name="progressValue">进度值(0-100)</param>
+        /// <returns>异步任务</returns>
+        private async Task UpdateStatusAsync(string statusText, int progressValue)
+        {
+            // 在UI线程上更新状态文本和百分比显示
+            this.Dispatcher.Invoke(() =>
+            {
                 if (StatusText != null)
                 {
                     StatusText.Text = statusText;
@@ -306,6 +330,12 @@ namespace ImageRecognitionApp.Assets.UI
                     ProgressPercentage.Text = $"{progressValue}%";
                 }
             }, System.Windows.Threading.DispatcherPriority.Background);
+            
+            // 使用动画平滑更新进度条值
+            if (InitializationProgress != null && _animationManager != null)
+            {
+                await _animationManager.AnimateProgressBarAsync(InitializationProgress, progressValue).ConfigureAwait(false);
+            }
         }
 
         /// <summary>

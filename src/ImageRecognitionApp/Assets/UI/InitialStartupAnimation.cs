@@ -84,19 +84,66 @@ namespace ImageRecognitionApp.Assets.UI
             if (progressBar == null)
                 throw new ArgumentNullException(nameof(progressBar));
             
-            // 确保目标值在有效范围内
-            targetValue = Math.Max(progressBar.Minimum, Math.Min(progressBar.Maximum, targetValue));
+            // 使用TaskCompletionSource来跟踪动画完成
+            var tcs = new TaskCompletionSource<bool>();
             
-            double animationDuration = AnimationDuration * ProgressBarAnimationFactor;
+            double animationDuration = 0;
             
+            // 在UI线程上执行所有UI相关操作
             await ExecuteOnUIThreadAsync(() =>
             {
-                var progressAnimation = CreateDoubleAnimation(progressBar.Value, targetValue, animationDuration);
-                progressBar.BeginAnimation(ProgressBar.ValueProperty, progressAnimation);
+                try
+                {
+                    // 确保目标值在有效范围内
+                    double minimum = progressBar.Minimum;
+                    double maximum = progressBar.Maximum;
+                    double clampedTargetValue = Math.Max(minimum, Math.Min(maximum, targetValue));
+                    
+                    // 计算动画持续时间，根据进度变化量调整，变化越大动画时间越长
+                    double currentValue = progressBar.Value;
+                    double progressChange = Math.Abs(clampedTargetValue - currentValue);
+                    
+                    // 基础动画时间 + 基于进度变化的额外时间
+                    double baseDuration = AnimationDuration * ProgressBarAnimationFactor;
+                    double variableDuration = progressChange * 0.02; // 每变化1%增加0.02秒
+                    animationDuration = Math.Max(baseDuration, variableDuration);
+                    
+                    // 创建动画
+                    var progressAnimation = new DoubleAnimation
+                    {
+                        From = currentValue,
+                        To = clampedTargetValue,
+                        Duration = TimeSpan.FromSeconds(animationDuration),
+                        // 使用更平滑的缓动函数提升动画质量
+                        EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseInOut, Exponent = 2 }
+                    };
+                    
+                    // 设置动画完成事件
+                    progressAnimation.Completed += (sender, e) =>
+                    {
+                        try
+                        {
+                            // 确保进度条值最终设置为目标值
+                            progressBar.Value = clampedTargetValue;
+                            tcs.SetResult(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            tcs.SetException(ex);
+                        }
+                    };
+                    
+                    // 开始动画
+                    progressBar.BeginAnimation(ProgressBar.ValueProperty, progressAnimation);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
             });
             
-            // 等待动画完成
-            await Task.Delay(TimeSpan.FromSeconds(animationDuration));
+            // 等待动画完成，设置超时以防动画卡住
+            await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(animationDuration > 0 ? animationDuration * 1.5 : 1)));
         }
         
         /// <summary>
