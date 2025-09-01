@@ -13,6 +13,7 @@ using System.Windows.Media.Animation;
 using System.ComponentModel;
 using ImageRecognitionApp.WinFun;  // 导入WinFun命名空间
 using ImageRecognitionApp.unit;     // 导入unit命名空间
+using ImageRecognitionApp.Assets.UI;
 
 namespace ImageRecognitionApp;
 
@@ -1077,7 +1078,29 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             ApplyButtonAnimation(button, true);
         }
 
-        // 这里可以添加按钮点击后的具体逻辑
+        // 按钮点击后的具体逻辑 - 根据按钮名称显示不同的内容
+        if (button.Name == "ScreenRecordingButton")
+        {
+            try
+            {
+                // 创建屏幕录制控件实例
+                ScreenRecordingControl recordingControl = new ScreenRecordingControl();
+                
+                // 将控件显示在主内容区域
+                MainContentControl.Content = recordingControl;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("加载屏幕录制功能失败：" + ex.Message);
+                System.Windows.MessageBox.Show("加载屏幕录制功能失败：" + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        else
+        {
+            // 对于其他按钮，这里可以添加相应的逻辑
+            // 当前仅实现了捕捉录制系统按钮的功能
+            MainContentControl.Content = null;
+        }
     }
 
     /// <summary>

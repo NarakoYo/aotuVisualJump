@@ -5,6 +5,7 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Resources\logo\logo.ico</ApplicationIcon>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
       <AssemblyVersion>0.0.1.0</AssemblyVersion>
