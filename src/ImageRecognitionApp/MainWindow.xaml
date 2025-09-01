@@ -466,7 +466,7 @@
                                 </Button.Template>
                             </Button>
 
-                            <!-- 屏幕录制按钮 -->
+                            <!-- 捕捉录制系统按钮 -->
                             <Button x:Name="ScreenRecordingButton" Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}" Click="SidebarButton_Click" 
                                     Height="45" 
                                     HorizontalAlignment="Stretch" 
