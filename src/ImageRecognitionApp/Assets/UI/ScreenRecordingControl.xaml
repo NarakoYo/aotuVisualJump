@@ -11,19 +11,21 @@
         <converters:SubtractConverter x:Key="SubtractConverter"/>
         <!-- 宽高比转换器 - 用于根据宽度计算高度 -->
         <converters:AspectRatioConverter x:Key="AspectRatioConverter"/>
+        <!-- 宽高比缩放转换器 - 用于计算内容在保持原始比例的情况下如何适应展示区域 -->
+        <converters:AspectRatioScalerConverter x:Key="AspectRatioScalerConverter"/>
     </UserControl.Resources>
     <!-- 使用Border包装整个内容，实现圆角效果 -->
     <Border Background="#3D8686" CornerRadius="10">
         <Grid>
-            <!-- 展示画布内容的区域 -->
+            <!-- 展示画布的区域 -->
             <!-- 宽度等于内容框的宽度-16px，高度根据宽度进行16:10换算 -->
             <Border x:Name="CanvasBorder" 
                     Background="#1E1E1E" 
                     HorizontalAlignment="Center" 
                     VerticalAlignment="Top" 
-                    Margin="-8,0,0,0" 
+                    Margin="-10,0,0,0" 
                     CornerRadius="10">
-                <!-- 宽度设置 -->
+                <!-- 宽度设置 - 内容框的宽度-16px -->
                 <Border.Width>
                     <MultiBinding Converter="{StaticResource SubtractConverter}">
                         <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=ContentControl}"/>
@@ -39,12 +41,77 @@
                         <Binding Source="16"/><!-- 目标宽度比例 -->
                     </MultiBinding>
                 </Border.Height>
-                <!-- 画布内容 - 暂时显示提示文本 -->
-                <TextBlock Text="录制画布区域" 
-                           HorizontalAlignment="Center" 
-                           VerticalAlignment="Center" 
-                           FontSize="16" 
-                           Foreground="White"/>
+                
+                <!-- 画面展示容器 - 参考OBS实现 -->
+                <Grid HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="True">
+                    <!-- 设置Grid的宽度和高度，确保与黑色背景Border一致 -->
+                    <Grid.Width>
+                        <MultiBinding Converter="{StaticResource AspectRatioScalerConverter}">
+                            <Binding Path="ActualWidth" ElementName="CanvasBorder"/>
+                            <Binding Path="ActualHeight" ElementName="CanvasBorder"/>
+                            <Binding Source="1920"/><!-- 原始宽度 -->
+                            <Binding Source="1080"/><!-- 原始高度 -->
+                        </MultiBinding>
+                    </Grid.Width>
+                    <Grid.Height>
+                        <MultiBinding Converter="{StaticResource AspectRatioConverter}">
+                            <Binding Path="Width" RelativeSource="{RelativeSource Self}"/>
+                            <Binding Source="9"/><!-- 目标高度比例 -->
+                            <Binding Source="16"/><!-- 目标宽度比例 -->
+                        </MultiBinding>
+                    </Grid.Height>
+                    
+                    <!-- 画面背景 - 当内容比例与展示区域不匹配时显示 -->
+                    <Border Background="#000000" 
+                            HorizontalAlignment="Stretch" 
+                            VerticalAlignment="Stretch"/>
+                    
+                    <!-- 画面内容区域 - 默认16:9比例，1920*1080分辨率 -->
+                    <Canvas x:Name="MainContentCanvas" 
+                            Width="{Binding Path=Width, RelativeSource={RelativeSource AncestorType=Grid}}" 
+                            Height="{Binding Path=Height, RelativeSource={RelativeSource AncestorType=Grid}}">
+                        <!-- 画面内容将在此处动态添加 -->
+                        <!-- 根据OBS实现方式，这里将显示不同来源的画面内容，并保持原始分辨率 -->
+                        <!-- 缩放逻辑由父容器控制，确保内容按比例缩放至最大显示尺寸 -->
+                    </Canvas>
+                </Grid>
+            </Border>
+            
+            <!-- 控制菜单区域 -->
+            <!-- 宽度与UserControl动态获取的宽度保持一致，高度以UserControl动态获取的宽度减去展示画布区域的高度再减去10px作为最小高度 -->
+            <Border x:Name="ControlMenuBorder"
+                    Background="#1E1E1E"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    CornerRadius="10">
+                <!-- 垂直位置设置 - 展示画布区域的高度+5px -->
+                <Border.Margin>
+                    <MultiBinding StringFormat="0,{0},0,0">
+                        <MultiBinding.Converter>
+                            <converters:SubtractConverter/>
+                        </MultiBinding.Converter>
+                        <Binding Path="ActualHeight" ElementName="CanvasBorder"/>
+                        <Binding Source="-5"/>
+                    </MultiBinding>
+                </Border.Margin>
+                <!-- 宽度设置 - 与UserControl动态获取的宽度保持一致 -->
+                <Border.Width>
+                    <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                </Border.Width>
+                <!-- 高度设置 - 以UserControl动态获取的高度减去展示画布区域的高度再减去10px作为最小高度 -->
+                <Border.MinHeight>
+                    <MultiBinding Converter="{StaticResource SubtractConverter}">
+                        <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
+                        <Binding Path="ActualHeight" ElementName="CanvasBorder"/>
+                        <Binding Source="10"/>
+                    </MultiBinding>
+                </Border.MinHeight>
+                
+                <!-- 控制菜单内容区域 -->
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <!-- 控制菜单内容将在这里添加 -->
+                    <!-- 可以添加按钮、滑块等控件来控制画布内容 -->
+                </Grid>
             </Border>
         </Grid>
     </Border>
