@@ -888,12 +888,14 @@
                         </Button>
                         </StackPanel>
                         </Border>
-                        <!-- 主内容区域 - 宽度为内容框的3/4-2px - 高度为内容框的高度 - 背景色#1E1E1E - 10px圆角 -->
+                        <!-- 主内容区域 - 宽度为内容框的3/4-2px - 高度为内容框的高度 - 白色边框1px - 10px圆角 -->
                         <Border Grid.Column="1"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Stretch"
                                 Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Border}}"
-                                Background="#1E1E1E"
+                                Background="Transparent"
+                                BorderBrush="White"
+                                BorderThickness="1"
                                 CornerRadius="10"
                                 Margin="5,0,2,0">
                             <!-- 主内容区域内容显示控件 -->

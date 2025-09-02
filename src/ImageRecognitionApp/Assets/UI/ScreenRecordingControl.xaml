@@ -3,252 +3,49 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:converters="clr-namespace:ImageRecognitionApp.Converters"
              mc:Ignorable="d"
-             d:DesignHeight="600"
-             d:DesignWidth="800"
-             Background="#1E1E1E">
-    <Grid>
-        <!-- 主内容区域 - 内部使用Grid进行布局 -->
-        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <!-- 录制状态和时间显示 -->
-            <Grid Margin="20,20,20,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <!-- 录制状态信息 -->
-                <Border Grid.Column="0"
-                        Background="#2D2D2D"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Center"
-                        Height="60">
-                    <TextBlock x:Name="RecordingTimeText" 
-                               Text="00:00:00"
-                               HorizontalAlignment="Center" 
-                               VerticalAlignment="Center" 
-                               FontSize="16" 
-                               Foreground="White"/>
-                </Border>
-
-                <!-- 录制控制按钮 -->
-                <WrapPanel Grid.Column="1"
-                           Orientation="Horizontal"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center">
-                    <Button x:Name="StartRecordingButton" 
-                            Content="开始录制" 
-                            Background="#4293C9" 
-                            Foreground="White" 
-                            Height="45" 
-                            Width="100" 
-                            BorderThickness="0" 
-                            Margin="0,0,10,0" 
-                            Click="StartRecordingButton_Click"/>
-                    <Button x:Name="StopRecordingButton" 
-                            Content="停止录制" 
-                            Background="#D1423D" 
-                            Foreground="White" 
-                            Height="45" 
-                            Width="100" 
-                            BorderThickness="0" 
-                            IsEnabled="False" 
-                            Click="StopRecordingButton_Click"/>
-                    <Button x:Name="PauseRecordingButton" 
-                            Content="暂停录制" 
-                            Background="#F7C04A" 
-                            Foreground="White" 
-                            Height="45" 
-                            Width="100" 
-                            BorderThickness="0" 
-                            IsEnabled="False" 
-                            Click="PauseRecordingButton_Click"/>
-                </WrapPanel>
-            </Grid>
-
-            <!-- 录制设置 -->
-            <Expander Header="录制设置" 
-                      IsExpanded="True" 
-                      HorizontalAlignment="Stretch" 
-                      Margin="20,80,20,0" 
-                      Background="#2D2D2D" 
-                      Foreground="White">
-                <Grid Margin="10,10,10,10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- 保存路径 -->
-                    <TextBlock Grid.Row="0" Grid.Column="0" 
-                               Text="保存路径：" 
-                               HorizontalAlignment="Right" 
-                               VerticalAlignment="Center" 
-                               Margin="0,5,10,5" 
-                               Foreground="White"/>
-                    <Grid Grid.Row="0" Grid.Column="1" 
-                          HorizontalAlignment="Stretch" 
-                          VerticalAlignment="Center" 
-                          Margin="0,5,0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox x:Name="SavePathTextBox" 
-                                 Grid.Column="0" 
-                                 Text="" 
-                                 HorizontalAlignment="Stretch" 
-                                 VerticalAlignment="Center" 
-                                 Height="30" 
-                                 Background="#1E1E1E" 
-                                 Foreground="White" 
-                                 BorderBrush="#4DFFFFFF" 
-                                 BorderThickness="1"/>
-                        <Button x:Name="BrowsePathButton" 
-                                Grid.Column="1" 
-                                Content="浏览..." 
-                                HorizontalAlignment="Right" 
-                                VerticalAlignment="Center" 
-                                Height="30" 
-                                Width="80" 
-                                Background="#37373D" 
-                                Foreground="White" 
-                                BorderBrush="#4DFFFFFF" 
-                                BorderThickness="1" 
-                                Margin="10,0,0,0" 
-                                Click="BrowsePathButton_Click"/>
-                    </Grid>
-
-                    <!-- 视频质量 -->
-                    <TextBlock Grid.Row="1" Grid.Column="0" 
-                               Text="视频质量：" 
-                               HorizontalAlignment="Right" 
-                               VerticalAlignment="Center" 
-                               Margin="0,5,10,5" 
-                               Foreground="White"/>
-                    <ComboBox x:Name="VideoQualityComboBox" 
-                              Grid.Row="1" Grid.Column="1" 
-                              HorizontalAlignment="Stretch" 
-                              VerticalAlignment="Center" 
-                              Height="30" 
-                              Background="#1E1E1E" 
-                              Foreground="White" 
-                              BorderBrush="#4DFFFFFF" 
-                              BorderThickness="1">
-                        <ComboBoxItem Content="低"/>
-                        <ComboBoxItem Content="中" IsSelected="True"/>
-                        <ComboBoxItem Content="高"/>
-                        <ComboBoxItem Content="最高"/>
-                    </ComboBox>
-
-                    <!-- 帧速率 -->
-                    <TextBlock Grid.Row="2" Grid.Column="0" 
-                               Text="帧速率：" 
-                               HorizontalAlignment="Right" 
-                               VerticalAlignment="Center" 
-                               Margin="0,5,10,5" 
-                               Foreground="White"/>
-                    <ComboBox x:Name="FrameRateComboBox" 
-                              Grid.Row="2" Grid.Column="1" 
-                              HorizontalAlignment="Stretch" 
-                              VerticalAlignment="Center" 
-                              Height="30" 
-                              Background="#1E1E1E" 
-                              Foreground="White" 
-                              BorderBrush="#4DFFFFFF" 
-                              BorderThickness="1">
-                        <ComboBoxItem Content="15"/>
-                        <ComboBoxItem Content="24"/>
-                        <ComboBoxItem Content="30" IsSelected="True"/>
-                        <ComboBoxItem Content="60"/>
-                    </ComboBox>
-
-                    <!-- 其他选项 -->
-                    <TextBlock Grid.Row="3" Grid.Column="0" 
-                               Text="其他选项：" 
-                               HorizontalAlignment="Right" 
-                               VerticalAlignment="Center" 
-                               Margin="0,5,10,5" 
-                               Foreground="White"/>
-                    <StackPanel Grid.Row="3" Grid.Column="1" 
-                                Orientation="Horizontal" 
-                                VerticalAlignment="Center" 
-                                Margin="10,5,0,5">
-                        <CheckBox x:Name="RecordAudioCheckBox" 
-                                  Content="录制音频" 
-                                  IsChecked="True" 
-                                  Foreground="White" 
-                                  Margin="0,0,20,0"/>
-                        <CheckBox x:Name="ShowCursorCheckBox" 
-                                  Content="显示鼠标光标" 
-                                  IsChecked="True" 
-                                  Foreground="White"/>
-                    </StackPanel>
-
-                    <!-- 保存设置按钮 -->
-                    <Button x:Name="SaveSettingsButton" 
-                            Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" 
-                            Content="保存设置" 
-                            HorizontalAlignment="Center" 
-                            VerticalAlignment="Center" 
-                            Height="40" 
-                            Width="120" 
-                            Background="#4293C9" 
-                            Foreground="White" 
-                            BorderBrush="#4DFFFFFF" 
-                            BorderThickness="1" 
-                            Margin="0,10,0,0" 
-                            Click="SaveSettingsButton_Click"/>
-                </Grid>
-            </Expander>
-
-            <!-- 录制文件列表 -->
-            <Expander Header="录制历史" 
-                      IsExpanded="True" 
-                      HorizontalAlignment="Stretch" 
-                      Margin="20,320,20,20" 
-                      Background="#2D2D2D" 
-                      Foreground="White">
-                <Grid Margin="10,10,10,10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-                    
-                    <!-- 文件列表 -->
-                    <ListBox x:Name="RecordingsListBox" 
-                             Grid.Row="0" 
-                             HorizontalAlignment="Stretch" 
-                             VerticalAlignment="Stretch" 
-                             Background="#1E1E1E" 
-                             Foreground="White" 
-                             BorderBrush="#4DFFFFFF" 
-                             BorderThickness="1" 
-                             ItemsSource="{Binding}"/>
-                    
-                    <!-- 刷新按钮 -->
-                    <Button x:Name="RefreshButton" 
-                            Grid.Row="1" 
-                            Content="刷新列表" 
-                            HorizontalAlignment="Right" 
-                            VerticalAlignment="Center" 
-                            Height="30" 
-                            Width="80" 
-                            Background="#37373D" 
-                            Foreground="White" 
-                            BorderBrush="#4DFFFFFF" 
-                            BorderThickness="1" 
-                            Margin="0,5,0,0" 
-                            Click="RefreshButton_Click"/>
-                </Grid>
-            </Expander>
+             Background="Transparent">
+    <UserControl.Resources>
+        <!-- 减法转换器 - 用于计算值的差值 -->
+        <converters:SubtractConverter x:Key="SubtractConverter"/>
+        <!-- 宽高比转换器 - 用于根据宽度计算高度 -->
+        <converters:AspectRatioConverter x:Key="AspectRatioConverter"/>
+    </UserControl.Resources>
+    <!-- 使用Border包装整个内容，实现圆角效果 -->
+    <Border Background="#3D8686" CornerRadius="10">
+        <Grid>
+            <!-- 展示画布内容的区域 -->
+            <!-- 宽度等于内容框的宽度-16px，高度根据宽度进行16:10换算 -->
+            <Border x:Name="CanvasBorder" 
+                    Background="#1E1E1E" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Top" 
+                    Margin="-8,0,0,0" 
+                    CornerRadius="10">
+                <!-- 宽度设置 -->
+                <Border.Width>
+                    <MultiBinding Converter="{StaticResource SubtractConverter}">
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=ContentControl}"/>
+                        <Binding Source="16"/>
+                    </MultiBinding>
+                </Border.Width>
+                <!-- 高度设置 - 16:10 宽高比 -->
+                <Border.Height>
+                    <MultiBinding Converter="{StaticResource AspectRatioConverter}">
+                        <!-- 与宽度相同的计算方式，确保高度基于正确的宽度值计算 -->
+                        <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=ContentControl}"/>
+                        <Binding Source="10"/><!-- 目标高度比例 -->
+                        <Binding Source="16"/><!-- 目标宽度比例 -->
+                    </MultiBinding>
+                </Border.Height>
+                <!-- 画布内容 - 暂时显示提示文本 -->
+                <TextBlock Text="录制画布区域" 
+                           HorizontalAlignment="Center" 
+                           VerticalAlignment="Center" 
+                           FontSize="16" 
+                           Foreground="White"/>
+            </Border>
         </Grid>
-    </Grid>
+    </Border>
 </UserControl>

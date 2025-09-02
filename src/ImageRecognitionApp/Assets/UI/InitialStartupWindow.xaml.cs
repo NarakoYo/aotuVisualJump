@@ -379,18 +379,18 @@ namespace ImageRecognitionApp.Assets.UI
         }
 
         /// <summary>
-        /// 鼠标左键按下事件处理程序，允许拖动窗口
+        /// 鼠标左键按下事件处理程序
         /// </summary>
         /// <param name="sender">事件发送者</param>
         /// <param name="e">鼠标事件参数</param>
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            try
-            {
-                // 允许通过鼠标拖动窗口
-                this.DragMove();
-            }
-            catch { /* 忽略拖动过程中可能出现的异常 */ }
+            // try
+            // {
+            //     // 允许通过鼠标拖动窗口
+            //     this.DragMove();
+            // }
+            // catch { /* 忽略拖动过程中可能出现的异常 */ }
         }
     }
 }
