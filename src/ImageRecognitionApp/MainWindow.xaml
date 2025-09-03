@@ -98,10 +98,10 @@
                 <!-- 内容层 -->
                 <Grid>
                     <!-- 自定义标题栏 - 置顶 -->
-                    <Border x:Name="TitleBar" Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="14,14,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" MouseRightButtonDown="TitleBar_MouseRightButtonDown" HorizontalAlignment="Stretch" Background="#3C3C3C">
+                    <Border x:Name="TitleBar" Height="50" VerticalAlignment="Top" Panel.ZIndex="1" CornerRadius="14,14,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" MouseLeftButtonUp="TitleBar_MouseLeftButtonUp" MouseMove="TitleBar_MouseMove" MouseRightButtonDown="TitleBar_MouseRightButtonDown" HorizontalAlignment="Stretch" Background="#3C3C3C">
                         <!-- 原下边框线已注释: BorderThickness="0,0,0,1" BorderBrush="#FFFFFF" -->
                     <!-- 标题栏内部网格 - 处理鼠标拖动事件 -->
-                    <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid MouseLeftButtonDown="TitleBar_MouseLeftButtonDown" MouseLeftButtonUp="TitleBar_MouseLeftButtonUp" MouseMove="TitleBar_MouseMove">
                         <!-- 毛玻璃背景层 -->
                         <!-- <Border Background="#1E1E1E" Opacity="1" CornerRadius="18,18,0,0"></Border> -->
                         <!-- 内容层 -->

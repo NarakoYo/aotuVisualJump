@@ -636,6 +636,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     private Point _restorePoint; // 新增：存储窗口还原位置
     private double _restoreWidth = 0; // 新增：存储窗口还原宽度
     private double _restoreHeight = 0; // 新增：存储窗口还原高度
+    private DateTime _mouseDownStartTime; // 用于判断长按拖动的开始时间
+    private bool _isDragging = false; // 用于跟踪是否有拖动操作发生
+    private Point _dragStartPoint; // 拖动开始时的鼠标位置
+    private Point _dragStartScreenPoint; // 拖动开始时的鼠标屏幕坐标位置
 
     public MainWindow()
     {
@@ -1573,6 +1577,14 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
     private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        // 记录鼠标按下的开始时间
+        _mouseDownStartTime = DateTime.Now;
+        // 记录拖动开始位置
+        _dragStartPoint = e.GetPosition(this);
+        _dragStartPoint = PointToScreen(_dragStartPoint);
+        // 重置拖动标志
+        _isDragging = false;
+        
         if (e.LeftButton == MouseButtonState.Pressed)
         {
             if (this.WindowState == WindowState.Maximized)
@@ -1598,17 +1610,24 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                     }
                 }
                 else
-                {
-                    // 单击操作：直接拖动窗口，保持最大化状态不变
-                    // 直接调用DragMove，Windows会自动处理最大化窗口的拖动行为
-                    DragMove();
+                    {
+                        // 保存拖动起始点，实际的还原操作会在检测到真正的拖动时执行
+                        // 这样可以避免单击标题栏时误还原窗口
+                        Point screenPoint = e.GetPosition(this);
+                        screenPoint = PointToScreen(screenPoint);
+                        
+                        // 记录拖动起点，供MouseMove事件中使用
+                        _dragStartScreenPoint = screenPoint;
+                        
+                        // 捕获鼠标，以便跟踪拖动操作
+                        Mouse.Capture(sender as IInputElement);
+                    }
                 }
-            }
-            else
-            {
-                // 正常拖动窗口
-                DragMove();
-            }
+                else
+                {
+                    // 正常状态下，等待MouseMove事件中检测到拖动距离后再执行DragMove
+                    // 这里不立即调用DragMove，以确保一致性
+                }
         }
     }
 
@@ -1647,7 +1666,8 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
         else if (WindowState == WindowState.Normal)
         {
-            // 窗口恢复正常状态时，恢复圆角效果
+            // 窗口恢复正常状态时，恢复圆角效果并更新最大化标志
+            _isMaximized = false;
             if (mainBorder != null) mainBorder.CornerRadius = new CornerRadius(14);
             if (titleBar != null) titleBar.CornerRadius = new CornerRadius(14, 14, 0, 0);
             if (backgroundBorder != null) backgroundBorder.CornerRadius = new CornerRadius(18);
@@ -1659,6 +1679,102 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             ShowInTaskbar = true;
             (App.Current as App)?.LogMessage("窗口已最小化，保持在任务栏显示");
         }
+    }
+
+    // 新增：标题栏鼠标移动事件 - 检测拖动操作
+    private void TitleBar_MouseMove(object sender, MouseEventArgs e)
+    {
+        // 如果鼠标左键按下且鼠标移动了一定距离，则标记为拖动操作
+        if (e.LeftButton == MouseButtonState.Pressed && !_isDragging)
+        {
+            Point currentPoint = e.GetPosition(this);
+            currentPoint = PointToScreen(currentPoint);
+            
+            // 计算鼠标移动距离
+            double moveDistance = Math.Sqrt(Math.Pow(currentPoint.X - _dragStartPoint.X, 2) + Math.Pow(currentPoint.Y - _dragStartPoint.Y, 2));
+            
+            // 如果移动距离超过5像素，则认为是拖动操作
+            if (moveDistance > 5)
+            {
+                _isDragging = true;
+                (App.Current as App)?.LogMessage("检测到拖动操作");
+                
+                if (this.WindowState == WindowState.Maximized)
+                {
+                    // 如果当前是最大化状态，则执行还原操作
+                    // 先将窗口状态改为正常
+                    this.WindowState = WindowState.Normal;
+                    _isMaximized = false;
+                    
+                    // 使用保存的窗口尺寸
+                    if (_restoreWidth > 0 && _restoreHeight > 0)
+                    {
+                        this.Width = _restoreWidth;
+                        this.Height = _restoreHeight;
+                    }
+                    
+                    // 计算窗口位置，确保标题栏处在鼠标位置
+                    double screenWidth = SystemParameters.WorkArea.Width;
+                    double screenHeight = SystemParameters.WorkArea.Height;
+                    
+                    // 设置窗口位置，让标题栏处在鼠标位置
+                    this.Left = _dragStartScreenPoint.X - (this.ActualWidth / 2);
+                    this.Top = _dragStartScreenPoint.Y - 25; // 标题栏高度的一半左右
+                    
+                    // 确保窗口不会超出屏幕边界
+                    if (this.Left < 0) this.Left = 0;
+                    if (this.Top < 0) this.Top = 0;
+                    if (this.Left + this.ActualWidth > screenWidth)
+                        this.Left = screenWidth - this.ActualWidth;
+                    if (this.Top + this.ActualHeight > screenHeight)
+                        this.Top = screenHeight - this.ActualHeight;
+                     
+                    // 现在窗口已还原为正常状态，开始拖动窗口
+                    try
+                    {
+                        // 释放鼠标捕获，然后调用DragMove以确保窗口跟随鼠标移动
+                        Mouse.Capture(null);
+                        this.DragMove();
+                    }
+                    catch { }
+                }
+                else
+                {
+                    // 正常状态下，开始拖动窗口
+                    try
+                    {
+                        // 注意：在WPF中，DragMove必须在MouseDown事件处理程序中调用，
+                        // 但在这里我们需要处理鼠标已经按下并移动的情况，所以使用try-catch避免异常
+                        Mouse.Capture(null);
+                        this.DragMove();
+                    }
+                    catch { }
+                }
+            }
+        }
+    }
+
+    // 新增：标题栏鼠标释放事件 - 处理单击和长按拖动的判断容错
+    private void TitleBar_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        // 释放鼠标捕获
+        Mouse.Capture(null);
+        
+        // 计算鼠标按下到释放的时间差
+        TimeSpan pressDuration = DateTime.Now - _mouseDownStartTime;
+        
+        // 如果是短时间单击（小于200毫秒）、窗口状态在MouseLeftButtonDown中被改变了，且没有拖动操作
+        // 则将窗口恢复到最大化状态，防止单击触发拖动功能
+        if (pressDuration.TotalMilliseconds < 200 && this.WindowState == WindowState.Normal && _isMaximized == false && this.Left != _restorePoint.X && !_isDragging)
+        {
+            // 恢复窗口到最大化状态
+            this.WindowState = WindowState.Maximized;
+            _isMaximized = true;
+            (App.Current as App)?.LogMessage("检测到短时间单击，恢复窗口到最大化状态");
+        }
+        
+        // 重置拖动标志
+        _isDragging = false;
     }
 
     // 新增：窗口激活事件处理 - 确保窗口被正确激活
