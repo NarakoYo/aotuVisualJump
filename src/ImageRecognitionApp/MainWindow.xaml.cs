@@ -417,8 +417,18 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // 标题栏右键点击事件处理
     private void TitleBar_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
-        // 允许在标题栏非按钮区域显示系统菜单
-        e.Handled = false;
+        // 窗口最大化时，屏蔽系统菜单
+        if (_isMaximized)
+        {
+            e.Handled = true;
+            (App.Current as App)?.LogMessage("窗口最大化时，屏蔽右键菜单");
+        }
+        else
+        {
+            // 非最大化状态下，允许在标题栏非按钮区域显示系统菜单
+            e.Handled = false;
+            (App.Current as App)?.LogMessage("窗口非最大化时，允许右键菜单");
+        }
     }
 
     // 系统信息按钮点击事件

@@ -719,6 +719,13 @@ namespace ImageRecognitionApp.WinFun
                         var window = mainWindow as MainWindow;
                         if (window != null)
                         {
+                            // 检查窗口是否处于最大化状态
+                            if (window.WindowState == System.Windows.WindowState.Maximized)
+                            {
+                                LogMessage("TaskbarManager: 窗口处于最大化状态，不显示系统菜单");
+                                return;
+                            }
+                            
                             // 查找标题栏元素
                             var titleBar = window.FindName("TitleBar") as System.Windows.Controls.Border;
                             if (titleBar != null)
