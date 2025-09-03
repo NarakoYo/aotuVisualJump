@@ -634,6 +634,8 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     private List<object> _imageCache = new List<object>();
     private bool _isMaximized = false; // 新增：跟踪窗口是否最大化
     private Point _restorePoint; // 新增：存储窗口还原位置
+    private double _restoreWidth = 0; // 新增：存储窗口还原宽度
+    private double _restoreHeight = 0; // 新增：存储窗口还原高度
 
     public MainWindow()
     {
@@ -664,6 +666,10 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
         // 初始化设置按钮状态
         _isSettingButtonClicked = false;
+
+        // 设置窗口最大尺寸，确保不覆盖任务栏
+        this.MaxHeight = SystemParameters.WorkArea.Height;
+        this.MaxWidth = SystemParameters.WorkArea.Width;
 
         // 初始化AssetHelper并获取按钮图标路径
         try
@@ -1569,13 +1575,40 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
-            // 只保留正常拖动窗口的功能，移除最大化相关的代码
-            // 确保窗口始终保持在正常状态
-            this.WindowState = WindowState.Normal;
-            _isMaximized = false;
-
-            // 正常拖动窗口
-            DragMove();
+            if (this.WindowState == WindowState.Maximized)
+            {
+                if (e.ClickCount == 2)
+                {
+                    // 双击标题栏：仅使用保存的还原点和尺寸，不基于鼠标当前位置
+                    this.WindowState = WindowState.Normal;
+                    _isMaximized = false;
+                    
+                    // 严格使用之前保存的窗口位置和尺寸信息
+                    if (!double.IsNaN(_restorePoint.X) && !double.IsNaN(_restorePoint.Y) && _restoreWidth > 0 && _restoreHeight > 0)
+                    {
+                        this.Left = _restorePoint.X;
+                        this.Top = _restorePoint.Y;
+                        this.Width = _restoreWidth;
+                        this.Height = _restoreHeight;
+                        (App.Current as App)?.LogMessage("双击标题栏，窗口准确还原到最大化前的位置和尺寸：(" + _restorePoint.X + ", " + _restorePoint.Y + ")，尺寸：" + _restoreWidth + "x" + _restoreHeight);
+                    }
+                    else
+                    {
+                        (App.Current as App)?.LogMessage("双击标题栏，窗口还原到正常状态（无保存的位置信息）");
+                    }
+                }
+                else
+                {
+                    // 单击操作：直接拖动窗口，保持最大化状态不变
+                    // 直接调用DragMove，Windows会自动处理最大化窗口的拖动行为
+                    DragMove();
+                }
+            }
+            else
+            {
+                // 正常拖动窗口
+                DragMove();
+            }
         }
     }
 
@@ -1589,7 +1622,38 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     // 新增：窗口状态变化事件处理 - 确保窗口状态正确处理
     private void Window_StateChanged(object sender, EventArgs e)
     {
-        if (WindowState == WindowState.Minimized)
+        // 获取窗口主容器的Border元素
+        var mainBorder = FindName("mainBorder") as Border;
+        var titleBar = FindName("TitleBar") as Border;
+        var backgroundBorder = FindName("backgroundBorder") as Border;
+        
+        if (WindowState == WindowState.Maximized)
+        {
+            // 保存窗口还原位置和尺寸
+            if (!_isMaximized)
+            {
+                _restorePoint = new Point(this.Left, this.Top);
+                _restoreWidth = this.Width;
+                _restoreHeight = this.Height;
+                (App.Current as App)?.LogMessage("窗口最大化，保存还原位置和尺寸：(" + _restorePoint.X + ", " + _restorePoint.Y + ")，尺寸：" + _restoreWidth + "x" + _restoreHeight);
+            }
+            _isMaximized = true;
+            
+            // 窗口最大化时，移除圆角效果
+            if (mainBorder != null) mainBorder.CornerRadius = new CornerRadius(0);
+            if (titleBar != null) titleBar.CornerRadius = new CornerRadius(0);
+            if (backgroundBorder != null) backgroundBorder.CornerRadius = new CornerRadius(0);
+            (App.Current as App)?.LogMessage("窗口已最大化，移除圆角效果");
+        }
+        else if (WindowState == WindowState.Normal)
+        {
+            // 窗口恢复正常状态时，恢复圆角效果
+            if (mainBorder != null) mainBorder.CornerRadius = new CornerRadius(14);
+            if (titleBar != null) titleBar.CornerRadius = new CornerRadius(14, 14, 0, 0);
+            if (backgroundBorder != null) backgroundBorder.CornerRadius = new CornerRadius(18);
+            (App.Current as App)?.LogMessage("窗口恢复正常，恢复圆角效果");
+        }
+        else if (WindowState == WindowState.Minimized)
         {
             // 确保窗口在最小化状态下仍然显示在任务栏中
             ShowInTaskbar = true;

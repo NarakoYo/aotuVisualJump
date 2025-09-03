@@ -82,28 +82,20 @@
             <Border x:Name="ControlMenuBorder"
                     Background="#1E1E1E"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Top"
+                    VerticalAlignment="Bottom"
+                    Margin="0,0,0,0"
                     CornerRadius="10">
-                <!-- 垂直位置设置 - 展示画布区域的高度+5px -->
-                <Border.Margin>
-                    <MultiBinding StringFormat="0,{0},0,0">
-                        <MultiBinding.Converter>
-                            <converters:SubtractConverter/>
-                        </MultiBinding.Converter>
-                        <Binding Path="ActualHeight" ElementName="CanvasBorder"/>
-                        <Binding Source="-5"/>
-                    </MultiBinding>
-                </Border.Margin>
+                <!-- 垂直位置设置 - 下边框距离内容框下边框4px -->
                 <!-- 宽度设置 - 与UserControl动态获取的宽度保持一致 -->
                 <Border.Width>
                     <Binding Path="ActualWidth" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                 </Border.Width>
-                <!-- 高度设置 - 以UserControl动态获取的高度减去展示画布区域的高度再减去10px作为最小高度 -->
+                <!-- 高度设置 - 以UserControl动态获取的高度减去展示画布区域的高度再减去2px作为最小高度 -->
                 <Border.MinHeight>
                     <MultiBinding Converter="{StaticResource SubtractConverter}">
                         <Binding Path="ActualHeight" RelativeSource="{RelativeSource AncestorType=UserControl}"/>
                         <Binding Path="ActualHeight" ElementName="CanvasBorder"/>
-                        <Binding Source="10"/>
+                        <Binding Source="2"/>
                     </MultiBinding>
                 </Border.MinHeight>
                 

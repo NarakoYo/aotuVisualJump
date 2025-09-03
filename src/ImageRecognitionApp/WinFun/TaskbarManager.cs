@@ -808,7 +808,7 @@ namespace ImageRecognitionApp.WinFun
                     {
                         // 禁用最大化菜单项
                         // SC_MAXIMIZE = 0xF030
-                        EnableMenuItem(hMenu, SC_MAXIMIZE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+                        // EnableMenuItem(hMenu, SC_MAXIMIZE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
                         
                         // 禁用大小菜单项
                         EnableMenuItem(hMenu, SC_SIZE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
@@ -837,16 +837,16 @@ namespace ImageRecognitionApp.WinFun
                             // 如果用户选择了菜单项，则发送相应的系统命令
                             if (menuResult > 0)
                             {
-                                // 过滤掉不允许的命令
-                                if (menuResult != SC_MAXIMIZE && menuResult != SC_SIZE && menuResult != SC_RESTORE)
-                                {
-                                    PostMessage(_windowHandle, WM_SYSCOMMAND, (IntPtr)menuResult, IntPtr.Zero);
-                                    LogMessage($"TaskbarManager: 用户选择了系统菜单项: {menuResult}");
-                                }
-                                else
-                                {
-                                    LogMessage($"TaskbarManager: 忽略菜单项选择: {menuResult}");
-                                }
+                                // 只过滤掉不允许的大小菜单项，允许最大化和还原
+                            if (menuResult != SC_SIZE)
+                            {
+                                PostMessage(_windowHandle, WM_SYSCOMMAND, (IntPtr)menuResult, IntPtr.Zero);
+                                LogMessage($"TaskbarManager: 用户选择了系统菜单项: {menuResult}");
+                            }
+                            else
+                            {
+                                LogMessage($"TaskbarManager: 忽略菜单项选择: {menuResult}");
+                            }
                             }
                         }
                     }

@@ -12,7 +12,7 @@
         Background="Transparent"
         Closing="Window_Closing"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="CanMinimize"
+        ResizeMode="CanResize"
         StateChanged="Window_StateChanged"
         Activated="Window_Activated">
     <Window.Resources>
@@ -88,11 +88,11 @@
     <!-- 主布局网格 - 包含应用程序的所有UI元素 -->
     <Grid>
         <!-- 主背景边框 - 实现14px圆角效果 -->
-        <Border Background="#3C3C3C" CornerRadius="14,14,14,14">
+        <Border x:Name="mainBorder" Background="#3C3C3C" CornerRadius="14,14,14,14">
             <!-- 内容层网格 - 包含标题栏和内容区域 -->
             <Grid>
                 <!-- 毛玻璃背景层 -->
-                <Border Background="#3C3C3C" Opacity="0.9" CornerRadius="18">
+                <Border x:Name="backgroundBorder" Background="#3C3C3C" Opacity="0.9" CornerRadius="18">
 
                 </Border>
                 <!-- 内容层 -->
