@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
@@ -33,6 +34,7 @@ namespace ImageRecognitionApp.WinFun
         private HwndSource? _hwndSource;             // 窗口源对象，用于消息处理
         private bool _isTrayIconVisible = false;     // 托盘图标可见状态
         private bool _isWindowMinimizedToTray = false; // 窗口是否最小化到托盘
+        private ITaskbarList3? _taskbarList3;         // 任务栏列表3接口实例，用于任务栏进度条
         
         // 窗口位置相关字段
         private double _lastWindowLeft = 0;          // 上次窗口的左边界位置
@@ -120,6 +122,43 @@ namespace ImageRecognitionApp.WinFun
 
         #region Win32 API 导入
 
+        // 任务栏进度条相关接口和API
+        [ComImport]
+        [Guid("EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface ITaskbarList3
+        {
+            // ITaskbarList methods
+            [PreserveSig]
+            void HrInit();
+            [PreserveSig]
+            void AddTab(IntPtr hwnd);
+            [PreserveSig]
+            void DeleteTab(IntPtr hwnd);
+            [PreserveSig]
+            void ActivateTab(IntPtr hwnd);
+            [PreserveSig]
+            void SetActiveAlt(IntPtr hwnd);
+
+            // ITaskbarList2 methods
+            [PreserveSig]
+            void MarkFullscreenWindow(IntPtr hwnd, [MarshalAs(UnmanagedType.Bool)] bool fFullscreen);
+
+            // ITaskbarList3 methods
+            [PreserveSig]
+            void SetProgressValue(IntPtr hwnd, ulong ullCompleted, ulong ullTotal);
+            [PreserveSig]
+            void SetProgressState(IntPtr hwnd, TaskbarProgressState tbpFlags);
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        private static extern void SHCreateItemFromParsingName([MarshalAs(UnmanagedType.LPWStr)] string pszPath,
+            IBindCtx pbc, ref Guid riid, [MarshalAs(UnmanagedType.Interface)] out object ppv);
+
+        [DllImport("shell32.dll")]
+        private static extern int CoCreateInstance(ref Guid clsid, IntPtr pUnkOuter,
+            uint dwClsContext, ref Guid iid, [MarshalAs(UnmanagedType.Interface)] out ITaskbarList3 ppv);
+
         [DllImport("user32.dll")]
         private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
 
@@ -180,6 +219,21 @@ namespace ImageRecognitionApp.WinFun
         #endregion
 
         #region 常量定义
+
+        // 任务栏进度条状态枚举
+        public enum TaskbarProgressState
+        {
+            NoProgress = 0,
+            Indeterminate = 1,  // 走马灯效果
+            Normal = 2,         // 正常加载
+            Error = 4,          // 加载错误中断卡住
+            Paused = 8          // 加载暂停
+        }
+
+        // GUID常量
+        private static readonly Guid CLSID_TaskbarList = new Guid("56FDF344-FD6D-11d0-958A-006097C9A090");
+        private static readonly Guid IID_ITaskbarList3 = new Guid("EA1AFB91-9E28-4B86-90E9-9E9F8A5EEFAF");
+        private const uint CLSCTX_INPROC_SERVER = 1;
 
         // 任务栏图标消息常量
         private const uint NIM_ADD = 0x00000000;       // 添加任务栏图标
@@ -351,11 +405,41 @@ namespace ImageRecognitionApp.WinFun
 
                 // 初始化上下文菜单
                 InitializeContextMenu();
+
+                // 初始化任务栏进度条接口
+                InitializeTaskbarProgressBar();
             }
             catch (Exception ex)
             {
                 LogMessage($"TaskbarManager: 初始化任务栏组件错误: {ex.Message}");
                 LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
+            }
+        }
+
+        /// <summary>
+        /// 初始化任务栏进度条接口
+        /// </summary>
+        private void InitializeTaskbarProgressBar()
+        {
+            try
+            {
+                if (Environment.OSVersion.Version.Major >= 6)
+                { // Windows Vista及以上版本支持任务栏进度条
+                    _taskbarList3 = (ITaskbarList3)Activator.CreateInstance(Type.GetTypeFromCLSID(CLSID_TaskbarList));
+                    if (_taskbarList3 != null)
+                    {
+                        _taskbarList3.HrInit();
+                        LogMessage("TaskbarManager: 任务栏进度条接口已初始化");
+                    }
+                }
+                else
+                {
+                    LogMessage("TaskbarManager: 当前操作系统版本不支持任务栏进度条功能");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 初始化任务栏进度条接口错误: {ex.Message}");
             }
         }
 
@@ -379,6 +463,47 @@ namespace ImageRecognitionApp.WinFun
             catch (Exception ex)
             {
                 LogMessage($"TaskbarManager: 初始化任务栏动画对象错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 设置任务栏进度条状态
+        /// </summary>
+        /// <param name="state">进度条状态</param>
+        public void SetProgressState(TaskbarProgressState state)
+        {
+            try
+            {
+                if (_taskbarList3 != null && _windowHandle != IntPtr.Zero)
+                {
+                    _taskbarList3.SetProgressState(_windowHandle, state);
+                    LogMessage($"TaskbarManager: 设置任务栏进度条状态为: {state}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 设置任务栏进度条状态错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 设置任务栏进度条值
+        /// </summary>
+        /// <param name="currentValue">当前进度值</param>
+        /// <param name="maximumValue">最大进度值</param>
+        public void SetProgressValue(ulong currentValue, ulong maximumValue)
+        {
+            try
+            {
+                if (_taskbarList3 != null && _windowHandle != IntPtr.Zero)
+                {
+                    _taskbarList3.SetProgressValue(_windowHandle, currentValue, maximumValue);
+                    LogMessage($"TaskbarManager: 设置任务栏进度条值: {currentValue}/{maximumValue}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 设置任务栏进度条值错误: {ex.Message}");
             }
         }
 

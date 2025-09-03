@@ -7,6 +7,8 @@ using System.Windows.Data;
 using System.Windows.Input;
 using ImageRecognitionApp.Assets.UICode;
 using ImageRecognitionApp.unit;
+using ImageRecognitionApp.WinFun;
+using TaskbarProgressState = ImageRecognitionApp.WinFun.TaskbarManager.TaskbarProgressState;
 
 namespace ImageRecognitionApp.Assets.UI
 {
@@ -89,6 +91,7 @@ namespace ImageRecognitionApp.Assets.UI
         private readonly InitialStartupManager _initializationManager;
         private readonly InitialStartupAnimation _animationManager;
         private const int TotalInitializationSteps = 5;
+        private TaskbarManager _taskbarManager;
 
         /// <summary>
         /// 构造函数，初始化窗口组件和资源
@@ -98,6 +101,8 @@ namespace ImageRecognitionApp.Assets.UI
             InitializeComponent();
             _initializationManager = new InitialStartupManager();
             _animationManager = new InitialStartupAnimation(this);
+            // 初始化任务栏管理器
+            _taskbarManager = new TaskbarManager(this);
             // 设置状态更新回调
             _initializationManager.UpdateStatusCallback = UpdateStatus;
             this.Loaded += InitialStartupWindow_Loaded;
@@ -306,6 +311,57 @@ namespace ImageRecognitionApp.Assets.UI
                 {
                     await _animationManager.AnimateProgressBarAsync(InitializationProgress, progressValue);
                 }
+                
+                // 更新任务栏进度条
+                if (_taskbarManager != null)
+                {
+                    try
+                    {
+                        // 根据不同的进度值设置不同的任务栏进度条状态
+                        if (progressValue == 0 && statusText.Contains("失败"))
+                        {
+                            // 加载错误中断卡住：红色进度条
+                            _taskbarManager.SetProgressState(TaskbarProgressState.Error);
+                        }
+                        else if (progressValue > 0 && progressValue < 100)
+                        {
+                            // 根据进度值选择不同的进度模式
+                            if (progressValue % 20 == 0)
+                            {
+                                // 偶数进度点使用正常进度模式
+                                _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
+                            }
+                            else if (progressValue % 15 == 0)
+                            {
+                                // 特定条件下使用暂停模式
+                                _taskbarManager.SetProgressState(TaskbarProgressState.Paused);
+                            }
+                            else if (progressValue % 25 == 0)
+                            {
+                                // 特定条件下使用走马灯模式
+                                _taskbarManager.SetProgressState(TaskbarProgressState.Indeterminate);
+                            }
+                            else
+                            {
+                                // 其他情况使用正常进度模式
+                                _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
+                            }
+                            
+                            // 更新进度值
+                            _taskbarManager.SetProgressValue((ulong)progressValue, 100);
+                        }
+                        else if (progressValue == 100)
+                        {
+                            // 初始化完成，设置正常状态并显示100%进度
+                            _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
+                            _taskbarManager.SetProgressValue(100, 100);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("更新任务栏进度条失败: " + ex.Message);
+                    }
+                }
             }, System.Windows.Threading.DispatcherPriority.Background);
         }
         
@@ -335,6 +391,57 @@ namespace ImageRecognitionApp.Assets.UI
             if (InitializationProgress != null && _animationManager != null)
             {
                 await _animationManager.AnimateProgressBarAsync(InitializationProgress, progressValue).ConfigureAwait(false);
+            }
+            
+            // 更新任务栏进度条
+            if (_taskbarManager != null)
+            {
+                try
+                {
+                    // 根据不同的进度值设置不同的任务栏进度条状态
+                    if (progressValue == 0 && statusText.Contains("失败"))
+                    {
+                        // 加载错误中断卡住：红色进度条
+                        _taskbarManager.SetProgressState(TaskbarProgressState.Error);
+                    }
+                    else if (progressValue > 0 && progressValue < 100)
+                    {
+                        // 根据进度值选择不同的进度模式
+                        if (progressValue % 20 == 0)
+                        {
+                            // 偶数进度点使用正常进度模式
+                            _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
+                        }
+                        else if (progressValue % 15 == 0)
+                        {
+                            // 特定条件下使用暂停模式
+                            _taskbarManager.SetProgressState(TaskbarProgressState.Paused);
+                        }
+                        else if (progressValue % 25 == 0)
+                        {
+                            // 特定条件下使用走马灯模式
+                            _taskbarManager.SetProgressState(TaskbarProgressState.Indeterminate);
+                        }
+                        else
+                        {
+                            // 其他情况使用正常进度模式
+                            _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
+                        }
+                        
+                        // 更新进度值
+                        _taskbarManager.SetProgressValue((ulong)progressValue, 100);
+                    }
+                    else if (progressValue == 100)
+                    {
+                        // 初始化完成，设置正常状态并显示100%进度
+                        _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
+                        _taskbarManager.SetProgressValue(100, 100);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("更新任务栏进度条失败: " + ex.Message);
+                }
             }
         }
 
