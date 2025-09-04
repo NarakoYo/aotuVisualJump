@@ -1,7 +1,7 @@
-using ImageRecognitionApp.unit;
+// using ImageRecognitionApp.UnitTools;
 using System;
 
-namespace ImageRecognitionApp.unit.assist
+namespace ImageRecognitionApp.UnitTools.assist
 {
     /// <summary>
     /// 本地化标题助手类，用于获取应用程序的本地化标题

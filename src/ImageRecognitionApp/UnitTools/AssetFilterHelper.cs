@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ImageRecognitionApp.unit
+namespace ImageRecognitionApp.UnitTools
 {
     /// <summary>
     /// 资产文件筛选工具类

@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Configuration;
 using System.Linq;
-namespace ImageRecognitionApp.unit
+namespace ImageRecognitionApp.UnitTools
 {
     /// <summary>
     /// 日志管理器 - 负责日志的创建、管理和写入

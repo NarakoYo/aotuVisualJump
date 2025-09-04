@@ -8,7 +8,7 @@
         xmlns:converters="clr-namespace:ImageRecognitionApp.Converters"
         xmlns:animation="clr-namespace:System.Windows.Media.Animation;assembly=PresentationCore"
         mc:Ignorable="d"
-        Title="应用初始化" Height="514" Width="750"
+        Height="514" Width="750"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"

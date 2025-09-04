@@ -9,7 +9,7 @@ using System.Drawing;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Threading;
-using ImageRecognitionApp.unit;
+using ImageRecognitionApp.UnitTools;
 using System.Windows.Media; // 添加这个引用以使用VisualTreeHelper
 using ImageRecognitionApp; // 添加这个引用以使用MainWindow
 

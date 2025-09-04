@@ -330,6 +330,22 @@
     {"sign_id": 10800, "isEx": 0, "ghYh": "占位10800", "zhCn": "小工具", "enUs": "Tool", "frFr": "Outil", "ruRu": "Инструмент", "esEs": "Herramienta", "arSa": "أداة", "deDe": "Werkzeug", "jaJp": "ツール", "koKr": "도구", "hiIn": "उपकरण", "ptBr": "Ferramenta"},
     
     {
+      "sign_id": 20000,
+      "isEx": 0,
+      "ghYh": "占位20000",
+      "zhCn": "Initialization loading...",
+      "enUs": "Initialization loading...",
+      "frFr": "Initialization loading...",
+      "ruRu": "Initialization loading...",
+      "esEs": "Initialization loading...",
+      "arSa": "Initialization loading...",
+      "deDe": "Initialization loading...",
+      "jaJp": "Initialization loading...",
+      "koKr": "Initialization loading...",
+      "hiIn": "Initialization loading...",
+      "ptBr": "Initialization loading..."
+    },
+    {
       "sign_id": 20001,
       "isEx": 0,
       "ghYh": "占位20001",

@@ -4,7 +4,7 @@ using System.Management;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
-using ImageRecognitionApp.unit;
+using ImageRecognitionApp.UnitTools;
 
 namespace ImageRecognitionApp.Assets.UICode
 {

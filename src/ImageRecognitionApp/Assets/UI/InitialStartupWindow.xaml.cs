@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using ImageRecognitionApp.Assets.UICode;
-using ImageRecognitionApp.unit;
+using ImageRecognitionApp.UnitTools;
 using ImageRecognitionApp.WinFun;
 using TaskbarProgressState = ImageRecognitionApp.WinFun.TaskbarManager.TaskbarProgressState;
 
@@ -152,6 +152,20 @@ namespace ImageRecognitionApp.Assets.UI
                 if (!string.IsNullOrEmpty(localizedTitle))
                 {
                     AppTitle.Text = localizedTitle;
+                }
+                
+                // 设置窗口标题
+                try
+                {
+                    string windowTitle = localizationHelper.GetString(20000);
+                    if (!string.IsNullOrEmpty(windowTitle))
+                    {
+                        this.Title = windowTitle;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"获取窗口本地化标题失败: {ex.Message}");
                 }
             }
             catch (Exception ex)

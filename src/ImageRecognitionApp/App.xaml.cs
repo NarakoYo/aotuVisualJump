@@ -1,8 +1,13 @@
 using System;
-using System.Windows;
 using System.IO;
-using ImageRecognitionApp.unit;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Threading;
+using ImageRecognitionApp.UnitTools;
 using ImageRecognitionApp.WinFun;
+using ImageRecognitionApp.Utils; // 添加这个引用以使用PerformanceManager类
+using Microsoft.Win32; // 添加这个引用以使用SystemEvents和PowerModeChangedEventArgs
 
 namespace ImageRecognitionApp;
 
@@ -11,6 +16,16 @@ namespace ImageRecognitionApp;
 /// </summary>
 public partial class App : Application
 {
+    // 性能监控相关变量
+    private DispatcherTimer _performanceMonitorTimer;
+    private PerformanceCounter _cpuCounter;
+    private PerformanceCounter _memoryCounter;
+    private bool _isInStandbyMode = false;
+    private const int STANDBY_CHECK_INTERVAL_MS = 5000; // 5秒检查一次系统待机状态
+    
+    // 全局性能管理器
+    public PerformanceManager PerformanceManager { get; private set; }
+    
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -75,7 +90,19 @@ public partial class App : Application
             LogManager.Instance.WriteStartupShutdownLog(false);
             SingleInstanceChecker.ReleaseMutex();
         };
-
+        
+        // 初始化性能管理器
+        PerformanceManager = new PerformanceManager();
+        
+        // 初始化系统资源监控
+        InitializeSystemResourceMonitoring();
+        
+        // 注册电源状态变化事件
+        SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
+        
+        // 启动待机状态检测
+        StartStandbyDetection();
+        
         // 初始化进程（设置进程名称和图标）
         try
         {
@@ -151,6 +178,119 @@ public partial class App : Application
     {
         LogManager.Instance.WriteLog(LogManager.LogLevel.Info, message);
     }
+    
+    /// <summary>
+    /// 初始化系统资源监控
+    /// </summary>
+    private void InitializeSystemResourceMonitoring()
+    {
+        try
+        {
+            // 创建CPU性能计数器
+            _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            _cpuCounter.NextValue(); // 第一次调用返回0，需要预热
+            
+            // 创建内存性能计数器
+            _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+            
+            // 创建并启动监控定时器
+            _performanceMonitorTimer = new DispatcherTimer();
+            _performanceMonitorTimer.Interval = TimeSpan.FromSeconds(5); // 每5秒检查一次
+            _performanceMonitorTimer.Tick += PerformanceMonitorTimer_Tick;
+            _performanceMonitorTimer.Start();
+            
+            LogMessage("系统资源监控已初始化");
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"初始化系统资源监控时出错: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 性能监控定时器回调
+    /// </summary>
+    private void PerformanceMonitorTimer_Tick(object sender, EventArgs e)
+    {
+        try
+        {
+            // 获取当前CPU使用率和可用内存
+            float cpuUsage = _cpuCounter.NextValue();
+            float availableMemory = _memoryCounter.NextValue();
+            
+            // 记录系统资源使用情况
+            LogMessage($"CPU使用率: {cpuUsage:F2}%, 可用内存: {availableMemory:F2} MB");
+            
+            // 根据系统资源使用情况调整性能模式
+            PerformanceManager.AdjustPerformanceMode(cpuUsage, availableMemory);
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"性能监控出错: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 启动待机状态检测
+    /// </summary>
+    private void StartStandbyDetection()
+    {
+        // 初始化最后用户活动时间
+        PerformanceManager.UpdateLastUserActivityTime();
+        
+        // 启动键盘和鼠标钩子来检测用户活动
+        PerformanceManager.StartUserActivityMonitoring();
+    }
+    
+    /// <summary>
+    /// 系统电源模式变化事件处理
+    /// </summary>
+    private void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
+    {
+        switch (e.Mode)
+        {
+            case PowerModes.Resume:
+                LogMessage("系统从待机状态恢复");
+                _isInStandbyMode = false;
+                PerformanceManager.ExitLowPowerMode();
+                break;
+            case PowerModes.Suspend:
+                LogMessage("系统进入待机状态");
+                _isInStandbyMode = true;
+                PerformanceManager.EnterLowPowerMode();
+                break;
+            case PowerModes.StatusChange:
+                // 电源状态改变（如从电池切换到交流电）
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// 应用程序退出时释放资源
+    /// </summary>
+    protected override void OnExit(ExitEventArgs e)
+    {
+        base.OnExit(e);
+        
+        // 停止性能监控
+        if (_performanceMonitorTimer != null)
+        {
+            _performanceMonitorTimer.Stop();
+            _performanceMonitorTimer = null;
+        }
+        
+        // 释放性能计数器
+        _cpuCounter?.Dispose();
+        _memoryCounter?.Dispose();
+        
+        // 停止用户活动监控
+        PerformanceManager?.StopUserActivityMonitoring();
+        
+        // 注销电源事件
+        SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
+        
+        LogMessage("应用程序资源已释放");
+    }
 
     // 主窗口加载完成事件
     private event EventHandler? MainWindowLoaded;
@@ -160,5 +300,8 @@ public partial class App : Application
     {
         base.OnActivated(e);
         MainWindowLoaded?.Invoke(this, EventArgs.Empty);
+        
+        // 用户活动检测
+        PerformanceManager.UpdateLastUserActivityTime();
     }
 }

@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
-using ImageRecognitionApp.unit;
+using ImageRecognitionApp.UnitTools;
 
 namespace ImageRecognitionApp.WinFun
 {
@@ -103,7 +103,7 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 // 获取进程名称（使用LocalizedTitleHelper获取本地化标题）
-                string appName = ImageRecognitionApp.unit.assist.LocalizedTitleHelper.GetLocalizedAppTitle();
+                string appName = ImageRecognitionApp.UnitTools.assist.LocalizedTitleHelper.GetLocalizedAppTitle();
                 (Application.Current as App)?.LogMessage($"已获取应用名称: {appName}");
 
                 // 设置进程名称

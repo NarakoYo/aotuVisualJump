@@ -12,8 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.ComponentModel;
 using ImageRecognitionApp.WinFun;  // 导入WinFun命名空间
-using ImageRecognitionApp.unit;     // 导入unit命名空间
+using ImageRecognitionApp.UnitTools;     // 导入UnitTools命名空间
 using ImageRecognitionApp.Assets.UI;
+using ImageRecognitionApp.Utils;    // 导入Utils命名空间以使用PerformanceManager
 
 namespace ImageRecognitionApp;
 
@@ -640,6 +641,11 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     private List<object> _recordingCommands = new List<object>();
     private DateTime _recordingStartTime;
     private DispatcherTimer? _recordingTimer = null;
+    private DispatcherTimer? _idleDetectionTimer = null;
+    private bool _isInLowPowerMode = false;
+    private DateTime _lastActivityTime;
+    private const int IDLE_TIMEOUT_MS = 30000; // 30秒无活动进入低功耗模式
+    private const int LOW_POWER_TIMER_INTERVAL = 500; // 低功耗模式下的定时器间隔
     // 移除未使用的字段以修复CS0414
     private List<object> _imageCache = new List<object>();
     private bool _isMaximized = false; // 新增：跟踪窗口是否最大化
@@ -758,7 +764,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         try
         {
             // 初始化本地化助手
-            var helper = ImageRecognitionApp.unit.JsonLocalizationHelper.Instance;
+            var helper = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance;
             helper.Initialize();
 
             // 获取标题文本和设置按钮文本
@@ -844,19 +850,40 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
         // 显示任务栏通知
         _taskbarManager?.ShowNotification("应用已启动", "图像识别应用已成功启动");
+        
+        // 订阅性能配置变更事件
+        if ((App.Current as App)?.PerformanceManager != null)
+        {
+            (App.Current as App).PerformanceManager.PerformanceProfileChanged += PerformanceManager_PerformanceProfileChanged;
+        }
     }
 
 
 
     // 窗口关闭事件处理程序
-    private void MainWindow_Closed(object? sender, EventArgs e)
-    {
-        // 停止脚本执行
-        StopScriptExecution();
-        // 释放任务栏资源
-        _taskbarManager?.Dispose();
-        _taskbarAnimation?.StopFlashAnimation();
-    }
+        private void MainWindow_Closed(object? sender, EventArgs e)
+        {
+            // 停止脚本执行
+            StopScriptExecution();
+            // 停止录制
+            if (_isRecording)
+            {
+                StopRecording();
+            }
+            // 释放任务栏资源
+            _taskbarManager?.Dispose();
+            _taskbarAnimation?.StopFlashAnimation();
+            
+            // 释放其他资源
+            _recordingCommands.Clear();
+            _imageCache.Clear();
+            
+            // 取消订阅性能配置变更事件
+            if ((App.Current as App)?.PerformanceManager != null)
+            {
+                (App.Current as App).PerformanceManager.PerformanceProfileChanged -= PerformanceManager_PerformanceProfileChanged;
+            }
+        }
 
     /// <summary>
     /// 属性变化事件处理程序
@@ -1221,60 +1248,157 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     /// 开始录制脚本
     /// </summary>
     private void StartRecording()
-    {
-        if (!_isRecording)
         {
-            _isRecording = true;
-            _recordingStartTime = DateTime.Now;
-
-            // 任务栏通知和动画
-            _taskbarManager?.ShowNotification("开始录制", "脚本录制已开始");
-            _taskbarAnimation?.StartFlashAnimation(0, 1000);  // 无限闪烁，间隔1秒
-
-            if (_recordingTimer == null)
+            if (!_isRecording)
             {
-                _recordingTimer = new DispatcherTimer();
+                _isRecording = true;
+                _recordingStartTime = DateTime.Now;
+                _lastActivityTime = DateTime.Now;
+
+                // 任务栏通知和动画
+                _taskbarManager?.ShowNotification("开始录制", "脚本录制已开始");
+                _taskbarAnimation?.StartFlashAnimation(0, 1000);  // 无限闪烁，间隔1秒
+
+                if (_recordingTimer == null)
+                {
+                    _recordingTimer = new DispatcherTimer();
+                    // 默认使用较低的采样率以降低CPU使用率
+                    _recordingTimer.Interval = TimeSpan.FromMilliseconds(100);
+                    _recordingTimer.Tick += RecordingTimer_Tick;
+                }
+                else
+                {
+                    // 确保定时器未被低功耗模式修改
+                    _recordingTimer.Interval = TimeSpan.FromMilliseconds(100);
+                }
+
+                _recordingTimer.Start();
+                // 启动空闲检测
+                StartIdleDetection();
+
+                // Update UI
+                // UpdateRecordingButton();
             }
-
-            _recordingTimer.Interval = TimeSpan.FromMilliseconds(50);
-            _recordingTimer.Tick += RecordingTimer_Tick;
-            _recordingTimer.Start();
-
-            // Update UI
-            // UpdateRecordingButton();
         }
-    }
 
     private void RecordingTimer_Tick(object? sender, EventArgs e)
-    {
-        if (_recordingTimer == null || _recordingCommands == null) return;
-        var mouseState = new { X = Mouse.GetPosition(this).X, Y = Mouse.GetPosition(this).Y };
-        _recordingCommands.Add(new { Time = DateTime.Now - _recordingStartTime, action = "move", X = mouseState.X, Y = mouseState.Y });
-    }
-
-    private void StopRecording()
-    {
-        if (_isRecording)
         {
-            _isRecording = false;
-
-            // 停止任务栏动画并显示通知
-            _taskbarAnimation?.StopFlashAnimation();
-            _taskbarManager?.ShowNotification("录制完成", "脚本已录制完成并保存");
-
+            if (_recordingTimer == null || _recordingCommands == null) return;
+            
+            // 记录鼠标位置和时间
+            var mouseState = new { X = Mouse.GetPosition(this).X, Y = Mouse.GetPosition(this).Y };
+            _recordingCommands.Add(new { Time = DateTime.Now - _recordingStartTime, action = "move", X = mouseState.X, Y = mouseState.Y });
+            
+            // 更新最后活动时间
+            _lastActivityTime = DateTime.Now;
+            
+            // 如果在低功耗模式下检测到活动，恢复正常模式
+            if (_isInLowPowerMode)
+            {
+                SwitchToNormalPowerMode();
+            }
+        }
+        
+        /// <summary>
+        /// 启动空闲检测定时器
+        /// </summary>
+        private void StartIdleDetection()
+        {
+            if (_idleDetectionTimer == null)
+            {
+                _idleDetectionTimer = new DispatcherTimer();
+                _idleDetectionTimer.Interval = TimeSpan.FromMilliseconds(1000); // 每秒检测一次
+                _idleDetectionTimer.Tick += IdleDetectionTimer_Tick;
+            }
+            _idleDetectionTimer.Start();
+        }
+        
+        /// <summary>
+        /// 停止空闲检测定时器
+        /// </summary>
+        private void StopIdleDetection()
+        {
+            if (_idleDetectionTimer != null)
+            {
+                _idleDetectionTimer.Stop();
+                _idleDetectionTimer.Tick -= IdleDetectionTimer_Tick;
+            }
+        }
+        
+        /// <summary>
+        /// 空闲检测定时器回调
+        /// </summary>
+        private void IdleDetectionTimer_Tick(object? sender, EventArgs e)
+        {
+            if (!_isRecording) return;
+            
+            // 检查是否超过空闲时间阈值
+            if (DateTime.Now - _lastActivityTime > TimeSpan.FromMilliseconds(IDLE_TIMEOUT_MS) && !_isInLowPowerMode)
+            {
+                SwitchToLowPowerMode();
+            }
+        }
+        
+        /// <summary>
+        /// 切换到低功耗模式
+        /// </summary>
+        private void SwitchToLowPowerMode()
+        {
+            _isInLowPowerMode = true;
+            
             if (_recordingTimer != null)
             {
-                _recordingTimer.Stop();
-                _recordingTimer.Tick -= RecordingTimer_Tick;
+                _recordingTimer.Interval = TimeSpan.FromMilliseconds(LOW_POWER_TIMER_INTERVAL);
             }
-
-            // Process recording
-            SaveScriptToFile();
-
-            // Update UI
-            // UpdateRecordingButton();
+            
+            (App.Current as App)?.LogMessage("已切换到低功耗模式");
         }
-    }
+        
+        /// <summary>
+        /// 切换到正常功耗模式
+        /// </summary>
+        private void SwitchToNormalPowerMode()
+        {
+            _isInLowPowerMode = false;
+            
+            if (_recordingTimer != null)
+            {
+                _recordingTimer.Interval = TimeSpan.FromMilliseconds(100);
+            }
+            
+            (App.Current as App)?.LogMessage("已切换到正常模式");
+        }
+
+    private void StopRecording()
+        {
+            if (_isRecording)
+            {
+                _isRecording = false;
+
+                // 停止任务栏动画并显示通知
+                _taskbarAnimation?.StopFlashAnimation();
+                _taskbarManager?.ShowNotification("录制完成", "脚本已录制完成并保存");
+
+                // 停止并释放定时器资源
+                if (_recordingTimer != null)
+                {
+                    _recordingTimer.Stop();
+                    _recordingTimer.Tick -= RecordingTimer_Tick;
+                }
+                
+                // 停止空闲检测
+                StopIdleDetection();
+
+                // Process recording
+                SaveScriptToFile();
+                
+                // 清除录制命令列表以释放内存
+                _recordingCommands.Clear();
+
+                // Update UI
+                // UpdateRecordingButton();
+            }
+        }
 
     private void PauseRecording(object? sender, RoutedEventArgs? e)
     {
@@ -1285,6 +1409,44 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     }
     private string? _latestScriptPath; // 重新添加脚本路径变量
 
+    /// <summary>
+    /// 性能配置变更事件处理程序
+    /// </summary>
+    private void PerformanceManager_PerformanceProfileChanged(object? sender, PerformanceProfile e)
+    {
+        // 根据新的性能配置调整录制定时器间隔
+        if (_recordingTimer != null && _isRecording)
+        {
+            bool wasRunning = _recordingTimer.IsEnabled;
+            if (wasRunning)
+            {
+                _recordingTimer.Stop();
+            }
+            
+            // 应用新的定时器间隔
+            _recordingTimer.Interval = TimeSpan.FromMilliseconds(e.TimerInterval);
+            
+            if (wasRunning)
+            {
+                _recordingTimer.Start();
+            }
+        }
+        
+        // 根据新的性能配置调整缓存大小
+        if (_imageCache.Count > e.CacheSize)
+        {
+            lock (_imageCache)
+            {
+                // 清除超出缓存大小的项目
+                _imageCache.RemoveRange(e.CacheSize, _imageCache.Count - e.CacheSize);
+            }
+        }
+        
+        // 记录性能配置变更
+        string mode = e.TimerInterval > 100 ? "低功耗" : (e.TimerInterval < 100 ? "高性能" : "正常");
+        (App.Current as App)?.LogMessage($"主窗口已应用{mode}性能配置: 定时器间隔={e.TimerInterval}ms, 缓存大小={e.CacheSize}");
+    }
+    
     private void SaveScriptToFile()
     {
         _latestScriptPath = Path.Combine(_scriptSaveDir, $"script_{DateTime.Now:yyyyMMddHHmmss}.json");
@@ -1462,7 +1624,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20006);
+            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(20006);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));
@@ -1482,7 +1644,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20005);
+            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(20005);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));
@@ -1502,7 +1664,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(20004);
+            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(20004);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));
@@ -1522,7 +1684,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = unit.JsonLocalizationHelper.Instance.GetString(10014);
+            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(10014);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));

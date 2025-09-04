@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
-using ImageRecognitionApp.unit;
+// using ImageRecognitionApp.UnitTools;
 
-namespace ImageRecognitionApp.unit
+namespace ImageRecognitionApp.UnitTools
 {
     /// <summary>
     /// 跟踪助手类，用于记录应用程序运行时的跟踪信息
