@@ -375,7 +375,7 @@ namespace ImageRecognitionApp.Assets.UI
         /// <param name="textBlock">目标TextBlock控件</param>
         /// <param name="getValueFunction">获取值的函数</param>
         /// <param name="infoType">信息类型，用于日志记录</param>
-        private void SetTextWithErrorHandling(TextBlock textBlock, Func<string> getValueFunction, string infoType)
+        private void SetTextWithErrorHandling(TextBlock textBlock, Func<string?> getValueFunction, string infoType)
         {
             try
             {
@@ -423,7 +423,7 @@ namespace ImageRecognitionApp.Assets.UI
                 }
                 else
                 {
-                    return "Windows 其他版本";
+                    return "Windows其他版本";
                 }
             }
             catch { }
@@ -555,13 +555,13 @@ namespace ImageRecognitionApp.Assets.UI
         /// </summary>
         private class MonitorInfo
         {
-            public string DeviceName { get; set; }
-            public string HardwareId { get; set; }
-            public string FriendlyName { get; set; }
-            public string Description { get; set; }
-            public string Resolution { get; set; }
+            public string? DeviceName { get; set; }
+            public string? HardwareId { get; set; }
+            public string? FriendlyName { get; set; }
+            public string? Description { get; set; }
+            public string? Resolution { get; set; }
             public int RefreshRate { get; set; }
-            public string HdrSupport { get; set; }
+            public string? HdrSupport { get; set; }
         }
 
         /// <summary>

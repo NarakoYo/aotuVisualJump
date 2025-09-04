@@ -5,6 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using System.Windows.Markup;
+using System.Diagnostics;
 
 namespace ImageRecognitionApp.UnitTools
 {
@@ -16,6 +20,12 @@ namespace ImageRecognitionApp.UnitTools
         private readonly string _defaultLanguage = "zh-cn";
         private readonly string _jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Localization", "ExcelConfig", "localization.json");
         private bool _isInitialized = false;
+        private bool _loadOnlyCurrentLanguage = false; // 是否只加载当前语言
+        private IMemoryCache _stringCache;
+        private const string CACHE_PREFIX = "Localization_";
+        private const double CACHE_EXPIRY_MINUTES = 30; // 缓存过期时间(分钟)
+        private const int MAX_CACHE_SIZE = 500; // 最大缓存条目数
+        private int _cacheEntryCount = 0; // 当前缓存条目数
 
         public static JsonLocalizationHelper Instance => _instance.Value;
 
@@ -23,11 +33,36 @@ namespace ImageRecognitionApp.UnitTools
         /// 获取本地化工具是否已初始化
         /// </summary>
         public bool IsInitialized => _isInitialized;
+        
+        /// <summary>
+        /// 设置是否只加载当前语言的翻译
+        /// </summary>
+        public bool LoadOnlyCurrentLanguage
+        {
+            get => _loadOnlyCurrentLanguage;
+            set
+            {
+                if (_loadOnlyCurrentLanguage != value)
+                {
+                    _loadOnlyCurrentLanguage = value;
+                    // 如果已经初始化，则重新加载数据
+                    if (_isInitialized)
+                    {
+                        ReloadLocalizationData();
+                    }
+                }
+            }
+        }
 
         private JsonLocalizationHelper()
         {
             // 私有构造函数，防止外部实例化
             _currentLanguage = NormalizeLanguageCode(CultureInfo.CurrentCulture.Name);
+            // 初始化内存缓存
+            _stringCache = new MemoryCache(new MemoryCacheOptions
+            {
+                SizeLimit = MAX_CACHE_SIZE
+            });
         }
 
         /// <summary>
@@ -92,6 +127,27 @@ namespace ImageRecognitionApp.UnitTools
         }
 
         /// <summary>
+        /// 重新加载本地化数据
+        /// </summary>
+        public void ReloadLocalizationData()
+        {
+            try
+            {
+                // 清除现有数据
+                _localizationData.Clear();
+                ClearCache();
+                
+                // 重新加载数据
+                LoadLocalizationData();
+                Console.WriteLine($"已重新加载本地化数据，当前语言: {_currentLanguage}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"重新加载本地化数据时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// 加载本地化数据
         /// </summary>
         private void LoadLocalizationData()
@@ -141,6 +197,7 @@ namespace ImageRecognitionApp.UnitTools
                                 }
 
                                 var translations = new Dictionary<string, string>();
+                                bool hasCurrentLanguage = false;
 
                                 // 遍历所有属性
                                 foreach (var property in item.EnumerateObject())
@@ -164,16 +221,46 @@ namespace ImageRecognitionApp.UnitTools
                                         normalizedLangCode = NormalizeLanguageCode(propertyName);
                                     }
 
-                                    // 获取翻译值
-                                    string translation = property.Value.GetString() ?? string.Empty;
-                                    translations[normalizedLangCode] = translation;
+                                    // 如果只加载当前语言
+                                    if (_loadOnlyCurrentLanguage)
+                                    {
+                                        // 只添加当前语言和默认语言
+                                        if (normalizedLangCode == _currentLanguage || 
+                                            normalizedLangCode == _defaultLanguage ||
+                                            normalizedLangCode == "gh-yh") // 保留gh-yh作为备选
+                                        {
+                                            // 获取翻译值
+                                            string translation = property.Value.GetString() ?? string.Empty;
+                                            translations[normalizedLangCode] = translation;
+                                            
+                                            if (normalizedLangCode == _currentLanguage)
+                                            {
+                                                hasCurrentLanguage = true;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // 加载所有语言
+                                        string translation = property.Value.GetString() ?? string.Empty;
+                                        translations[normalizedLangCode] = translation;
+                                    }
                                 }
 
-                                _localizationData[signId] = translations;
+                                // 只有当有当前语言翻译或不限制语言时才添加到字典
+                                if (!_loadOnlyCurrentLanguage || hasCurrentLanguage || translations.Count > 0)
+                                {
+                                    _localizationData[signId] = translations;
+                                }
                             }
                         }
                     }
                 }
+
+                // 记录加载统计信息
+                long totalEntries = _localizationData.Count;
+                long totalTranslations = _localizationData.Values.Sum(t => t.Count);
+                Console.WriteLine($"本地化数据加载完成: 总条目数={totalEntries}, 总翻译数={totalTranslations}, 加载模式={(LoadOnlyCurrentLanguage ? "仅当前语言" : "所有语言")}");
             }
             catch (Exception ex)
             {
@@ -234,6 +321,102 @@ namespace ImageRecognitionApp.UnitTools
         }
 
         /// <summary>
+        /// 添加字符串到缓存
+        /// </summary>
+        /// <param name="signId">标识ID</param>
+        /// <param name="languageCode">语言代码</param>
+        /// <param name="value">本地化字符串</param>
+        private void AddToCache(int signId, string languageCode, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return;
+
+            try
+            {
+                string cacheKey = $"{CACHE_PREFIX}{signId}_{languageCode}";
+                
+                // 检查缓存是否已满
+                if (_cacheEntryCount >= MAX_CACHE_SIZE)
+                {
+                    // 移除最旧的缓存项（简单实现）
+                    ClearCache();
+                    return;
+                }
+
+                // 创建缓存项选项
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetSize(1)  // 设置条目大小
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(CACHE_EXPIRY_MINUTES))
+                    .SetPriority(CacheItemPriority.Normal)
+                    .RegisterPostEvictionCallback(
+                        (key, value, reason, state) =>
+                        {
+                            if (reason != EvictionReason.Capacity)
+                            {
+                                _cacheEntryCount--;
+                            }
+                        });
+
+                // 添加到缓存
+                _stringCache.Set(cacheKey, value, cacheEntryOptions);
+                _cacheEntryCount++;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"添加本地化字符串到缓存时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 从缓存获取字符串
+        /// </summary>
+        /// <param name="signId">标识ID</param>
+        /// <param name="languageCode">语言代码</param>
+        /// <param name="value">输出的本地化字符串</param>
+        /// <returns>是否成功从缓存获取</returns>
+        private bool TryGetFromCache(int signId, string languageCode, out string? value)
+        {
+            try
+            {
+                string cacheKey = $"{CACHE_PREFIX}{signId}_{languageCode}";
+                if (_stringCache.TryGetValue(cacheKey, out value))
+                {
+                    return value != null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"从缓存获取本地化字符串时出错: {ex.Message}");
+            }
+
+            value = null;
+            return false;
+        }
+
+        /// <summary>
+        /// 清除本地化字符串缓存
+        /// </summary>
+        public void ClearCache()
+        {
+            try
+            {
+                // 在Microsoft.Extensions.Caching.Memory中，没有直接清除所有缓存的方法
+                // 这里我们可以通过创建新的缓存实例来实现类似效果
+                _stringCache.Dispose();
+                _stringCache = new MemoryCache(new MemoryCacheOptions
+                {
+                    SizeLimit = MAX_CACHE_SIZE
+                });
+                _cacheEntryCount = 0;
+                Console.WriteLine("本地化字符串缓存已清除");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"清除本地化字符串缓存时出错: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// 获取指定sign_id和语言的本地化字符串
         /// </summary>
         /// <param name="signId">标识ID</param>
@@ -249,30 +432,47 @@ namespace ImageRecognitionApp.UnitTools
                 // 使用标准化方法处理语言代码
                 string normalizedLangCode = NormalizeLanguageCode(languageCode);
 
+                // 首先尝试从缓存获取
+                string? cachedValue = null;
+                if (TryGetFromCache(signId, normalizedLangCode, out cachedValue) && cachedValue != null)
+                {
+                    return cachedValue;
+                }
+
                 // 检查翻译数据是否存在
+                string result;
                 if (_localizationData.TryGetValue(signId, out var translations))
                 {
                     if (translations.TryGetValue(normalizedLangCode, out var value) && !string.IsNullOrEmpty(value))
                     {
-                        Console.WriteLine($"找到翻译: {value}");
-                        return value;
+                        result = value;
                     }
-
                     // 如果当前语言没有找到或值为空，尝试使用ghYh字段
-                    if (translations.TryGetValue("gh-yh", out value) && !string.IsNullOrEmpty(value))
+                    else if (translations.TryGetValue("gh-yh", out value) && !string.IsNullOrEmpty(value))
                     {
-                        Console.WriteLine($"未找到当前语言翻译，使用ghYh字段值: {value}");
-                        return value;
+                        result = value;
                     }
-
                     // 如果没有找到当前语言和ghYh字段的翻译，返回sign_id+缺失语言标记
-                    return $"{signId}_MISSING_{normalizedLangCode}";
+                    else
+                    {
+                        result = $"{signId}_MISSING_{normalizedLangCode}";
+                    }
                 }
                 else
                 {
                     // 如果未找到sign_id，返回错误码
-                    return "未找到本地化id";
+                    result = "未找到本地化id";
                 }
+
+                // 将结果添加到缓存，但不缓存错误或缺失标记
+                if (!result.StartsWith("ERROR_") && 
+                    !result.StartsWith("未找到") &&
+                    !result.Contains("_MISSING_"))
+                {
+                    AddToCache(signId, normalizedLangCode, result);
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -305,8 +505,21 @@ namespace ImageRecognitionApp.UnitTools
                     return false;
                 }
 
-                _currentLanguage = normalizedLanguage;
-                Console.WriteLine($"已切换到语言: {_currentLanguage}");
+                // 如果语言发生了变化，清除缓存
+                if (_currentLanguage != normalizedLanguage)
+                {
+                    _currentLanguage = normalizedLanguage;
+                    ClearCache();
+                    
+                    // 如果启用了只加载当前语言，重新加载数据
+                    if (_loadOnlyCurrentLanguage && _isInitialized)
+                    {
+                        ReloadLocalizationData();
+                    }
+                    
+                    Console.WriteLine($"已切换到语言: {_currentLanguage}");
+                }
+                
                 return true;
             }
             catch (Exception ex)
@@ -338,6 +551,36 @@ namespace ImageRecognitionApp.UnitTools
             }
 
             return languages.ToList();
+        }
+
+        /// <summary>
+        /// 在低内存情况下释放资源
+        /// </summary>
+        public void ReleaseResourcesOnLowMemory()
+        {
+            try
+            {
+                // 清除缓存
+                ClearCache();
+                
+                // 如果当前没有启用只加载当前语言，则切换为只加载当前语言模式
+                if (!_loadOnlyCurrentLanguage && _isInitialized)
+                {
+                    Console.WriteLine("系统内存不足，切换为仅加载当前语言模式");
+                    _loadOnlyCurrentLanguage = true;
+                    ReloadLocalizationData();
+                }
+                
+                // 执行垃圾回收
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                
+                Console.WriteLine("本地化助手已释放资源以应对低内存情况");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"释放本地化资源时出错: {ex.Message}");
+            }
         }
     }
 }

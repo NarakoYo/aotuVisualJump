@@ -24,10 +24,10 @@ namespace ImageRecognitionApp.UnitTools
         /// </summary>
         private class AssetConfig
         {
-            public string Resources { get; set; }
+            public string? Resources { get; set; }
             
             [JsonPropertyName("AssetList")]
-            public List<AssetItem> AssetList { get; set; }
+            public List<AssetItem>? AssetList { get; set; }
         }
         
         /// <summary>
@@ -38,7 +38,7 @@ namespace ImageRecognitionApp.UnitTools
             [JsonPropertyName("sign_id")]
             public int SignId { get; set; }
             
-            public string Asset { get; set; }
+            public string? Asset { get; set; }
         }
         
         /// <summary>

@@ -45,7 +45,7 @@ namespace ImageRecognitionApp.Assets.UI
         private static extern bool BitBlt(IntPtr hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hdcSrc, int nXSrc, int nYSrc, int dwRop);
 
         // 定时器用于定期更新屏幕捕获
-        private DispatcherTimer _captureTimer;
+        private DispatcherTimer? _captureTimer;
         private bool _isCapturing = false;
 
         // 鼠标拖动相关变量

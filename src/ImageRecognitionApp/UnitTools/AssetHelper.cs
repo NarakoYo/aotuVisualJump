@@ -29,8 +29,24 @@ namespace ImageRecognitionApp.UnitTools
         private bool _isInitialized = false;
         private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         private static readonly LogManager _logManager = LogManager.Instance;
-        private static readonly ConcurrentDictionary<string, object> _assetCache = new ConcurrentDictionary<string, object>();
-        private const int MAX_CACHE_SIZE = 100;
+        private static readonly ConcurrentDictionary<string, CacheItem> _assetCache = new ConcurrentDictionary<string, CacheItem>();
+        private static int MAX_CACHE_SIZE = 30; // 初始缓存大小设为较小值，后续可动态调整
+        private static int LOW_MEMORY_CACHE_SIZE = 10; // 低内存模式下的缓存大小，后续可动态调整
+
+        /// <summary>
+        /// 缓存项，包含资产和最后访问时间
+        /// </summary>
+        private class CacheItem
+        {
+            public object Asset { get; set; }
+            public DateTime LastAccessTime { get; set; }
+
+            public CacheItem(object asset)
+            {
+                Asset = asset;
+                LastAccessTime = DateTime.Now;
+            }
+        }
 
         /// <summary>
         /// 获取AssetHelper的单例实例
@@ -259,8 +275,9 @@ namespace ImageRecognitionApp.UnitTools
         public BitmapImage GetImageAsset(string signId)
         {
             string cacheKey = $"image_{signId}";
-            if (_assetCache.TryGetValue(cacheKey, out object? cachedAsset) && cachedAsset is BitmapImage cachedImage)
+            if (_assetCache.TryGetValue(cacheKey, out CacheItem? cachedAsset) && cachedAsset.Asset is BitmapImage cachedImage)
             {
+                cachedAsset.LastAccessTime = DateTime.Now;
                 return cachedImage;
             }
 
@@ -309,8 +326,9 @@ namespace ImageRecognitionApp.UnitTools
         public System.Drawing.Icon GetIconAsset(string signId)
         {
             string cacheKey = $"icon_{signId}";
-            if (_assetCache.TryGetValue(cacheKey, out object? cachedAsset) && cachedAsset is System.Drawing.Icon cachedIcon)
+            if (_assetCache.TryGetValue(cacheKey, out CacheItem? cachedAsset) && cachedAsset.Asset is System.Drawing.Icon cachedIcon)
             {
+                cachedAsset.LastAccessTime = DateTime.Now;
                 return cachedIcon;
             }
 
@@ -354,8 +372,9 @@ namespace ImageRecognitionApp.UnitTools
         public string GetSvgAssetContent(string signId)
         {
             string cacheKey = $"svg_{signId}";
-            if (_assetCache.TryGetValue(cacheKey, out object? cachedAsset) && cachedAsset is string cachedSvg)
+            if (_assetCache.TryGetValue(cacheKey, out CacheItem? cachedAsset) && cachedAsset.Asset is string cachedSvg)
             {
+                cachedAsset.LastAccessTime = DateTime.Now;
                 return cachedSvg;
             }
 
@@ -399,8 +418,9 @@ namespace ImageRecognitionApp.UnitTools
         public MediaPlayer GetAudioAsset(string signId)
         {
             string cacheKey = $"audio_{signId}";
-            if (_assetCache.TryGetValue(cacheKey, out object? cachedAsset) && cachedAsset is MediaPlayer cachedPlayer)
+            if (_assetCache.TryGetValue(cacheKey, out CacheItem? cachedAsset) && cachedAsset.Asset is MediaPlayer cachedPlayer)
             {
+                cachedAsset.LastAccessTime = DateTime.Now;
                 return cachedPlayer;
             }
 
@@ -491,17 +511,115 @@ namespace ImageRecognitionApp.UnitTools
         /// <param name="asset">要缓存的资源</param>
         private void AddToCache(string cacheKey, object asset)
         {
-            // 缓存大小控制
-            if (_assetCache.Count >= MAX_CACHE_SIZE)
+            // 检查当前系统内存状态，动态调整缓存大小
+            int currentCacheSizeLimit = IsLowMemory() ? LOW_MEMORY_CACHE_SIZE : MAX_CACHE_SIZE;
+            
+            // 如果缓存已满，使用LRU策略移除最久未使用的项
+            if (_assetCache.Count >= currentCacheSizeLimit)
             {
-                // 简单的LRU缓存策略实现（仅移除第一个元素）
-                var firstKey = _assetCache.Keys.FirstOrDefault();
-                if (firstKey != null)
+                // 查找最久未使用的缓存项
+                var oldestItem = _assetCache.OrderBy(kvp => kvp.Value.LastAccessTime).FirstOrDefault();
+                if (oldestItem.Key != null)
                 {
-                    _assetCache.TryRemove(firstKey, out _);
+                    _assetCache.TryRemove(oldestItem.Key, out _);
                 }
             }
-            _assetCache[cacheKey] = asset;
+            
+            _assetCache[cacheKey] = new CacheItem(asset);
+        }
+        
+        /// <summary>
+        /// 更新缓存大小限制
+        /// </summary>
+        /// <param name="newLimit">新的缓存大小限制</param>
+        public void UpdateCacheSizeLimit(int newLimit)
+        {
+            // 确保新的限制值合理
+            if (newLimit < 5)
+            {
+                newLimit = 5; // 设置最小缓存大小为5
+                _logManager.WriteLog(LogManager.LogLevel.Warning, "缓存大小限制过小，已调整为最小5项");
+            }
+            
+            if (newLimit > 200)
+            {
+                newLimit = 200; // 设置最大缓存大小上限为200
+                _logManager.WriteLog(LogManager.LogLevel.Warning, "缓存大小限制过大，已调整为最大200项");
+            }
+            
+            // 更新缓存大小限制
+            MAX_CACHE_SIZE = newLimit;
+            
+            // 如果当前缓存大小超过新的限制，立即清理多余的项
+            if (_assetCache.Count > MAX_CACHE_SIZE && !IsLowMemory())
+            {
+                // 需要移除的项数量
+                int itemsToRemove = _assetCache.Count - MAX_CACHE_SIZE;
+                
+                // 查找最久未使用的项并移除
+                var itemsToRemoveList = _assetCache.OrderBy(kvp => kvp.Value.LastAccessTime)
+                                                 .Take(itemsToRemove)
+                                                 .ToList();
+                
+                foreach (var item in itemsToRemoveList)
+                {
+                    _assetCache.TryRemove(item.Key, out _);
+                }
+                
+                _logManager.WriteLog(LogManager.LogLevel.Info, 
+                    $"已更新缓存大小限制为{newLimit}项，并清理了{itemsToRemove}项缓存");
+            }
+            else
+            {
+                _logManager.WriteLog(LogManager.LogLevel.Info, 
+                    $"已更新缓存大小限制为{newLimit}项");
+            }
+        }
+        
+        /// <summary>
+        /// 检查系统是否处于低内存状态
+        /// </summary>
+        /// <returns>如果系统内存不足则返回true</returns>
+        private bool IsLowMemory()
+        {
+            try
+            {
+                using (var searcher = new System.Management.ManagementObjectSearcher("SELECT TotalVisibleMemorySize, FreePhysicalMemory FROM Win32_OperatingSystem"))
+                {
+                    foreach (var queryObj in searcher.Get())
+                    {
+                        ulong totalMemory = Convert.ToUInt64(queryObj["TotalVisibleMemorySize"]) / 1024; // MB
+                        ulong freeMemory = Convert.ToUInt64(queryObj["FreePhysicalMemory"]) / 1024; // MB
+                         
+                        // 如果可用内存低于总内存的10%或低于512MB，认为是低内存状态
+                        bool isLowMemory = freeMemory < totalMemory / 10 || freeMemory < 512;
+                         
+                        // 在低内存状态下，释放本地化资源
+                        if (isLowMemory)
+                        {
+                            try
+                            {
+                                // 尝试调用JsonLocalizationHelper释放资源
+                                JsonLocalizationHelper.Instance.ReleaseResourcesOnLowMemory();
+                                _logManager.WriteLog(LogManager.LogLevel.Info, "已通知本地化助手释放资源");
+                            }
+                            catch (Exception ex)
+                            {
+                                _logManager.WriteLog(LogManager.LogLevel.Error, $"调用本地化助手释放资源失败: {ex.Message}");
+                            }
+                        }
+                         
+                        return isLowMemory;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logManager.WriteLog(LogManager.LogLevel.Error, $"获取系统内存信息失败: {ex.Message}");
+            }
+             
+            // 出错时默认返回false
+            return false;
         }
 
         /// <summary>
@@ -512,8 +630,10 @@ namespace ImageRecognitionApp.UnitTools
         public MediaPlayer GetVideoAsset(string signId)
         {
             string cacheKey = $"video_{signId}";
-            if (_assetCache.TryGetValue(cacheKey, out object? cachedAsset) && cachedAsset is MediaPlayer cachedPlayer)
+            if (_assetCache.TryGetValue(cacheKey, out CacheItem? cachedAsset) && cachedAsset.Asset is MediaPlayer cachedPlayer)
             {
+                // 更新最后访问时间以实现LRU策略
+                cachedAsset.LastAccessTime = DateTime.Now;
                 return cachedPlayer;
             }
 
@@ -558,8 +678,10 @@ namespace ImageRecognitionApp.UnitTools
         public async Task<string> GetWebContentAsync(string signId)
         {
             string cacheKey = $"web_{signId}";
-            if (_assetCache.TryGetValue(cacheKey, out object? cachedAsset) && cachedAsset is string cachedContent)
+            if (_assetCache.TryGetValue(cacheKey, out CacheItem? cachedAsset) && cachedAsset.Asset is string cachedContent)
             {
+                // 更新最后访问时间以实现LRU策略
+                cachedAsset.LastAccessTime = DateTime.Now;
                 return cachedContent;
             }
 

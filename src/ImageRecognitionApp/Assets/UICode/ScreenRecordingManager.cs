@@ -14,12 +14,12 @@ namespace ImageRecognitionApp.Assets.UICode
     public class ScreenRecordingManager : INotifyPropertyChanged
     {
         #region 事件和委托
-        public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler RecordingStarted;
-        public event EventHandler RecordingStopped;
-        public event EventHandler RecordingPaused;
-        public event EventHandler RecordingResumed;
-        public event EventHandler RecordingTimeUpdated;
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public event EventHandler? RecordingStarted;
+        public event EventHandler? RecordingStopped;
+        public event EventHandler? RecordingPaused;
+        public event EventHandler? RecordingResumed;
+        public event EventHandler? RecordingTimeUpdated;
         #endregion
 
         #region 私有字段
@@ -29,7 +29,7 @@ namespace ImageRecognitionApp.Assets.UICode
         private TimeSpan _pausedTime = TimeSpan.Zero;
         private DispatcherTimer _recordingTimer;
         private string _recordingFilePath = string.Empty;
-        private ScreenRecordingSettings _settings;
+        private ScreenRecordingSettings? _settings;
         private string _settingsFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ImageRecognitionApp", "ScreenRecordingSettings.json");
         private TimeSpan _currentRecordingTime = TimeSpan.Zero;
         #endregion
@@ -431,16 +431,16 @@ namespace ImageRecognitionApp.Assets.UICode
     }
 
     [DataContract]
-    public class ScreenRecordingSettings
-    {
-        [DataMember]
-        public string Quality { get; set; }
-        
-        [DataMember]
-        public string Region { get; set; }
-        
-        [DataMember]
-        public string SavePath { get; set; }
+        public class ScreenRecordingSettings
+        {
+            [DataMember]
+            public string? Quality { get; set; }
+            
+            [DataMember]
+            public string? Region { get; set; }
+            
+            [DataMember]
+            public string? SavePath { get; set; }
         
         [DataMember]
         public bool RecordAudio { get; set; }

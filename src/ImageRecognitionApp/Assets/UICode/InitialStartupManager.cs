@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Management;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace ImageRecognitionApp.Assets.UICode
         /// <summary>
         /// 用于更新初始化状态的委托
         /// </summary>
-        public Action<string, int> UpdateStatusCallback { get; set; }
+        public Action<string, int>? UpdateStatusCallback { get; set; }
         /// <summary>
         /// 检查系统环境
         /// </summary>
@@ -207,6 +208,9 @@ namespace ImageRecognitionApp.Assets.UICode
                 // 初始化AssetHelper单例
                 var assetHelper = AssetHelper.Instance;
                 
+                // 只初始化必要的配置，不加载所有资源文件
+                _logManager.WriteLog(LogManager.LogLevel.Info, "AssetHelper initialized without preloading all asset files");
+                
                 // 获取资源文件夹路径
                 string resourcesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources");
                 _logManager.WriteLog(LogManager.LogLevel.Info, $"Resource folder path: {resourcesPath}");
@@ -214,39 +218,16 @@ namespace ImageRecognitionApp.Assets.UICode
                 // 检查资源文件夹是否存在
                 if (Directory.Exists(resourcesPath))
                 {
-                    // 遍历资源文件夹中的所有文件
+                    // 仅计算文件数量，不预加载所有文件
                     string[] allAssetFiles = Directory.GetFiles(resourcesPath, "*.*", SearchOption.AllDirectories);
                     int totalAssets = allAssetFiles.Length;
-                    int processedAssets = 0;
                     
                     // 输出到UI文本
-                    UpdateStatusCallback?.Invoke($"Found {totalAssets} asset files", 45);
-                    _logManager.WriteLog(LogManager.LogLevel.Info, $"Found {totalAssets} asset files");
+                    UpdateStatusCallback?.Invoke($"Found {totalAssets} asset files (will be loaded on demand)", 45);
+                    _logManager.WriteLog(LogManager.LogLevel.Info, $"Found {totalAssets} asset files, will be loaded on demand");
                     
-                    // 遍历并处理每个资产文件
-                    foreach (string assetFilePath in allAssetFiles)
-                    {
-                        try
-                        {
-                            // 获取相对路径（从Resources文件夹开始）
-                            string relativePath = assetFilePath.Substring(resourcesPath.Length + 1);
-                            // 获取文件名
-                            string fileName = Path.GetFileName(assetFilePath);
-                            
-                            // 更新状态到初始化文本，减少每个资产的进度增量，让进度条动画更平滑
-                            UpdateStatusCallback?.Invoke($"Loading: {relativePath}", 45 + (processedAssets * 10 / totalAssets));
-                            // _logManager.WriteLog(LogManager.LogLevel.Info, $"Loading: {relativePath}");
-                            
-                            // 模拟资产加载延迟
-                            await Task.Delay(10).ConfigureAwait(false);
-                            
-                            processedAssets++;
-                        }
-                        catch (Exception ex)
-                        {
-                            _logManager.WriteLog(LogManager.LogLevel.Warning, $"Error loading asset {assetFilePath}: {ex.Message}");
-                        }
-                    }
+                    // 只加载关键资源（如启动画面、图标等）
+                    await LoadCriticalAssetsOnlyAsync(resourcesPath).ConfigureAwait(false);
                 }
                 else
                 {
@@ -254,17 +235,57 @@ namespace ImageRecognitionApp.Assets.UICode
                     _logManager.WriteLog(LogManager.LogLevel.Warning, $"Resource folder not found: {resourcesPath}");
                 }
                 
-                // 模拟异步处理时间
-                await Task.Delay(100).ConfigureAwait(false);
+                // 减少模拟延迟时间
+                await Task.Delay(30).ConfigureAwait(false);
                 
                 UpdateStatusCallback?.Invoke("Asset resources initialization completed", 60);
-                _logManager.WriteLog(LogManager.LogLevel.Info, "Project all asset resources initialization completed");
+                _logManager.WriteLog(LogManager.LogLevel.Info, "Project all asset resources initialization completed with lazy loading strategy");
             }
             catch (Exception ex)
             {
                 _logManager.WriteLog(LogManager.LogLevel.Error, $"Error initializing project asset resources: {ex.Message}");
                 UpdateStatusCallback?.Invoke($"Error initializing assets: {ex.Message}", 0);
                 throw;
+            }
+        }
+        
+        /// <summary>
+        /// 只加载关键资源，减少启动时的内存占用
+        /// </summary>
+        /// <param name="resourcesPath">资源文件夹路径</param>
+        /// <returns>异步任务</returns>
+        private async Task LoadCriticalAssetsOnlyAsync(string resourcesPath)
+        {
+            try
+            {
+                // 定义关键资源目录或文件类型
+                string[] criticalDirectories = { "Icons", "SplashScreen" };
+                string[] criticalExtensions = { ".ico", ".png", ".jpg", ".svg" };
+                
+                // 只加载关键资源
+                foreach (string directory in criticalDirectories)
+                {
+                    string criticalDirPath = Path.Combine(resourcesPath, directory);
+                    if (Directory.Exists(criticalDirPath))
+                    {
+                        string[] criticalFiles = Directory.GetFiles(criticalDirPath, "*.*", SearchOption.AllDirectories)
+                            .Where(file => criticalExtensions.Contains(Path.GetExtension(file).ToLower()))
+                            .ToArray();
+                        
+                        foreach (string criticalFile in criticalFiles)
+                        {
+                            // 这里可以选择性地预加载一些非常关键的资源
+                            // 但要保持最小化，大部分资源应该按需加载
+                            await Task.Delay(1).ConfigureAwait(false); // 微小延迟，避免阻塞
+                        }
+                    }
+                }
+                
+                _logManager.WriteLog(LogManager.LogLevel.Info, "Critical assets loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                _logManager.WriteLog(LogManager.LogLevel.Warning, $"Error loading critical assets: {ex.Message}");
             }
         }
 

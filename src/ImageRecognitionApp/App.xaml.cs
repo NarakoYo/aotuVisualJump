@@ -17,14 +17,14 @@ namespace ImageRecognitionApp;
 public partial class App : Application
 {
     // 性能监控相关变量
-    private DispatcherTimer _performanceMonitorTimer;
-    private PerformanceCounter _cpuCounter;
-    private PerformanceCounter _memoryCounter;
+    private DispatcherTimer? _performanceMonitorTimer;
+    private PerformanceCounter? _cpuCounter;
+    private PerformanceCounter? _memoryCounter;
     private bool _isInStandbyMode = false;
     private const int STANDBY_CHECK_INTERVAL_MS = 5000; // 5秒检查一次系统待机状态
     
     // 全局性能管理器
-    public PerformanceManager PerformanceManager { get; private set; }
+    public PerformanceManager? PerformanceManager { get; private set; }
     
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -193,11 +193,14 @@ public partial class App : Application
             // 创建内存性能计数器
             _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
             
-            // 创建并启动监控定时器
+            // 创建并启动监控定时器 - 降低监控频率以减少资源消耗
             _performanceMonitorTimer = new DispatcherTimer();
-            _performanceMonitorTimer.Interval = TimeSpan.FromSeconds(5); // 每5秒检查一次
+            _performanceMonitorTimer.Interval = TimeSpan.FromSeconds(10); // 每10秒检查一次，而不是5秒
             _performanceMonitorTimer.Tick += PerformanceMonitorTimer_Tick;
             _performanceMonitorTimer.Start();
+            
+            // 应用启动时立即检查内存状态
+            CheckMemoryStatusOnStartup();
             
             LogMessage("系统资源监控已初始化");
         }
@@ -208,9 +211,65 @@ public partial class App : Application
     }
     
     /// <summary>
+    /// 应用启动时检查内存状态，实施初始内存优化策略
+    /// </summary>
+    private void CheckMemoryStatusOnStartup()
+    {
+        try
+        {
+            // 立即获取当前可用内存
+            float availableMemory = _memoryCounter.NextValue();
+            
+            // 如果可用内存低于阈值，启动时就应用低功耗模式
+            const float LOW_MEMORY_THRESHOLD_MB = 1024; // 1GB
+            if (availableMemory < LOW_MEMORY_THRESHOLD_MB)
+            {
+                LogMessage($"系统内存较低({availableMemory:F2} MB)，启动时应用严格内存优化策略");
+                PerformanceManager.EnterLowPowerMode();
+                
+                // 立即执行垃圾回收
+                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+                GC.WaitForPendingFinalizers();
+            }
+            
+            // 配置进程内存限制
+            ConfigureProcessMemoryLimits();
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"检查启动内存状态时出错: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 配置进程内存限制，帮助操作系统更好地管理应用内存
+    /// </summary>
+    private void ConfigureProcessMemoryLimits()
+    {
+        try
+        {
+            Process currentProcess = Process.GetCurrentProcess();
+            
+            // 设置进程工作集大小限制，帮助系统更有效地管理内存
+            // 注意：这些值应该根据实际应用需求进行调整
+            int maxWorkingSetMb = 100; // 100MB作为初始最大工作集大小
+            int minWorkingSetMb = 20;  // 20MB作为初始最小工作集大小
+            
+            currentProcess.MaxWorkingSet = (IntPtr)(maxWorkingSetMb * 1024 * 1024);
+            currentProcess.MinWorkingSet = (IntPtr)(minWorkingSetMb * 1024 * 1024);
+            
+            LogMessage($"进程内存限制已配置: 最小={minWorkingSetMb}MB, 最大={maxWorkingSetMb}MB");
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"配置进程内存限制时出错: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
     /// 性能监控定时器回调
     /// </summary>
-    private void PerformanceMonitorTimer_Tick(object sender, EventArgs e)
+    private void PerformanceMonitorTimer_Tick(object? sender, EventArgs e)
     {
         try
         {
