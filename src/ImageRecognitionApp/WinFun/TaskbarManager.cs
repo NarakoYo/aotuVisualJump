@@ -35,6 +35,7 @@ namespace ImageRecognitionApp.WinFun
         private bool _isTrayIconVisible = false;     // 托盘图标可见状态
         private bool _isWindowMinimizedToTray = false; // 窗口是否最小化到托盘
         private ITaskbarList3? _taskbarList3;         // 任务栏列表3接口实例，用于任务栏进度条
+        private readonly bool _showTrayIconInitially = false; // 是否在初始化时显示托盘图标
         
         // 窗口位置相关字段
         private double _lastWindowLeft = 0;          // 上次窗口的左边界位置
@@ -288,7 +289,8 @@ namespace ImageRecognitionApp.WinFun
         /// 构造函数，初始化任务栏管理器
         /// </summary>
         /// <param name="window">要关联的WPF窗口</param>
-        public TaskbarManager(System.Windows.Window window)
+        /// <param name="showTrayIconInitially">是否在初始化时显示托盘图标</param>
+        public TaskbarManager(System.Windows.Window window, bool showTrayIconInitially = false)
         {
             if (window == null)
             {
@@ -297,8 +299,10 @@ namespace ImageRecognitionApp.WinFun
             
             // 设置单例实例
             _instance = this;
+            _showTrayIconInitially = showTrayIconInitially;
 
             LogMessage("TaskbarManager: 初始化任务栏管理器");
+            LogMessage($"TaskbarManager: 是否在初始化时显示托盘图标: {_showTrayIconInitially}");
             SetupWindowEventHandlers(window);
         }
 
@@ -397,9 +401,6 @@ namespace ImageRecognitionApp.WinFun
                 // 初始化任务栏动画对象
                 InitializeTaskbarAnimation();
 
-                // 初始化任务栏图标
-                InitializeTaskbarIcon();
-
                 // 注册窗口消息处理
                 RegisterWindowMessageHandler();
 
@@ -408,6 +409,16 @@ namespace ImageRecognitionApp.WinFun
 
                 // 初始化任务栏进度条接口
                 InitializeTaskbarProgressBar();
+
+                // 根据设置决定是否初始化任务栏图标
+                if (_showTrayIconInitially)
+                {
+                    InitializeTaskbarIcon();
+                }
+                else
+                {
+                    LogMessage("TaskbarManager: 根据配置，初始化阶段不显示托盘图标");
+                }
             }
             catch (Exception ex)
             {
@@ -1001,6 +1012,29 @@ namespace ImageRecognitionApp.WinFun
          private static extern bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
 
         #endregion
+
+        /// <summary>
+        /// 显示任务栏托盘图标
+        /// </summary>
+        public void ShowTrayIcon()
+        {
+            try
+            {
+                if (!_isTrayIconVisible)
+                {
+                    LogMessage("TaskbarManager: 手动显示任务栏托盘图标");
+                    InitializeTaskbarIcon();
+                }
+                else
+                {
+                    LogMessage("TaskbarManager: 任务栏图标已经可见");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 显示任务栏图标错误: {ex.Message}");
+            }
+        }
 
         #region 托盘图标交互处理
 

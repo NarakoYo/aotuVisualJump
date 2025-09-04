@@ -101,8 +101,8 @@ namespace ImageRecognitionApp.Assets.UI
             InitializeComponent();
             _initializationManager = new InitialStartupManager();
             _animationManager = new InitialStartupAnimation(this);
-            // 初始化任务栏管理器
-            _taskbarManager = new TaskbarManager(this);
+            // 初始化任务栏管理器，设置不显示托盘图标
+            _taskbarManager = new TaskbarManager(this, false);
             // 设置状态更新回调
             _initializationManager.UpdateStatusCallback = UpdateStatus;
             this.Loaded += InitialStartupWindow_Loaded;

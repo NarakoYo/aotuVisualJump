@@ -660,7 +660,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         // 初始化任务栏管理器和动画
         try
         {
-            _taskbarManager = new TaskbarManager(this);
+            _taskbarManager = new TaskbarManager(this, true);
             _taskbarAnimation = new TaskbarAnimation(this);
             (App.Current as App)?.LogMessage("任务栏管理器和动画初始化成功");
         }
