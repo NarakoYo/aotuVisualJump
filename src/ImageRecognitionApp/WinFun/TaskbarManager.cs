@@ -488,12 +488,12 @@ namespace ImageRecognitionApp.WinFun
                 if (_taskbarList3 != null && _windowHandle != IntPtr.Zero)
                 {
                     _taskbarList3.SetProgressState(_windowHandle, state);
-                    LogMessage($"TaskbarManager: 设置任务栏进度条状态为: {state}");
+                    // LogMessage($"TaskbarManager: 设置任务栏进度条状态为: {state}");
                 }
             }
             catch (Exception ex)
             {
-                LogMessage($"TaskbarManager: 设置任务栏进度条状态错误: {ex.Message}");
+                // LogMessage($"TaskbarManager: 设置任务栏进度条状态错误: {ex.Message}");
             }
         }
 
@@ -509,12 +509,12 @@ namespace ImageRecognitionApp.WinFun
                 if (_taskbarList3 != null && _windowHandle != IntPtr.Zero)
                 {
                     _taskbarList3.SetProgressValue(_windowHandle, currentValue, maximumValue);
-                    LogMessage($"TaskbarManager: 设置任务栏进度条值: {currentValue}/{maximumValue}");
+                    // LogMessage($"TaskbarManager: 设置任务栏进度条值: {currentValue}/{maximumValue}");
                 }
             }
             catch (Exception ex)
             {
-                LogMessage($"TaskbarManager: 设置任务栏进度条值错误: {ex.Message}");
+                // LogMessage($"TaskbarManager: 设置任务栏进度条值错误: {ex.Message}");
             }
         }
 

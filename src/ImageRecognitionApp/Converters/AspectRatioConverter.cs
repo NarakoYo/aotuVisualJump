@@ -1,6 +1,8 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
+using ImageRecognitionApp;
+using ImageRecognitionApp.unit;
 
 namespace ImageRecognitionApp.Converters
 {
@@ -44,6 +46,8 @@ namespace ImageRecognitionApp.Converters
 
             // 计算高度：宽度 * 高度比例 / 宽度比例
             double heightValue = widthValue * heightRatio / widthRatio;
+
+            (App.Current as App)?.LogMessage($"AspectRatioConverter: [Info] 计算结果 - 宽度: {widthValue}, 高度比例: {heightRatio}, 宽度比例: {widthRatio}, 计算高度: {heightValue}");
 
             // 确保结果不为负数
             return Math.Max(0.0, heightValue);
