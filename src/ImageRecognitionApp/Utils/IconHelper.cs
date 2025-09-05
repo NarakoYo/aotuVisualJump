@@ -3,7 +3,7 @@ using System.Windows.Media.Imaging;
 using System.IO;
 using System.Reflection;
 
-namespace ImageRecognitionApp.UnitTools
+namespace ImageRecognitionApp.Utils
 {
     /// <summary>
     /// 图标帮助类，用于处理PNG图标加载

@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
-using ImageRecognitionApp.UnitTools;
 using ImageRecognitionApp.WinFun;
 using ImageRecognitionApp.Utils; // 添加这个引用以使用PerformanceManager类
 using Microsoft.Win32; // 添加这个引用以使用SystemEvents和PowerModeChangedEventArgs
@@ -24,6 +23,9 @@ public partial class App : Application
     
     // 全局性能管理器
     public PerformanceManager? PerformanceManager { get; private set; }
+    
+    // 用户输入监控器
+    public UserInputMonitor? UserInputMonitor { get; private set; }
     
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -78,6 +80,11 @@ public partial class App : Application
         
         // 初始化性能管理器
         PerformanceManager = new PerformanceManager();
+        
+        // 初始化用户输入监控器
+        UserInputMonitor = UserInputMonitor.Instance;
+        UserInputMonitor.StartAllMonitoring();
+        LogMessage("用户输入监控器已初始化并启动");
         
         // 初始化系统资源监控
         InitializeSystemResourceMonitoring();
@@ -284,6 +291,12 @@ public partial class App : Application
         
         // 启动键盘和鼠标钩子来检测用户活动
         PerformanceManager.StartUserActivityMonitoring();
+        
+        // 注册UserInputMonitor的事件处理程序以更新用户活动时间
+        UserInputMonitor.KeyPressed += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+        UserInputMonitor.MouseClicked += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+        UserInputMonitor.MouseMoved += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+        UserInputMonitor.MouseWheel += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
     }
     
     /// <summary>
@@ -327,6 +340,7 @@ public partial class App : Application
         
         // 停止用户活动监控
         PerformanceManager?.StopUserActivityMonitoring();
+        UserInputMonitor?.StopAllMonitoring();
         
         // 注销电源事件
         SystemEvents.PowerModeChanged -= SystemEvents_PowerModeChanged;
@@ -341,9 +355,30 @@ public partial class App : Application
     protected override void OnActivated(EventArgs e)
     {
         base.OnActivated(e);
-        MainWindowLoaded?.Invoke(this, EventArgs.Empty);
         
-        // 用户活动检测
-        PerformanceManager.UpdateLastUserActivityTime();
+        // 确保应用程序不在关闭过程中，避免在程序已决定退出时触发事件导致异常
+        if (!this.ShutdownMode.HasFlag(ShutdownMode.OnExplicitShutdown) && !IsShuttingDown)
+        {
+            MainWindowLoaded?.Invoke(this, EventArgs.Empty);
+            
+            // 用户活动检测 - 检查PerformanceManager是否为null
+            PerformanceManager?.UpdateLastUserActivityTime();
+        }
+    }
+    
+    // 标记应用程序是否正在关闭
+    private bool IsShuttingDown { get; set; } = false;
+    
+    // 重写Shutdown方法，设置关闭标记
+    public new void Shutdown()
+    {
+        IsShuttingDown = true;
+        base.Shutdown();
+    }
+    
+    public new void Shutdown(int exitCode)
+    {
+        IsShuttingDown = true;
+        base.Shutdown(exitCode);
     }
 }

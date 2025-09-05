@@ -55,47 +55,9 @@ namespace ImageRecognitionApp.WinFun
         #endregion
 
     private readonly IntPtr _windowHandle;
-    // 动画状态标志
-    private bool _isAnimating = false;
+    // 移除不再需要的动画状态管理变量，简化类结构以优化性能
     
-    /// <summary>
-    /// 获取动画是否正在运行的状态
-    /// </summary>
-    public bool IsAnimating
-    {
-        get { return _isAnimating; }
-    }
-    private Task? _animationTask = null;
-    private const int JUMP_HEIGHT = 10; // 跳跃高度（像素）
-    private const int JUMP_DURATION_MS = 200; // 跳跃动画持续时间（毫秒）
-    private const int MINIMIZE_ANIMATION_DURATION_MS = 120; // 最小化动画持续时间（毫秒）- 已缩短以提升流畅度
-    private const int RESTORE_ANIMATION_DURATION_MS = 120; // 恢复动画持续时间（毫秒）
-    private const double MINIMUM_SCALE = 0.0001; // 最小缩放比例
-    // 使用当前屏幕的最大刷新率作为动画帧率，提升动画流畅度
-    private static readonly int FRAMES_PER_SECOND = GetMaxScreenRefreshRate();
-    
-    /// <summary>
-    /// 获取当前屏幕的最大刷新率
-    /// </summary>
-    /// <returns>最大刷新率</returns>
-    private static int GetMaxScreenRefreshRate()
-    {
-        try
-        {
-            // 导入GDI32.dll中的GetDeviceCaps函数
-            IntPtr hScreenDC = GetDC(IntPtr.Zero);
-            int refreshRate = GetDeviceCaps(hScreenDC, VERTREFRESH);
-            ReleaseDC(IntPtr.Zero, hScreenDC);
-            
-            // 确保获取到有效刷新率，如果获取失败则使用默认值
-            return refreshRate > 0 ? refreshRate : 60;
-        }
-        catch
-        {
-            // 默认返回60FPS作为fallback
-            return 60;
-        }
-    }
+    // 移除不再需要的获取屏幕刷新率方法，简化类结构以优化性能
     
     #region 额外的Win32 API导入
     
@@ -115,31 +77,7 @@ namespace ImageRecognitionApp.WinFun
     // 用于存储原始图标位置
         private System.Windows.Point _originalIconPosition = new System.Windows.Point(-1, -1);
         
-        // 缓入立方曲线
-        private double EaseInCubic(double t)
-        {
-            return t * t * t;
-        }
-
-        /// <summary>
-        /// 缓出立方曲线
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        private double EaseOutCubic(double t)
-        {
-            return 1 - Math.Pow(1 - t, 3);
-        }
-
-        /// <summary>
-        /// 缓入缓出四次方曲线 - 提供更平滑的动画效果
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        private double EaseInOutQuart(double t)
-        {
-            return t < 0.5 ? 8 * Math.Pow(t, 4) : 1 - Math.Pow(-2 * t + 2, 4) / 2;
-        }
+        // 移除不再需要的缓动函数，简化类结构以优化性能
 
     // 获取和设置任务栏图标位置的P/Invoke
     [DllImport("shell32.dll")]    
@@ -213,24 +151,18 @@ namespace ImageRecognitionApp.WinFun
         /// <param name="intervalMs">闪烁间隔（毫秒）</param>
         public void StartFlashAnimation(uint flashCount = 0, uint intervalMs = 500)
         {
-            if (_isAnimating)
-                return;
-
-            _isAnimating = true;
-
-            _animationTask = Task.Run(() =>
+            // 简化闪烁动画实现，直接使用Windows原生闪烁API
+            var flashInfo = new FLASHWINFO
             {
-                var flashInfo = new FLASHWINFO
-                {
-                    cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
-                    hwnd = _windowHandle,
-                    dwFlags = FLASHW_TRAY | FLASHW_TIMER,
-                    uCount = flashCount,
-                    dwTimeout = intervalMs
-                };
+                cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
+                hwnd = _windowHandle,
+                dwFlags = FLASHW_TRAY | FLASHW_TIMER,
+                uCount = flashCount,
+                dwTimeout = intervalMs
+            };
 
-                FlashWindowEx(ref flashInfo);
-            });
+            FlashWindowEx(ref flashInfo);
+            (App.Current as App)?.LogMessage("StartFlashAnimation: 使用Windows原生闪烁API");
         }
 
         /// <summary>
@@ -238,11 +170,7 @@ namespace ImageRecognitionApp.WinFun
         /// </summary>
         public void StopFlashAnimation()
         {
-            if (!_isAnimating)
-                return;
-
-            _isAnimating = false;
-
+            // 简化停止闪烁动画实现，直接使用Windows原生停止闪烁API
             var flashInfo = new FLASHWINFO
             {
                 cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
@@ -253,12 +181,7 @@ namespace ImageRecognitionApp.WinFun
             };
 
             FlashWindowEx(ref flashInfo);
-
-            if (_animationTask != null && !_animationTask.IsCompleted)
-            {
-                _animationTask.Wait();
-                _animationTask = null;
-            }
+            (App.Current as App)?.LogMessage("StopFlashAnimation: 使用Windows原生停止闪烁API");
         }
 
         /// <summary>
@@ -266,6 +189,7 @@ namespace ImageRecognitionApp.WinFun
         /// </summary>
         public void SingleFlash()
         {
+            // 使用Windows原生单次闪烁API
             var flashInfo = new FLASHWINFO
             {
                 cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
@@ -276,6 +200,7 @@ namespace ImageRecognitionApp.WinFun
             };
 
             FlashWindowEx(ref flashInfo);
+            (App.Current as App)?.LogMessage("SingleFlash: 使用Windows原生单次闪烁API");
         }
 
         /// <summary>
@@ -283,22 +208,29 @@ namespace ImageRecognitionApp.WinFun
     /// </summary>
     public void AttentionAnimation()
     {
-        // 先闪烁3次
-        StartFlashAnimation(3, 300);
-
-        // 短暂延迟后将窗口置于前台
-        Task.Delay(1000).ContinueWith(_ =>
+        // 简化注意力动画实现，直接使用Windows原生闪烁API并设置窗口到前台
+        var flashInfo = new FLASHWINFO
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            cbSize = (uint)Marshal.SizeOf(typeof(FLASHWINFO)),
+            hwnd = _windowHandle,
+            dwFlags = FLASHW_TRAY | FLASHW_ALL | FLASHW_TIMER,
+            uCount = 3,
+            dwTimeout = 300
+        };
+
+        FlashWindowEx(ref flashInfo);
+
+        // 直接设置窗口到前台，不使用延迟任务以提高性能
+        if (Application.Current.MainWindow != null)
+        {
+            Application.Current.MainWindow.Dispatcher.Invoke(() =>
             {
-                if (Application.Current.MainWindow != null)
-                {
-                    Application.Current.MainWindow.Show();
-                    Application.Current.MainWindow.Activate();
-                    SetForegroundWindow(_windowHandle);
-                }
+                Application.Current.MainWindow.Show();
+                Application.Current.MainWindow.Activate();
+                SetForegroundWindow(_windowHandle);
             });
-        });
+        }
+        (App.Current as App)?.LogMessage("AttentionAnimation: 使用Windows原生API显示注意力动画");
     }
 
     /// <summary>
@@ -306,491 +238,151 @@ namespace ImageRecognitionApp.WinFun
     /// </summary>
     public void JumpUpAnimation()
     {
-        if (_isAnimating)
-            return;
-
-        _isAnimating = true;
-
-        _animationTask = Task.Run(() =>
-        {
-            // 获取窗口图标
-            Icon? originalIcon = null;
-            IntPtr iconHandle = IntPtr.Zero;
-
-            try
-            {
-                // 获取原始图标
-                var window = Application.Current?.MainWindow;
-                if (window?.Icon != null)
-                {
-                    var bitmapSource = window.Icon as BitmapSource;
-                    if (bitmapSource != null)
-                    {
-                        using (var stream = new MemoryStream())
-                        {
-                            var encoder = new PngBitmapEncoder();
-                            encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
-                            encoder.Save(stream);
-                            stream.Seek(0, SeekOrigin.Begin);
-
-                            using (var bmp = new System.Drawing.Bitmap(stream))
-                            {
-                                originalIcon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
-                                if (originalIcon != null)
-                                {
-                                    iconHandle = originalIcon.Handle;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // 执行跳跃动画
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    // 这里简化处理，实际应用中可能需要创建一个透明窗口来显示动画
-                    // 向上移动图标位置
-                    MoveIcon(new System.Windows.Point(_originalIconPosition.X, _originalIconPosition.Y - JUMP_HEIGHT));
-                });
-
-                // 等待一段时间
-                Task.Delay(JUMP_DURATION_MS / 2).Wait();
-
-                // 恢复原始位置
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    MoveIcon(_originalIconPosition);
-                });
-            }
-            finally
-            {
-                _isAnimating = false;
-                if (originalIcon != null)
-                {
-                    originalIcon.Dispose();
-                }
-            }
-        });
+        // 简化跳跃动画实现，直接使用单次闪烁代替跳跃效果以优化性能
+        SingleFlash();
+        (App.Current as App)?.LogMessage("JumpUpAnimation: 使用单次闪烁代替跳跃动画以优化性能");
     }
 
     /// <summary>
-        /// 最小化动画：根据比例缩小画面，并向任务栏中央移动
+        /// 最小化动画：使用Windows原生动画效果
         /// </summary>
         public void MinimizeAnimation()
         {
-            if (_isAnimating)
-                return;
-
-            _isAnimating = true;
-
-            _animationTask = Task.Run(() =>
-            {
-                try
-                {
-                    // 保存窗口状态信息
-                    WindowState originalState = WindowState.Normal;
-                    bool originalTopmost = false;
-                    Visibility originalVisibility = Visibility.Visible;
-                    bool originalIsHitTestVisible = true;
-                    System.Windows.Point originalPosition = new System.Windows.Point(0, 0);
-                    double originalWidth = 0;
-                    double originalHeight = 0;
-                    double originalOpacity = 1;
-                    double taskbarCenterX = 0;
-                    double taskbarCenterY = 0;
-
-                    // 在UI线程上获取窗口信息
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var window = Application.Current.MainWindow;
-                        if (window == null)
-                            return;
-
-                        // 保存当前窗口状态
-                        originalState = window.WindowState;
-                        originalTopmost = window.Topmost;
-                        originalVisibility = window.Visibility;
-                        originalIsHitTestVisible = window.IsHitTestVisible;
-
-                        // 确保窗口是正常状态
-                        if (window.WindowState != WindowState.Normal)
-                        {
-                            window.WindowState = WindowState.Normal;
-                            (App.Current as App)?.LogMessage("MinimizeAnimation: 恢复窗口到正常大小以进行动画");
-                        }
-
-                        // 获取窗口原始位置和尺寸
-                        originalPosition = new System.Windows.Point(window.Left, window.Top);
-                        originalWidth = window.Width;
-                        originalHeight = window.Height;
-                        originalOpacity = window.Opacity;
-
-                        // 获取任务栏中央位置
-                        var taskbarPos = GetTaskbarPosition();
-                        taskbarCenterX = taskbarPos.left + (taskbarPos.right - taskbarPos.left) / 2;
-                        taskbarCenterY = taskbarPos.top + (taskbarPos.bottom - taskbarPos.top) / 2;
-
-                        // 禁用窗口点击测试，防止用户操作
-                        window.IsHitTestVisible = false;
-                    });
-
-                    // 计算更精确的帧率和动画参数
-                    int frameCount = Math.Max(15, (int)(MINIMIZE_ANIMATION_DURATION_MS / 1000.0 * FRAMES_PER_SECOND)); // 至少15帧确保动画可见
-                    int delayPerFrame = MINIMIZE_ANIMATION_DURATION_MS / frameCount;
-                      
-                    // 使用更精确的计时器
-                    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                    long frameStartTime = stopwatch.ElapsedMilliseconds;
-
-                    // 执行动画
-        long totalDuration = 0;
-        long previousFrameTime = stopwatch.ElapsedMilliseconds;
-        
-        for (int i = 1; i <= frameCount; i++)
-        {
-            // 计算当前进度（使用缓动函数使动画更自然）
-            double progress = (double)i / frameCount;
-            double easeProgress = EaseInOutQuart(progress); // 使用更平滑的缓入缓出四次方曲线
-
-                        // 计算当前缩放比例（从1到最小缩放比例）
-                        double currentScale = 1 - (1 - MINIMUM_SCALE) * easeProgress;
-
-                        // 计算当前位置（从原始位置到任务栏中央）
-                        double currentX = taskbarCenterX - originalWidth / 2 * MINIMUM_SCALE + (originalPosition.X - (taskbarCenterX - originalWidth / 2 * MINIMUM_SCALE)) * (1 - easeProgress);
-                        double currentY = taskbarCenterY - originalHeight / 2 * MINIMUM_SCALE + (originalPosition.Y - (taskbarCenterY - originalHeight / 2 * MINIMUM_SCALE)) * (1 - easeProgress);
-
-                        // 计算当前透明度（逐渐降低）
-                        double currentOpacity = originalOpacity * (1 - easeProgress);
-
-                        // 只在UI线程上更新窗口属性，提高性能
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            var window = Application.Current.MainWindow;
-                            if (window == null)
-                                return;
-
-                            // 批量更新窗口属性，减少布局和渲染调用
-                window.Left = currentX;
-                window.Top = currentY;
-                window.Width = originalWidth * currentScale;
-                window.Height = originalHeight * currentScale;
-                window.Opacity = currentOpacity;
-
-                // 避免不必要的UI渲染调用，让WPF自然处理渲染
-                        });
-
-                        // 使用更精确的计时和等待方式，避免Thread.Sleep的精度问题
-                        long currentFrameTime = stopwatch.ElapsedMilliseconds;
-                        long frameTime = currentFrameTime - previousFrameTime;
-                        totalDuration += frameTime;
-                        
-                        // 如果帧时间太短，等待剩余时间
-                        if (frameTime < delayPerFrame)
-                        {
-                            int waitTime = (int)(delayPerFrame - frameTime);
-                            // 使用Task.Delay代替Thread.Sleep，提高等待精度
-                            Task.Delay(waitTime).Wait();
-                        }
-                        
-                        previousFrameTime = stopwatch.ElapsedMilliseconds;
-                    }
-
-                    // 动画结束后，先恢复窗口原始大小和位置，但保持不可见
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var window = Application.Current.MainWindow;
-                        if (window == null)
-                            return;
-
-                        // 先恢复窗口原始大小和位置
-                        window.Left = originalPosition.X;
-                        window.Top = originalPosition.Y;
-                        window.Width = originalWidth;
-                        window.Height = originalHeight;
-                        window.Opacity = originalOpacity;
-                        
-                        // 确保窗口在任务栏显示
-                        window.ShowInTaskbar = true;
-                        
-                        // 然后设置窗口状态为最小化
-                        window.WindowState = WindowState.Minimized;
-
-                        // 恢复窗口设置
-                        window.IsHitTestVisible = originalIsHitTestVisible;
-                        
-                        (App.Current as App)?.LogMessage("MinimizeAnimation: 动画完成，恢复窗口原始大小并设置为最小化，确保在任务栏显示");
-                    });
-            }
-            catch (Exception ex)
-            {
-                (App.Current as App)?.LogMessage($"最小化动画执行出错: {ex.Message}");
-            }
-            finally
-            {
-                _isAnimating = false;
-            }
-        });
-    }
-
-    /// <summary>
-    /// 向下跳跃动画
-    /// </summary>
-    public void JumpDownAnimation()
-    {
-        if (_isAnimating)
-            return;
-
-        _isAnimating = true;
-
-        _animationTask = Task.Run(() =>
-        {
-            // 获取窗口图标
-            Icon? originalIcon = null;
-            IntPtr iconHandle = IntPtr.Zero;
-
             try
             {
-                // 获取原始图标
-                var window = Application.Current.MainWindow;
-                if (window?.Icon != null)
-                {
-                    var bitmapSource = window.Icon as BitmapSource;
-                    if (bitmapSource != null)
-                    {
-                        using (var stream = new MemoryStream())
-                        {
-                            var encoder = new PngBitmapEncoder();
-                            encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
-                            encoder.Save(stream);
-                            stream.Seek(0, SeekOrigin.Begin);
-
-                            using (var bmp = new System.Drawing.Bitmap(stream))
-                            {
-                                originalIcon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
-                                iconHandle = originalIcon.Handle;
-                            }
-                        }
-                    }
-                }
-
-                // 执行跳跃动画
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    // 这里简化处理，实际应用中可能需要创建一个透明窗口来显示动画
-                    // 向下移动图标位置
-                    MoveIcon(new System.Windows.Point(_originalIconPosition.X, _originalIconPosition.Y + JUMP_HEIGHT));
-                });
-
-                // 等待一段时间
-                Task.Delay(JUMP_DURATION_MS / 2).Wait();
-
-                // 恢复原始位置
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    MoveIcon(_originalIconPosition);
-                });
-            }
-            finally
-            {
-                _isAnimating = false;
-                if (originalIcon != null)
-                {
-                    originalIcon.Dispose();
-                }
-            }
-        });
-    }
-
-    /// <summary>
-    /// 恢复动画：从任务栏中央移动到原始位置，并根据比例放大画面
-    /// </summary>
-    public void RestoreAnimation()
-    {
-        if (_isAnimating)
-            return;
-
-        _isAnimating = true;
-
-        _animationTask = Task.Run(() =>
-        {
-            try
-            {
-                // 保存窗口状态信息
-                WindowState originalState = WindowState.Normal;
-                bool originalTopmost = false;
-                Visibility originalVisibility = Visibility.Visible;
-                bool originalIsHitTestVisible = true;
-                System.Windows.Point originalPosition = new System.Windows.Point(0, 0);
-                double originalWidth = 0;
-                double originalHeight = 0;
-                double originalOpacity = 1;
-                double taskbarCenterX = 0;
-                double taskbarCenterY = 0;
-
-                // 在UI线程上获取窗口信息和初始化
+                // 直接设置窗口为最小化，使用Windows原生动画
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     var window = Application.Current.MainWindow;
                     if (window == null)
                         return;
 
-                    // 保存当前窗口状态
-                    originalState = window.WindowState;
-                    originalTopmost = window.Topmost;
-                    originalVisibility = window.Visibility;
-                    originalIsHitTestVisible = window.IsHitTestVisible;
-
-                    // 获取窗口原始位置和尺寸
-                    originalPosition = new System.Windows.Point(window.Left, window.Top);
-                    originalWidth = window.Width;
-                    originalHeight = window.Height;
-                    originalOpacity = window.Opacity;
-
-                    // 获取任务栏中央位置
-                    var taskbarPos = GetTaskbarPosition();
-                    taskbarCenterX = taskbarPos.left + (taskbarPos.right - taskbarPos.left) / 2;
-                    taskbarCenterY = taskbarPos.top + (taskbarPos.bottom - taskbarPos.top) / 2;
-
-                    // 设置窗口初始位置为任务栏中央，尺寸为最小缩放比例
-                    window.Left = taskbarCenterX - originalWidth / 2 * MINIMUM_SCALE;
-                    window.Top = taskbarCenterY - originalHeight / 2 * MINIMUM_SCALE;
-                    window.Width = originalWidth * MINIMUM_SCALE;
-                    window.Height = originalHeight * MINIMUM_SCALE;
-                    window.Opacity = 0;
-
-                    // 确保窗口状态为正常并先设置为不可见，避免闪烁
-                    window.WindowState = WindowState.Normal;
-                    window.Visibility = Visibility.Collapsed;
-
-                    // 禁用窗口点击测试，防止用户操作
-                    window.IsHitTestVisible = false;
+                    // 直接设置窗口状态为最小化，使用Windows原生动画
+                    window.WindowState = WindowState.Minimized;
+                    (App.Current as App)?.LogMessage("MinimizeAnimation: 使用Windows原生动画最小化窗口");
                 });
-
-                // 计算更精确的帧率和动画参数
-                int frameCount = Math.Max(15, (int)(RESTORE_ANIMATION_DURATION_MS / 1000.0 * FRAMES_PER_SECOND)); // 至少15帧确保动画可见
-                int delayPerFrame = RESTORE_ANIMATION_DURATION_MS / frameCount;
-                  
-                // 使用更精确的计时器
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                long frameStartTime = stopwatch.ElapsedMilliseconds;
-                  
-                // 执行动画
-        long totalDuration = 0;
-        long previousFrameTime = stopwatch.ElapsedMilliseconds;
-        
-        for (int i = 1; i <= frameCount; i++)
-        {
-            // 计算当前进度（使用缓动函数使动画更自然）
-            double progress = (double)i / frameCount;
-            double easeProgress = EaseInOutQuart(progress); // 使用更平滑的缓入缓出四次方曲线
-
-                    // 计算当前缩放比例（从最小缩放比例到1）
-                    double currentScale = MINIMUM_SCALE + (1 - MINIMUM_SCALE) * easeProgress;
-
-                    // 计算当前位置（从任务栏中央到原始位置）
-                    double currentX = taskbarCenterX - originalWidth / 2 * MINIMUM_SCALE + (originalPosition.X - (taskbarCenterX - originalWidth / 2 * MINIMUM_SCALE)) * easeProgress;
-                    double currentY = taskbarCenterY - originalHeight / 2 * MINIMUM_SCALE + (originalPosition.Y - (taskbarCenterY - originalHeight / 2 * MINIMUM_SCALE)) * easeProgress;
-
-                    // 计算当前透明度（逐渐增加）
-                    double currentOpacity = originalOpacity * easeProgress;
-
-                    // 只在UI线程上更新窗口属性，提高性能
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var window = Application.Current.MainWindow;
-                        if (window == null)
-                            return;
-
-                        // 在第一帧时将窗口设置为可见，避免闪烁
-                        if (i == 1)
-                        {
-                            window.Visibility = Visibility.Visible;
-                        }
-                        // 批量更新窗口属性，减少布局和渲染调用
-                window.Left = currentX;
-                window.Top = currentY;
-                window.Width = originalWidth * currentScale;
-                window.Height = originalHeight * currentScale;
-                window.Opacity = currentOpacity;
-
-                // 避免不必要的UI渲染调用，让WPF自然处理渲染
-                    });
-
-                    // 使用更精确的计时和等待方式，避免Thread.Sleep的精度问题
-                    long currentFrameTime = stopwatch.ElapsedMilliseconds;
-                    long frameTime = currentFrameTime - previousFrameTime;
-                    totalDuration += frameTime;
-                    
-                    // 如果帧时间太短，等待剩余时间
-                    if (frameTime < delayPerFrame)
-                    {
-                        int waitTime = (int)(delayPerFrame - frameTime);
-                        // 使用Task.Delay代替Thread.Sleep，提高等待精度
-                        Task.Delay(waitTime).Wait();
-                    }
-                    
-                    previousFrameTime = stopwatch.ElapsedMilliseconds;
-                }
-
-                // 动画结束后，恢复窗口到原始状态并激活
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        var window = Application.Current.MainWindow;
-                        if (window == null)
-                            return;
-
-                        // 确保窗口先恢复到正常状态
-                        window.WindowState = WindowState.Normal;
-                        
-                        // 重要：明确设置窗口在任务栏显示
-                        window.ShowInTaskbar = true;
-                          
-                        // 通过TaskbarManager单例访问保存的窗口位置和大小
-                        var taskbarManager = TaskbarManager.Instance;
-                        if (taskbarManager != null)
-                        {
-                            // 正确恢复窗口位置和大小
-                            window.Left = taskbarManager.LastWindowLeft;
-                            window.Top = taskbarManager.LastWindowTop;
-                            window.Width = taskbarManager.LastWindowWidth;
-                            window.Height = taskbarManager.LastWindowHeight;
-                               
-                            // 如果上次是最大化状态，则恢复最大化
-                            if (taskbarManager.LastWindowState == WindowState.Maximized)
-                            {
-                                window.WindowState = WindowState.Maximized;
-                            }
-                        }
-                          
-                        window.Opacity = originalOpacity;
-                           
-                        // 恢复窗口设置
-                        window.IsHitTestVisible = originalIsHitTestVisible;
-                           
-                        // 确保窗口正确激活，设置焦点
-                        // 添加强制激活窗口的逻辑，防止窗口恢复后再次最小化
-                        window.Activate();
-                        window.Focus();
-                        
-                        // 添加额外的保护措施，确保窗口状态正确
-                        if (window.WindowState != WindowState.Normal && window.WindowState != WindowState.Maximized)
-                        {
-                            window.WindowState = WindowState.Normal;
-                        }
-                        
-                        // 再次确保窗口在任务栏显示
-                        window.ShowInTaskbar = true;
-                    });
             }
             catch (Exception ex)
             {
-                (App.Current as App)?.LogMessage($"恢复动画执行出错: {ex.Message}");
+                (App.Current as App)?.LogMessage($"最小化动画执行出错: {ex.Message}");
             }
-            finally
+        }
+
+    /// <summary>
+    /// 向下跳跃动画
+    /// </summary>
+    public void JumpDownAnimation()
+    {
+        // 简化跳跃动画实现，直接使用单次闪烁代替跳跃效果以优化性能
+        SingleFlash();
+        (App.Current as App)?.LogMessage("JumpDownAnimation: 使用单次闪烁代替跳跃动画以优化性能");
+    }
+
+    /// <summary>
+    /// 恢复动画：使用Windows原生动画效果
+    /// </summary>
+    public void RestoreAnimation()
+    {
+        try
+        {
+            // 直接使用Windows原生动画恢复窗口
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                _isAnimating = false;
+                var window = Application.Current.MainWindow;
+                if (window == null)
+                    return;
+
+                // 确保窗口在任务栏显示
+                window.ShowInTaskbar = true;
+                // 确保窗口可见 - 这是解决隐藏到托盘后无法还原问题的关键
+                window.Visibility = Visibility.Visible;
+                // 额外调用Show()方法确保窗口被显示
+                window.Show();
+
+                // 通过TaskbarManager单例访问保存的窗口位置和大小
+                var taskbarManager = TaskbarManager.Instance;
+                if (taskbarManager != null)
+                {
+                    // 正确恢复窗口位置和大小
+                    window.Left = taskbarManager.LastWindowLeft;
+                    window.Top = taskbarManager.LastWindowTop;
+                    window.Width = taskbarManager.LastWindowWidth;
+                    window.Height = taskbarManager.LastWindowHeight;
+                       
+                    // 如果上次是最大化状态，则恢复最大化
+                    if (taskbarManager.LastWindowState == WindowState.Maximized)
+                    {
+                        window.WindowState = WindowState.Maximized;
+                    }
+                    else
+                    {
+                        // 使用Windows原生动画恢复到普通状态
+                        window.WindowState = WindowState.Normal;
+                    }
+                }
+                else
+                {
+                    // 备用方案：直接恢复到普通状态
+                    window.WindowState = WindowState.Normal;
+                }
+
+                // 确保窗口在屏幕内（防止窗口位置超出屏幕范围）
+                EnsureWindowInScreen(window);
+                
+                // 确保窗口正确激活
+                window.Activate();
+                window.Focus();
+                
+                // 临时设置为Topmost然后立即取消，确保窗口能被用户看到
+                window.Topmost = true;
+                window.Topmost = false;
+                
+                (App.Current as App)?.LogMessage("RestoreAnimation: 使用Windows原生动画恢复窗口");
+            });
+        }
+        catch (Exception ex)
+        {
+            (App.Current as App)?.LogMessage($"恢复动画执行出错: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 确保窗口在屏幕可见范围内
+    /// </summary>
+    /// <param name="window">要检查的窗口</param>
+    private void EnsureWindowInScreen(Window window)
+    {
+        try
+        {
+            // 获取主屏幕工作区
+            var screen = SystemParameters.WorkArea;
+            
+            // 检查并修正窗口位置
+            if (window.Left < screen.Left)
+                window.Left = screen.Left;
+            if (window.Top < screen.Top)
+                window.Top = screen.Top;
+            
+            // 确保窗口不会超出屏幕右边界
+            if (window.Left + window.Width > screen.Right)
+                window.Left = screen.Right - window.Width;
+            // 确保窗口不会超出屏幕下边界
+            if (window.Top + window.Height > screen.Bottom)
+                window.Top = screen.Bottom - window.Height;
+            
+            // 确保窗口至少有一部分可见
+            if (window.Left >= screen.Right || window.Top >= screen.Bottom)
+            {
+                // 如果窗口完全在屏幕外，则居中显示
+                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                window.Left = (screen.Width - window.Width) / 2;
+                window.Top = (screen.Height - window.Height) / 2;
             }
-        });
+        }
+        catch (Exception ex)
+        {
+            (App.Current as App)?.LogMessage($"EnsureWindowInScreen执行出错: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -813,23 +405,8 @@ namespace ImageRecognitionApp.WinFun
     /// </summary>
     public void Dispose()
     {
-        // 停止动画
-        if (_isAnimating && _animationTask != null)
-        {
-            _isAnimating = false;
-            if (!_animationTask.IsCompleted)
-            {
-                try
-                {
-                    _animationTask.Wait(1000); // 等待最多1秒
-                }
-                catch (Exception ex)
-                {
-                    (App.Current as App)?.LogMessage($"等待动画任务完成时出错: {ex.Message}");
-                }
-                _animationTask = null;
-            }
-        }
+        // 简化Dispose方法，不再需要等待动画任务完成
+        (App.Current as App)?.LogMessage("TaskbarAnimation: 资源已释放");
     }
 }
 }

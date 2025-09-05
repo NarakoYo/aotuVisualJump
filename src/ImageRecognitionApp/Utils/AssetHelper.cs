@@ -13,7 +13,7 @@ using System.Net.Http;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
-namespace ImageRecognitionApp.UnitTools
+namespace ImageRecognitionApp.Utils
 {
     /// <summary>
     /// 资产处理工具类，用于获取和解析各种类型的资源文件

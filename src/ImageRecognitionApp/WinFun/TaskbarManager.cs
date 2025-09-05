@@ -9,7 +9,7 @@ using System.Drawing;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Threading;
-using ImageRecognitionApp.UnitTools;
+using ImageRecognitionApp.Utils;
 using System.Windows.Media; // 添加这个引用以使用VisualTreeHelper
 using ImageRecognitionApp; // 添加这个引用以使用MainWindow
 
@@ -758,40 +758,52 @@ namespace ImageRecognitionApp.WinFun
 
         /// <summary>
         /// 处理任务栏快捷方式左键点击
-        /// 当任务栏应用程序区的程序快捷方式处于选中状态时，左键点击优先触发最小化
+        /// 当任务栏应用程序区的程序快捷方式被点击时，根据窗口状态执行相应操作
         /// </summary>
         private void OnTaskbarShortcutLeftClick()
         {
             try
             {
+                // 获取当前时间戳
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                int threadId = Thread.CurrentThread.ManagedThreadId;
+                
+                // 使用LogManager记录详细的任务栏活动窗口栏操作日志
+                LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                    $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 用户点击了任务栏活动窗口栏，开始处理点击事件");
+                
                 LogMessage("TaskbarManager: 处理任务栏快捷方式左键点击");
                 var mainWindow = System.Windows.Application.Current.MainWindow;
                 if (mainWindow != null)
                 {
-                    LogMessage($"TaskbarManager: 当前窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}, IsActive: {mainWindow.IsActive}");
+                    string windowInfo = $"WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}, IsActive: {mainWindow.IsActive}";
+                    LogMessage($"TaskbarManager: 当前窗口状态 - {windowInfo}");
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                        $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 点击前窗口状态: {windowInfo}");
                     
                     // 先确保窗口在任务栏显示
                     mainWindow.ShowInTaskbar = true;
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                        $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 确保窗口在任务栏显示");
                     
                     // 检查窗口是否已经可见且被选中（活动状态）
                     if (mainWindow.IsVisible && mainWindow.IsActive)
                     {
-                        // 如果窗口已经可见且被选中，优先触发最小化
+                        // 窗口已经可见且被选中，当用户点击任务栏活动窗口栏时，触发最小化
+                        LogMessage("TaskbarManager: 窗口已选中且可见，触发最小化");
+                        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                            $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 窗口已处于活动状态且可见，用户点击了任务栏活动窗口栏，触发最小化");
+                        
+                        // 最小化窗口
                         mainWindow.WindowState = WindowState.Minimized;
-                        LogMessage("TaskbarManager: 窗口已选中，触发最小化");
-                         
-                        // 播放最小化动画
-                        if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
-                        {
-                            _taskbarAnimation.MinimizeAnimation();
-                            LogMessage("TaskbarManager: 播放窗口最小化动画");
-                        }
+                        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                            $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 窗口已最小化");
                     }
                     else
                     {
                         // 窗口未被选中或不可见，执行恢复窗口逻辑
                         // 播放窗口动画
-                        if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
+                        if (_taskbarAnimation != null)
                         {
                             if (mainWindow.WindowState == WindowState.Normal && mainWindow.IsVisible)
                             {
@@ -815,27 +827,47 @@ namespace ImageRecognitionApp.WinFun
                         else
                         {
                             // 如果没有动画或动画正在运行，则直接恢复窗口
+                            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                                $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 动画组件不可用，直接恢复窗口状态");
                             mainWindow.WindowState = WindowState.Normal;
                             mainWindow.Visibility = Visibility.Visible;
                             mainWindow.ShowInTaskbar = true;
+                            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                                $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 已设置窗口状态为Normal，可见性为Visible，任务栏显示为true");
                             
                             // 恢复窗口位置
                             RestoreWindowPosition(mainWindow);
+                            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                                $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 已恢复窗口位置");
                             
                             // 强制激活窗口
                             mainWindow.Activate();
                             mainWindow.Focus();
-                              
+                            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                                $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 已激活窗口并设置焦点");
+                               
                             LogMessage("TaskbarManager: 直接恢复并激活窗口");
                             LogMessage($"TaskbarManager: 恢复后窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
+                            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                                $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 直接恢复并激活窗口完成");
+                            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                                $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 恢复后窗口状态 - WindowState: {mainWindow.WindowState}, Visibility: {mainWindow.Visibility}, ShowInTaskbar: {mainWindow.ShowInTaskbar}");
                         }
                     }
+                }
+                else
+                {
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Warning, 
+                        $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 警告：未能获取主窗口引用");
                 }
             }
             catch (Exception ex)
             {
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
                 LogMessage($"TaskbarManager: 处理任务栏快捷方式左键点击错误: {ex.Message}");
                 LogMessage($"TaskbarManager: 错误堆栈: {ex.StackTrace}");
+                LogManager.Instance.WriteLog(LogManager.LogLevel.Error, 
+                    $"[TaskbarActivity] [{timestamp}] [Thread:{Thread.CurrentThread.ManagedThreadId}] 处理任务栏快捷方式左键点击错误: {ex.Message}\n错误堆栈: {ex.StackTrace}");
             }
         }
 
@@ -1066,7 +1098,7 @@ namespace ImageRecognitionApp.WinFun
                         mainWindow.ShowInTaskbar = true;
                         
                         // 播放恢复动画，让动画来负责显示和激活窗口
-                        if (_taskbarAnimation != null && !_taskbarAnimation.IsAnimating)
+                        if (_taskbarAnimation != null)
                         {
                             LogMessage("TaskbarManager: 播放窗口恢复动画");
                             // 在播放动画前再次确保ShowInTaskbar = true
@@ -1388,6 +1420,9 @@ namespace ImageRecognitionApp.WinFun
                 var mainWindow = System.Windows.Application.Current.MainWindow;
                 if (mainWindow != null)
                 {
+                    // 保存窗口当前位置和状态
+                    SaveWindowPosition(mainWindow);
+                    
                     mainWindow.WindowState = WindowState.Minimized;
                     mainWindow.Visibility = Visibility.Hidden;
                     mainWindow.ShowInTaskbar = false;

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 using System.Windows.Markup;
 using System.Diagnostics;
 
-namespace ImageRecognitionApp.UnitTools
+namespace ImageRecognitionApp.Utils
 {
     public class JsonLocalizationHelper
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
 using System.Runtime.InteropServices;
-using ImageRecognitionApp.UnitTools;
+using ImageRecognitionApp.Utils;
 
 namespace ImageRecognitionApp.Utils
 {
@@ -122,7 +122,7 @@ namespace ImageRecognitionApp.Utils
                 // 清理AssetHelper缓存
                 try
                 {
-                    var assetHelper = ImageRecognitionApp.UnitTools.AssetHelper.Instance;
+                    var assetHelper = ImageRecognitionApp.Utils.AssetHelper.Instance;
                     assetHelper.ClearCache();
                     (Application.Current as App)?.LogMessage("资产缓存已清空");
                 }
@@ -171,7 +171,7 @@ namespace ImageRecognitionApp.Utils
                 // 直接调整全局缓存大小限制
                 try
                 {
-                    var assetHelper = ImageRecognitionApp.UnitTools.AssetHelper.Instance;
+                    var assetHelper = ImageRecognitionApp.Utils.AssetHelper.Instance;
                     assetHelper.UpdateCacheSizeLimit(profile.CacheSize);
                 }
                 catch (Exception ex)

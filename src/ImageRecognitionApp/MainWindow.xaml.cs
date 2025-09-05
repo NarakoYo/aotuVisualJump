@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.ComponentModel;
 using ImageRecognitionApp.WinFun;  // 导入WinFun命名空间
-using ImageRecognitionApp.UnitTools;     // 导入UnitTools命名空间
+using ImageRecognitionApp.Utils;     // 导入Utils命名空间
 using ImageRecognitionApp.Assets.UI;
 using ImageRecognitionApp.Utils;    // 导入Utils命名空间以使用PerformanceManager
 
@@ -764,7 +764,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         try
         {
             // 初始化本地化助手
-            var helper = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance;
+            var helper = ImageRecognitionApp.Utils.JsonLocalizationHelper.Instance;
             helper.Initialize();
 
             // 获取标题文本和设置按钮文本
@@ -1624,7 +1624,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(20006);
+            tooltip.Content = ImageRecognitionApp.Utils.JsonLocalizationHelper.Instance.GetString(20006);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));
@@ -1644,7 +1644,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(20005);
+            tooltip.Content = ImageRecognitionApp.Utils.JsonLocalizationHelper.Instance.GetString(20005);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));
@@ -1664,7 +1664,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(20004);
+            tooltip.Content = ImageRecognitionApp.Utils.JsonLocalizationHelper.Instance.GetString(20004);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));
@@ -1684,7 +1684,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         {
             // 创建ToolTip对象
             ToolTip tooltip = new ToolTip();
-            tooltip.Content = ImageRecognitionApp.UnitTools.JsonLocalizationHelper.Instance.GetString(10014);
+            tooltip.Content = ImageRecognitionApp.Utils.JsonLocalizationHelper.Instance.GetString(10014);
 
             // 设置ToolTip样式
             Style tooltipStyle = new Style(typeof(ToolTip));

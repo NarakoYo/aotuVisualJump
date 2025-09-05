@@ -6,7 +6,7 @@
 // using System.Text;
 // using NLua;
 
-// namespace ImageRecognitionApp.unit
+// namespace ImageRecognitionApp.Utils
 // {
 //     public class LuaLocalizationHelper
 //     {
