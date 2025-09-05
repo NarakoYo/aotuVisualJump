@@ -410,7 +410,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     }
 
     // 下拉菜单按钮点击事件
-    private void DropdownMenuButton_Click(object sender, RoutedEventArgs e)
+    private void DropdownMenuButton_Click(object? sender, RoutedEventArgs e)
     {
         DropdownMenuPopup.IsOpen = !DropdownMenuPopup.IsOpen;
     }
@@ -452,7 +452,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     }
 
     // 关于按钮点击事件
-    private void AboutButton_Click(object sender, RoutedEventArgs e)
+    private void AboutButton_Click(object? sender, RoutedEventArgs e)
     {
         DropdownMenuPopup.IsOpen = false;
         // 这里添加关于按钮的具体实现
@@ -467,7 +467,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
     // 窗口构造函数
     // 全局右键点击事件处理
-    private void MainWindow_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    private void MainWindow_PreviewMouseRightButtonDown(object? sender, MouseButtonEventArgs e)
     {
         // 只有在自定义标题栏非按钮区域才允许右键菜单显示
         // 检查点击位置是否在标题栏内
@@ -888,7 +888,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     /// <summary>
     /// 属性变化事件处理程序
     /// </summary>
-    private void MainWindow_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    private void MainWindow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(TitleText) && _taskbarManager != null)
         {
@@ -1491,7 +1491,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     }
 
     // 隐藏至托盘
-    private void HideToTray(object sender, RoutedEventArgs e)
+    private void HideToTray(object? sender, RoutedEventArgs e)
     {
         // 使用TaskbarManager的HideWindowToTray方法隐藏窗口到托盘
         // 该方法会正确设置_windowMinimizedToTray标志
@@ -1501,7 +1501,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         _taskbarManager?.ShowNotification("应用已最小化到托盘", "点击托盘图标可恢复窗口");
     }
 
-    private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+    private void Window_MouseDown(object? sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed)
         {
@@ -1613,12 +1613,12 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
     }
 
-    private void CloseWindow(object sender, RoutedEventArgs e)
+    private void CloseWindow(object? sender, RoutedEventArgs e)
     {
         this.Close();
     }
 
-    private void HideToTrayButton_Loaded(object sender, RoutedEventArgs e)
+    private void HideToTrayButton_Loaded(object? sender, RoutedEventArgs e)
     {
         if (sender is Button button)
         {
@@ -1638,7 +1638,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
     }
 
-    private void MinimizeWindowButton_Loaded(object sender, RoutedEventArgs e)
+    private void MinimizeWindowButton_Loaded(object? sender, RoutedEventArgs e)
     {
         if (sender is Button button)
         {
@@ -1698,7 +1698,7 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         }
     }
 
-    private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         try
         {

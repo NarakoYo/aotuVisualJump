@@ -590,7 +590,7 @@ namespace ImageRecognitionApp.Assets.UI
                         dm.dmSize = (short)Marshal.SizeOf(typeof(DEVMODE));
 
                         // 获取当前显示设置
-                        if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, ref dm))
+                        if (dd.DeviceName != null && EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, ref dm))
                         {
                             // 计算刷新率
                             int refreshRate = dm.dmDisplayFrequency;
@@ -614,13 +614,16 @@ namespace ImageRecognitionApp.Assets.UI
                             string deviceKey = null;
 
                             // 尝试通过设备名称匹配
-                            foreach (var key in monitorInfoDict.Keys)
+                            if (monitorInfoDict != null && dd.DeviceName != null)
                             {
-                                if (key.Contains(dd.DeviceName.Replace(@"\\\", @"\\"))) // 处理路径中的反斜杠
+                                foreach (var key in monitorInfoDict.Keys)
                                 {
-                                    deviceKey = key;
-                                    monitorInfo = monitorInfoDict[key];
-                                    break;
+                                    if (key != null && key.Contains(dd.DeviceName.Replace(@"\\\", @"\\"))) // 处理路径中的反斜杠
+                                    {
+                                        deviceKey = key;
+                                        monitorInfo = monitorInfoDict[key];
+                                        break;
+                                    }
                                 }
                             }
 
@@ -771,22 +774,22 @@ namespace ImageRecognitionApp.Assets.UI
             [MarshalAs(UnmanagedType.U4)]
             public int cb;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string DeviceName;
+            public string? DeviceName;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string DeviceString;
+            public string? DeviceString;
             [MarshalAs(UnmanagedType.U4)]
             public int StateFlags;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string DeviceID;
+            public string? DeviceID;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string DeviceKey;
+            public string? DeviceKey;
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         private struct DEVMODE
         {
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string dmDeviceName;
+            public string? dmDeviceName;
             public short dmSpecVersion;
             public short dmDriverVersion;
             public short dmSize;
@@ -802,7 +805,7 @@ namespace ImageRecognitionApp.Assets.UI
             public short dmTTOption;
             public short dmCollate;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string dmFormName;
+            public string? dmFormName;
             public short dmLogPixels;
             public int dmBitsPerPel;
             public int dmPelsWidth;
@@ -1667,7 +1670,7 @@ namespace ImageRecognitionApp.Assets.UI
         /// </summary>
         /// <param name="sender">事件发送者</param>
         /// <param name="e">事件参数</param>
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        private void CloseButton_Click(object? sender, RoutedEventArgs e)
         {
             this.Close();
         }

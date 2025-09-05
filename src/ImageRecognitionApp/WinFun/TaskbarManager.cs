@@ -33,7 +33,8 @@ namespace ImageRecognitionApp.WinFun
         private ContextMenu? _contextMenu;           // 右键上下文菜单
         private HwndSource? _hwndSource;             // 窗口源对象，用于消息处理
         private bool _isTrayIconVisible = false;     // 托盘图标可见状态
-        private bool _isWindowMinimizedToTray = false; // 窗口是否最小化到托盘
+        // 不再使用此字段，而是直接基于窗口状态判断
+        // private bool _isWindowMinimizedToTray = false; // 窗口是否最小化到托盘
         private ITaskbarList3? _taskbarList3;         // 任务栏列表3接口实例，用于任务栏进度条
         private readonly bool _showTrayIconInitially = false; // 是否在初始化时显示托盘图标
         
@@ -436,11 +437,16 @@ namespace ImageRecognitionApp.WinFun
             {
                 if (Environment.OSVersion.Version.Major >= 6)
                 { // Windows Vista及以上版本支持任务栏进度条
-                    _taskbarList3 = (ITaskbarList3)Activator.CreateInstance(Type.GetTypeFromCLSID(CLSID_TaskbarList));
-                    if (_taskbarList3 != null)
+                    Type taskbarListType = Type.GetTypeFromCLSID(CLSID_TaskbarList);
+                    if (taskbarListType != null)
                     {
-                        _taskbarList3.HrInit();
-                        LogMessage("TaskbarManager: 任务栏进度条接口已初始化");
+                        object instance = Activator.CreateInstance(taskbarListType);
+                        if (instance is ITaskbarList3 taskbarList3)
+                        {
+                            _taskbarList3 = taskbarList3;
+                            _taskbarList3.HrInit();
+                            LogMessage("TaskbarManager: 任务栏进度条接口已初始化");
+                        }
                     }
                 }
                 else
@@ -491,9 +497,9 @@ namespace ImageRecognitionApp.WinFun
                     // LogMessage($"TaskbarManager: 设置任务栏进度条状态为: {state}");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // LogMessage($"TaskbarManager: 设置任务栏进度条状态错误: {ex.Message}");
+                // LogMessage($"TaskbarManager: 设置任务栏进度条状态错误");
             }
         }
 
@@ -512,9 +518,9 @@ namespace ImageRecognitionApp.WinFun
                     // LogMessage($"TaskbarManager: 设置任务栏进度条值: {currentValue}/{maximumValue}");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // LogMessage($"TaskbarManager: 设置任务栏进度条值错误: {ex.Message}");
+                // LogMessage($"TaskbarManager: 设置任务栏进度条值错误");
             }
         }
 
@@ -1303,7 +1309,7 @@ namespace ImageRecognitionApp.WinFun
         /// <summary>
         /// 显示/隐藏窗口菜单项点击处理
         /// </summary>
-        private void OnShowHideWindowMenuItemClick(object sender, RoutedEventArgs e)
+        private void OnShowHideWindowMenuItemClick(object? sender, RoutedEventArgs e)
         {
             try
             {
@@ -1315,7 +1321,6 @@ namespace ImageRecognitionApp.WinFun
                     {
                         // 隐藏窗口
                         mainWindow.Visibility = Visibility.Hidden;
-                        _isWindowMinimizedToTray = true;
                         LogMessage("TaskbarManager: 隐藏窗口");
                     }
                     else
@@ -1333,7 +1338,6 @@ namespace ImageRecognitionApp.WinFun
                             mainWindow.WindowState = WindowState.Normal;
                             mainWindow.ShowInTaskbar = true;
                             mainWindow.Activate();
-                            _isWindowMinimizedToTray = false;
                             LogMessage("TaskbarManager: 显示并激活窗口");
                         }
                     }
@@ -1348,7 +1352,7 @@ namespace ImageRecognitionApp.WinFun
         /// <summary>
         /// 最小化窗口菜单项点击处理
         /// </summary>
-        private void OnMinimizeWindowMenuItemClick(object sender, RoutedEventArgs e)
+        private void OnMinimizeWindowMenuItemClick(object? sender, RoutedEventArgs e)
         {
             try
             {
@@ -1376,7 +1380,7 @@ namespace ImageRecognitionApp.WinFun
         /// <summary>
         /// 隐藏到托盘菜单项点击处理
         /// </summary>
-        private void OnHideToTrayMenuItemClick(object sender, RoutedEventArgs e)
+        private void OnHideToTrayMenuItemClick(object? sender, RoutedEventArgs e)
         {
             try
             {
@@ -1387,7 +1391,6 @@ namespace ImageRecognitionApp.WinFun
                     mainWindow.WindowState = WindowState.Minimized;
                     mainWindow.Visibility = Visibility.Hidden;
                     mainWindow.ShowInTaskbar = false;
-                    _isWindowMinimizedToTray = true;
                     LogMessage("TaskbarManager: 将窗口隐藏到托盘");
 
                     // 播放最小化动画
@@ -1407,7 +1410,7 @@ namespace ImageRecognitionApp.WinFun
         /// <summary>
         /// 退出应用菜单项点击处理
         /// </summary>
-        private void OnExitApplicationMenuItemClick(object sender, RoutedEventArgs e)
+        private void OnExitApplicationMenuItemClick(object? sender, RoutedEventArgs e)
         {
             try
             {

@@ -388,7 +388,7 @@ namespace ImageRecognitionApp.Assets.UICode
         #endregion
 
         #region 计时器处理
-        private void RecordingTimer_Tick(object sender, EventArgs e)
+        private void RecordingTimer_Tick(object? sender, EventArgs e)
         {
             if (!IsPaused)
             {

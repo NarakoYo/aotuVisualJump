@@ -20,7 +20,6 @@ public partial class App : Application
     private DispatcherTimer? _performanceMonitorTimer;
     private PerformanceCounter? _cpuCounter;
     private PerformanceCounter? _memoryCounter;
-    private bool _isInStandbyMode = false;
     private const int STANDBY_CHECK_INTERVAL_MS = 5000; // 5秒检查一次系统待机状态
     
     // 全局性能管理器
@@ -59,20 +58,6 @@ public partial class App : Application
 
         // 记录程序启动标记
         LogManager.Instance.WriteStartupShutdownLog(true);
-
-        // 单实例检查
-        try
-        {
-            JsonLocalizationHelper.Instance.Initialize();
-            // Console.WriteLine("本地化工具初始化成功");
-            // LogMessage("本地化工具初始化成功");
-        }
-        catch (Exception ex)
-        {
-            // Console.WriteLine($"本地化工具初始化失败: {ex.Message}");
-            LogMessage($"本地化工具初始化失败: {ex.Message}");
-            LogException(ex);
-        }
 
         // 单实例检查
         if (SingleInstanceChecker.CheckIfAlreadyRunning())
@@ -154,14 +139,14 @@ public partial class App : Application
         return false;
     }
 
-    private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    private void App_DispatcherUnhandledException(object? sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
         LogException(e.Exception);
         e.Handled = true;
         Shutdown(1);
     }
 
-    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    private void CurrentDomain_UnhandledException(object? sender, UnhandledExceptionEventArgs e)
     {
         if (e.ExceptionObject is Exception ex)
         {
@@ -304,18 +289,16 @@ public partial class App : Application
     /// <summary>
     /// 系统电源模式变化事件处理
     /// </summary>
-    private void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
+    private void SystemEvents_PowerModeChanged(object? sender, PowerModeChangedEventArgs e)
     {
         switch (e.Mode)
         {
             case PowerModes.Resume:
                 LogMessage("系统从待机状态恢复");
-                _isInStandbyMode = false;
                 PerformanceManager.ExitLowPowerMode();
                 break;
             case PowerModes.Suspend:
                 LogMessage("系统进入待机状态");
-                _isInStandbyMode = true;
                 PerformanceManager.EnterLowPowerMode();
                 break;
             case PowerModes.StatusChange:

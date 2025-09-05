@@ -64,7 +64,7 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 // 获取本地化文本
-                string warningMessage = GetLocalizedString("20001");
+                string? warningMessage = GetLocalizedString("20001");
                 if (string.IsNullOrEmpty(warningMessage))
                 {
                     warningMessage = "程序已经在运行中，无法重复启动。";
@@ -72,7 +72,7 @@ namespace ImageRecognitionApp.WinFun
 
                 // 创建提示窗口
                 // 获取弹窗标题本地化文本
-                string windowTitle = GetLocalizedString("20002");
+                string? windowTitle = GetLocalizedString("20002");
                 if (string.IsNullOrEmpty(windowTitle))
                 {
                     windowTitle = "提示";
@@ -159,7 +159,7 @@ namespace ImageRecognitionApp.WinFun
                 };
 
                 // 获取确认按钮文本
-                string okButtonText = GetLocalizedString("20003");
+                string? okButtonText = GetLocalizedString("20003");
                 if (string.IsNullOrEmpty(okButtonText))
                 {
                     okButtonText = "确定";
@@ -250,7 +250,7 @@ namespace ImageRecognitionApp.WinFun
         /// <summary>
         /// 主窗口点击事件处理程序
         /// </summary>
-        private static void MainWindow_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        private static void MainWindow_PreviewMouseDown(object? sender, MouseButtonEventArgs e)
         {
             // 检查弹窗是否存在且可见
             if (_warningWindow != null && _warningWindow.IsVisible)
@@ -295,7 +295,7 @@ namespace ImageRecognitionApp.WinFun
         /// </summary>
         /// <param name="signId">字符串标识</param>
         /// <returns>本地化后的字符串</returns>
-        private static string GetLocalizedString(string signId)
+        private static string? GetLocalizedString(string signId)
         {
             try
             {

@@ -228,9 +228,12 @@ namespace ImageRecognitionApp.Assets.UI
         /// <param name="contentPanel">内容面板</param>
         private static void HideAllChildren(Panel contentPanel)
         {
-            foreach (UIElement child in contentPanel.Children)
+            if (contentPanel == null)
+                return;
+
+            foreach (object childObj in contentPanel.Children)
             {
-                if (child != null)
+                if (childObj is UIElement child)
                 {
                     child.Visibility = Visibility.Collapsed;
                 }

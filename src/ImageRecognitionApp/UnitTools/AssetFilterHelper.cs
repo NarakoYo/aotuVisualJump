@@ -101,7 +101,7 @@ namespace ImageRecognitionApp.UnitTools
         /// </summary>
         /// <param name="configFilePath">配置文件路径</param>
         /// <returns>资产配置对象</returns>
-        private static AssetConfig ParseAssetConfig(string configFilePath)
+        private static AssetConfig? ParseAssetConfig(string configFilePath)
         {
             if (!File.Exists(configFilePath))
             {
@@ -135,7 +135,7 @@ namespace ImageRecognitionApp.UnitTools
                 // 扫描所有C#代码文件
                 var csFiles = Directory.GetFiles(projectDirectory, "*.cs", SearchOption.AllDirectories);
                 
-                // 匹配AssetHelper.Instance.GetXXX方法调用中的整数sign_id
+                // 匹配AssetHelper.Instance.GetXXX方法调用中的整数sign_id.
                 string signIdPattern = @"AssetHelper\.Instance\.Get[A-Za-z]+\(\s*(\d+)\s*\)";
                 
                 foreach (string file in csFiles)

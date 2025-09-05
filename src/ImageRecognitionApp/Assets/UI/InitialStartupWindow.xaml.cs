@@ -504,7 +504,7 @@ namespace ImageRecognitionApp.Assets.UI
         /// </summary>
         /// <param name="sender">事件发送者</param>
         /// <param name="e">鼠标事件参数</param>
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void Window_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
         {
             // try
             // {

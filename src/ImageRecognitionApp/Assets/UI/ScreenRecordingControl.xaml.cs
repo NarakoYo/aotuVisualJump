@@ -106,7 +106,7 @@ namespace ImageRecognitionApp.Assets.UI
             }
         }
 
-        private void CaptureTimer_Tick(object sender, EventArgs e)
+        private void CaptureTimer_Tick(object? sender, EventArgs e)
         {
             try
             {
@@ -220,7 +220,7 @@ namespace ImageRecognitionApp.Assets.UI
         /// </summary>
         private void MainContentCanvas_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (_isDragging && MainContentCanvas.Children.Count > 0)
+            if (_isDragging && MainContentCanvas != null && MainContentCanvas.Children.Count > 0)
             {
                 // 获取当前鼠标位置
                 System.Windows.Point currentMousePosition = e.GetPosition(MainContentCanvas);

@@ -314,13 +314,13 @@ namespace ImageRecognitionApp.WinFun
         _animationTask = Task.Run(() =>
         {
             // 获取窗口图标
-            Icon originalIcon = null;
+            Icon? originalIcon = null;
             IntPtr iconHandle = IntPtr.Zero;
 
             try
             {
                 // 获取原始图标
-                var window = Application.Current.MainWindow;
+                var window = Application.Current?.MainWindow;
                 if (window?.Icon != null)
                 {
                     var bitmapSource = window.Icon as BitmapSource;
@@ -336,7 +336,10 @@ namespace ImageRecognitionApp.WinFun
                             using (var bmp = new System.Drawing.Bitmap(stream))
                             {
                                 originalIcon = System.Drawing.Icon.FromHandle(bmp.GetHicon());
-                                iconHandle = originalIcon.Handle;
+                                if (originalIcon != null)
+                                {
+                                    iconHandle = originalIcon.Handle;
+                                }
                             }
                         }
                     }
@@ -542,7 +545,7 @@ namespace ImageRecognitionApp.WinFun
         _animationTask = Task.Run(() =>
         {
             // 获取窗口图标
-            Icon originalIcon = null;
+            Icon? originalIcon = null;
             IntPtr iconHandle = IntPtr.Zero;
 
             try
