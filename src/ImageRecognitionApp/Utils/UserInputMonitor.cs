@@ -174,13 +174,17 @@ namespace ImageRecognitionApp.Utils
         /// </summary>
         private void InitializeMonitor()
         {
-            // 初始化钩子和监控组件
+            // 仅初始化回调函数，不立即注册钩子
             _keyboardHookCallback = KeyboardHookCallbackImplementation;
             _mouseHookCallback = MouseHookCallbackImplementation;
 
-            // 注册钩子
-            UpdateKeyboardHook();
-            UpdateMouseHook();
+            // 不立即注册钩子，等待StartAllMonitoring被调用时再注册
+            // 设置初始状态为禁用，避免UpdateKeyboardHook和UpdateMouseHook立即安装钩子
+            _isKeyboardMonitoringEnabled = false;
+            _isMouseMonitoringEnabled = false;
+            _isAudioMonitoringEnabled = false;
+            _isCameraMonitoringEnabled = false;
+            _isComponentClickMonitoringEnabled = false;
         }
 
         /// <summary>

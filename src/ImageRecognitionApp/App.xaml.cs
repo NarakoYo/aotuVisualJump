@@ -85,24 +85,43 @@ public partial class App : Application
         UserInputMonitor = UserInputMonitor.Instance;
         LogMessage("用户输入监控器已初始化，但等待主界面加载后再启动");
         
-        // 初始化系统资源监控
-        InitializeSystemResourceMonitoring();
+        // 注册MainWindowLoaded事件，用于延迟初始化重量级组件
+        MainWindowLoaded += (sender, e) =>
+        {
+            try
+            {
+                // 在主界面加载完成后再初始化系统资源监控的完整功能
+                CheckMemoryStatusAfterMainWindowLoaded();
+                LogMessage("主界面加载完成，已初始化系统资源监控完整功能");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"初始化系统资源监控完整功能时出错: {ex.Message}");
+            }
+        };
+        
+        // 初始化轻量级的系统资源监控
+        InitializeLightweightSystemMonitoring();
         
         // 注册电源状态变化事件
         SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
         
-        // 启动待机状态检测
+        // 启动轻量级的待机状态检测
         StartStandbyDetection();
         
-        // 初始化进程（设置进程名称和图标）
-        try
+        // 将进程初始化移到MainWindowLoaded事件中，避免启动时的卡顿
+        MainWindowLoaded += (sender, e) =>
         {
-            ProcessHelper.InitializeProcess();
-        }
-        catch (Exception ex)
-        {
-            LogMessage($"初始化进程时出错: {ex.Message}");
-            LogException(ex);
+            try
+            {
+                ProcessHelper.InitializeProcess();
+                LogMessage("主界面加载完成，已初始化进程设置");
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"初始化进程时出错: {ex.Message}");
+                LogException(ex);
+            }
         };
     }
     
@@ -171,9 +190,34 @@ public partial class App : Application
     }
     
     /// <summary>
-    /// 初始化系统资源监控
+    /// 初始化轻量级的系统资源监控（仅创建必要的计数器，延迟其他操作）
     /// </summary>
-    private void InitializeSystemResourceMonitoring()
+    private void InitializeLightweightSystemMonitoring()
+    {
+        try
+        {
+            // 只创建内存性能计数器，用于基本的内存监控
+            _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+            
+            // 创建但不启动监控定时器
+            _performanceMonitorTimer = new DispatcherTimer();
+            _performanceMonitorTimer.Interval = TimeSpan.FromSeconds(10); // 每10秒检查一次
+            _performanceMonitorTimer.Tick += PerformanceMonitorTimer_Tick;
+            
+            // 只进行最基本的内存状态检查，不执行复杂的优化
+            float availableMemory = _memoryCounter.NextValue();
+            LogMessage($"应用程序启动，初始可用内存: {availableMemory:F2} MB");
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"初始化轻量级系统资源监控时出错: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 在主界面加载完成后检查内存状态
+    /// </summary>
+    private void CheckMemoryStatusAfterMainWindowLoaded()
     {
         try
         {
@@ -181,44 +225,18 @@ public partial class App : Application
             _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
             _cpuCounter.NextValue(); // 第一次调用返回0，需要预热
             
-            // 创建内存性能计数器
-            _memoryCounter = new PerformanceCounter("Memory", "Available MBytes");
+            // 启动监控定时器
+            _performanceMonitorTimer?.Start();
             
-            // 创建并启动监控定时器 - 降低监控频率以减少资源消耗
-            _performanceMonitorTimer = new DispatcherTimer();
-            _performanceMonitorTimer.Interval = TimeSpan.FromSeconds(10); // 每10秒检查一次，而不是5秒
-            _performanceMonitorTimer.Tick += PerformanceMonitorTimer_Tick;
-            _performanceMonitorTimer.Start();
-            
-            // 应用启动时立即检查内存状态
-            CheckMemoryStatusOnStartup();
-            
-            LogMessage("系统资源监控已初始化");
-        }
-        catch (Exception ex)
-        {
-            LogMessage($"初始化系统资源监控时出错: {ex.Message}");
-        }
-    }
-    
-    /// <summary>
-    /// 应用启动时检查内存状态，实施初始内存优化策略
-    /// </summary>
-    private void CheckMemoryStatusOnStartup()
-    {
-        try
-        {
-            // 立即获取当前可用内存
+            // 检查内存状态并执行优化
             float availableMemory = _memoryCounter.NextValue();
-            
-            // 如果可用内存低于阈值，启动时就应用低功耗模式
             const float LOW_MEMORY_THRESHOLD_MB = 1024; // 1GB
             if (availableMemory < LOW_MEMORY_THRESHOLD_MB)
             {
-                LogMessage($"系统内存较低({availableMemory:F2} MB)，启动时应用严格内存优化策略");
+                LogMessage($"系统内存较低({availableMemory:F2} MB)，应用严格内存优化策略");
                 PerformanceManager.EnterLowPowerMode();
                 
-                // 立即执行垃圾回收
+                // 执行垃圾回收
                 GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
                 GC.WaitForPendingFinalizers();
             }
@@ -228,9 +246,11 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            LogMessage($"检查启动内存状态时出错: {ex.Message}");
+            LogMessage($"检查内存状态时出错: {ex.Message}");
         }
     }
+    
+
     
     /// <summary>
     /// 配置进程内存限制，帮助操作系统更好地管理应用内存
@@ -288,17 +308,25 @@ public partial class App : Application
         // 初始化最后用户活动时间
         PerformanceManager.UpdateLastUserActivityTime();
         
-        // 启动键盘和鼠标钩子来检测用户活动
-        PerformanceManager.StartUserActivityMonitoring();
-        
-        // 注册MainWindowLoaded事件处理程序，确保在主界面加载完成后才注册UserInputMonitor的事件处理程序
+        // 注册MainWindowLoaded事件处理程序，确保在主界面加载完成后才进行重量级初始化
         MainWindowLoaded += (sender, e) =>
         {
-            // 注册UserInputMonitor的事件处理程序以更新用户活动时间
-            UserInputMonitor.KeyPressed += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
-            UserInputMonitor.MouseClicked += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
-            UserInputMonitor.MouseMoved += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
-            UserInputMonitor.MouseWheel += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+            try
+            {
+                // 在主界面加载完成后才启动键盘和鼠标钩子来检测用户活动
+                PerformanceManager.StartUserActivityMonitoring();
+                LogMessage("主界面加载完成，已启动用户活动监控");
+                
+                // 注册UserInputMonitor的事件处理程序以更新用户活动时间
+                UserInputMonitor.Instance.KeyPressed += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+                UserInputMonitor.Instance.MouseClicked += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+                UserInputMonitor.Instance.MouseMoved += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+                UserInputMonitor.Instance.MouseWheel += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"启动用户活动监控时出错: {ex.Message}");
+            }
         };
     }
     
@@ -342,7 +370,7 @@ public partial class App : Application
         _memoryCounter?.Dispose();
         
         // 停止用户活动监控
-        PerformanceManager?.StopUserActivityMonitoring();
+        // 只使用UserInputMonitor来停止监控，避免重复卸载钩子
         UserInputMonitor?.StopAllMonitoring();
         
         // 注销电源事件
@@ -353,6 +381,9 @@ public partial class App : Application
 
     // 主窗口加载完成事件
     private event EventHandler? MainWindowLoaded;
+    
+    // 标记主窗口是否已经完成加载和初始化
+    private bool _mainWindowLoaded = false;
 
     // 在应用程序中重写OnActivated方法，确保主窗口激活时设置图标
     protected override void OnActivated(EventArgs e)
@@ -362,7 +393,15 @@ public partial class App : Application
         // 确保应用程序不在关闭过程中，避免在程序已决定退出时触发事件导致异常
         if (!this.ShutdownMode.HasFlag(ShutdownMode.OnExplicitShutdown) && !IsShuttingDown)
         {
-            MainWindowLoaded?.Invoke(this, EventArgs.Empty);
+            // 只在主窗口第一次激活时触发初始化事件
+            if (!_mainWindowLoaded)
+            {
+                _mainWindowLoaded = true;
+                MainWindowLoaded?.Invoke(this, EventArgs.Empty);
+                
+                // 初始化完成后进行内存状态检查
+                CheckMemoryStatusAfterMainWindowLoaded();
+            }
             
             // 用户活动检测 - 检查PerformanceManager是否为null
             PerformanceManager?.UpdateLastUserActivityTime();
