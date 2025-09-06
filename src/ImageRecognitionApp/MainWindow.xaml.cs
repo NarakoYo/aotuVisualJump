@@ -734,9 +734,20 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             ToolButtonIconPath = assetHelper.GetAssetPath(10013);
             CollapseButtonIconPath = assetHelper.GetAssetPath(10014);
 
-            // 设置启动按钮默认选中状态
+            // 设置启动按钮默认选中状态并在主界面初始化完成后启动用户输入监控
             this.Loaded += (sender, e) =>
             {
+                // 启动用户输入监控器
+                try
+                {
+                    (App.Current as App)?.UserInputMonitor?.StartAllMonitoring();
+                    (App.Current as App)?.LogMessage("主界面初始化完成，已启动用户输入监控器");
+                }
+                catch (Exception ex)
+                {
+                    (App.Current as App)?.LogMessage($"启动用户输入监控器时出错: {ex.Message}");
+                }
+
                 if (LaunchButton != null && LaunchButton.Template != null)
                 {
                     var border = LaunchButton.Template.FindName("border", LaunchButton) as Border;
@@ -1206,16 +1217,19 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
         InputBindings.Add(new InputBinding(
             new RelayCommand(param => StartStopRecording(null, null)),
             new KeyGesture(Key.F9, ModifierKeys.None)));
+        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "快捷键初始化 - F9: 开始/停止录制");
 
         // F5: 执行脚本
         InputBindings.Add(new InputBinding(
             new RelayCommand(param => ExecuteScript(null, null)),
             new KeyGesture(Key.F5, ModifierKeys.None)));
+        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "快捷键初始化 - F5: 执行脚本");
 
         // F10: 暂停录制
         InputBindings.Add(new InputBinding(
             new RelayCommand(param => PauseRecording(null, null)),
             new KeyGesture(Key.F10, ModifierKeys.None)));
+        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "快捷键初始化 - F10: 暂停录制");
     }
 
     /// <summary>
@@ -1234,6 +1248,12 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
     /// </summary>
     private void StartStopRecording(object? sender, RoutedEventArgs? e)
     {
+        // 记录快捷键F9触发
+        if (sender == null && e == null)
+        {
+            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "快捷键监控 - 快捷键F9触发: 切换录制状态");
+        }
+        
         if (_isRecording)
         {
             StopRecording();
@@ -1255,6 +1275,9 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
                 _recordingStartTime = DateTime.Now;
                 _lastActivityTime = DateTime.Now;
 
+                // 记录开始录制
+                LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "录制 - 开始录制: 时间=" + _recordingStartTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                
                 // 任务栏通知和动画
                 _taskbarManager?.ShowNotification("开始录制", "脚本录制已开始");
                 _taskbarAnimation?.StartFlashAnimation(0, 1000);  // 无限闪烁，间隔1秒
@@ -1375,6 +1398,9 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
             {
                 _isRecording = false;
 
+                // 记录停止录制
+                LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "录制 - 停止录制: 录制时长=" + (DateTime.Now - _recordingStartTime).TotalSeconds.ToString("0.00") + "秒");
+                
                 // 停止任务栏动画并显示通知
                 _taskbarAnimation?.StopFlashAnimation();
                 _taskbarManager?.ShowNotification("录制完成", "脚本已录制完成并保存");
@@ -1402,9 +1428,19 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
     private void PauseRecording(object? sender, RoutedEventArgs? e)
     {
+        // 记录快捷键F10触发
+        if (sender == null && e == null)
+        {
+            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "快捷键监控 - 快捷键F10触发: 切换录制暂停状态");
+        }
+        
         if (_isRecording && _recordingTimer != null)
         {
             _recordingTimer.IsEnabled = !_recordingTimer.IsEnabled;
+            
+            // 记录暂停/继续状态
+            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                "录制 - " + (_recordingTimer.IsEnabled ? "继续录制" : "暂停录制"));
         }
     }
     private string? _latestScriptPath; // 重新添加脚本路径变量
@@ -1511,6 +1547,12 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
     private void ExecuteScript(object? sender, RoutedEventArgs? e)
     {
+        // 记录快捷键F5触发
+        if (sender == null && e == null)
+        {
+            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "快捷键监控 - 快捷键F5触发: 执行脚本");
+        }
+        
         if (_isRecording)
         {
             (App.Current as App)?.LogMessage("录制中，无法执行脚本");
@@ -1520,10 +1562,14 @@ public partial class MainWindow : Window, System.ComponentModel.INotifyPropertyC
 
         if (_isExecuting)
         {
+            LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "脚本执行 - 停止脚本执行");
             StopScriptExecution();
             return;
         }
 
+        // 记录开始执行脚本
+        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "脚本执行 - 开始执行脚本");
+        
         // 显示执行开始通知
         _taskbarManager?.ShowNotification("开始执行", "脚本执行已开始");
         _taskbarAnimation?.StartFlashAnimation(0, 500);  // 快速闪烁

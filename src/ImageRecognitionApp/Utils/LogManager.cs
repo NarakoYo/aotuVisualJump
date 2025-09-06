@@ -21,7 +21,7 @@ namespace ImageRecognitionApp.Utils
         private TimeZoneInfo _timeZone;
         private int _maxFileSizeKB = 1024; // 默认最大文件大小1MB
         private int _maxFilesPerDay = 10;  // 默认每天最多10个文件
-        private LogLevel _minLogLevel = LogLevel.Info; // 默认日志级别
+        private LogLevel _minLogLevel = LogLevel.Debug; // 默认日志级别改为Debug，确保所有日志都能被记录
         private string _fileNameFormat = "yyyy-MM-dd-HH"; // 默认文件名格式
         private readonly object _fileLock = new object(); // 文件写入锁
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
@@ -82,10 +82,11 @@ namespace ImageRecognitionApp.Utils
         #endregion
 
         /// <summary>
-        /// 日志严重类型枚举
+        /// 日志严重类型枚举（级别顺序：Debug < Info < Warning < Error < Fatal）
         /// </summary>
         public enum LogLevel
         {
+            Debug,
             Info,
             Warning,
             Error,

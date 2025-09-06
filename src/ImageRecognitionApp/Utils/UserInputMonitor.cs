@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -43,6 +44,12 @@ namespace ImageRecognitionApp.Utils
         private bool _isMouseMonitoringEnabled = true;
         private bool _isAudioMonitoringEnabled = false;
         private bool _isCameraMonitoringEnabled = false;
+
+        // 鼠标按钮状态跟踪
+        private bool _isLeftButtonPressed = false;
+        private bool _isRightButtonPressed = false;
+        private Point _lastMousePosition = new Point(0, 0);
+        private bool _isDragging = false;
 
         // 最后输入时间戳
         private DateTime _lastInputTime = DateTime.Now;
@@ -142,6 +149,22 @@ namespace ImageRecognitionApp.Utils
             }
         }
 
+        /// <summary>
+        /// 是否启用组件点击监控
+        /// </summary>
+        public bool IsComponentClickMonitoringEnabled
+        {
+            get => _isComponentClickMonitoringEnabled;
+            set
+            {
+                if (_isComponentClickMonitoringEnabled != value)
+                {
+                    _isComponentClickMonitoringEnabled = value;
+                }
+            }
+        }
+        private bool _isComponentClickMonitoringEnabled = false;
+
         #endregion
 
         #region 初始化和清理方法
@@ -169,6 +192,8 @@ namespace ImageRecognitionApp.Utils
             IsMouseMonitoringEnabled = true;
             IsAudioMonitoringEnabled = true;
             IsCameraMonitoringEnabled = true;
+            // 默认不启用组件点击监控，因为它会产生大量日志
+            IsComponentClickMonitoringEnabled = false;
         }
 
         /// <summary>
@@ -178,6 +203,7 @@ namespace ImageRecognitionApp.Utils
         {
             IsKeyboardMonitoringEnabled = false;
             IsMouseMonitoringEnabled = false;
+            IsComponentClickMonitoringEnabled = false;
             IsAudioMonitoringEnabled = false;
             IsCameraMonitoringEnabled = false;
         }
@@ -268,11 +294,19 @@ namespace ImageRecognitionApp.Utils
                 // 处理按键按下事件
                 if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
                 {
+                    // 记录键盘按键按下日志
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                        $"键盘监控 - 按键按下: Key={key}, VKCode={vkCode}");
+                    
                     KeyPressed?.Invoke(this, new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(Application.Current.MainWindow), 0, key));
                 }
                 // 处理按键释放事件
                 else if (wParam == (IntPtr)WM_KEYUP || wParam == (IntPtr)WM_SYSKEYUP)
                 {
+                    // 记录键盘按键释放日志
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                        $"键盘监控 - 按键释放: Key={key}, VKCode={vkCode}");
+                    
                     KeyReleased?.Invoke(this, new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(Application.Current.MainWindow), 0, key));
                 }
             }
@@ -291,16 +325,26 @@ namespace ImageRecognitionApp.Utils
         {
             if (_isMouseMonitoringEnabled && _mouseHookId == IntPtr.Zero)
             {
-                using (Process curProcess = Process.GetCurrentProcess())
-                using (ProcessModule curModule = curProcess.MainModule)
+                try
                 {
-                    _mouseHookId = SetWindowsHookEx(WH_MOUSE_LL, _mouseHookCallback, GetModuleHandle(curModule.ModuleName), 0);
+                    using (Process curProcess = Process.GetCurrentProcess())
+                    using (ProcessModule curModule = curProcess.MainModule)
+                    {
+                        _mouseHookId = SetWindowsHookEx(WH_MOUSE_LL, _mouseHookCallback, GetModuleHandle(curModule.ModuleName), 0);
+                        // 添加钩子初始化成功的日志
+                        LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "鼠标监控 - 钩子初始化成功");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Error, $"鼠标监控 - 钩子初始化失败: {ex.Message}");
                 }
             }
             else if (!_isMouseMonitoringEnabled && _mouseHookId != IntPtr.Zero)
             {
                 UnhookWindowsHookEx(_mouseHookId);
                 _mouseHookId = IntPtr.Zero;
+                LogManager.Instance.WriteLog(LogManager.LogLevel.Info, "鼠标监控 - 钩子已移除");
             }
         }
 
@@ -324,12 +368,44 @@ namespace ImageRecognitionApp.Utils
                 {
                     MouseButtonState leftButton = MouseButtonState.Released;
                     MouseButtonState rightButton = MouseButtonState.Released;
+                    string buttonName = "未知";
+                    string actionName = "点击";
 
                     if (wParam == (IntPtr)WM_LBUTTONDOWN)
+                    {
                         leftButton = MouseButtonState.Pressed;
+                        buttonName = "左键";
+                        actionName = "按下";
+                        _isLeftButtonPressed = true;
+                        _isDragging = false;
+                    }
                     else if (wParam == (IntPtr)WM_RBUTTONDOWN)
+                    {
                         rightButton = MouseButtonState.Pressed;
+                        buttonName = "右键";
+                        actionName = "按下";
+                        _isRightButtonPressed = true;
+                        _isDragging = false;
+                    }
+                    else if (wParam == (IntPtr)WM_LBUTTONUP)
+                    {
+                        buttonName = "左键";
+                        actionName = "释放";
+                        _isLeftButtonPressed = false;
+                        _isDragging = false;
+                    }
+                    else if (wParam == (IntPtr)WM_RBUTTONUP)
+                    {
+                        buttonName = "右键";
+                        actionName = "释放";
+                        _isRightButtonPressed = false;
+                        _isDragging = false;
+                    }
 
+                    // 记录鼠标点击日志
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                        $"鼠标监控 - {buttonName}{actionName}: 位置=({mousePosition.X},{mousePosition.Y})");
+                    
                     // 创建一个基本的MouseEventArgs，并设置必要的属性
                     MouseEventArgs e = new MouseEventArgs(Mouse.PrimaryDevice, 0);
                     
@@ -341,19 +417,41 @@ namespace ImageRecognitionApp.Utils
                     MouseClicked?.Invoke(this, e);
                 }
                 // 处理鼠标移动事件
-                else if (wParam == (IntPtr)WM_MOUSEMOVE)
-                {
-                    // 创建一个基本的MouseEventArgs
-                    MouseEventArgs e = new MouseEventArgs(Mouse.PrimaryDevice, 0);
+                    else if (wParam == (IntPtr)WM_MOUSEMOVE)
+                    {
+                        // 检查是否是长按拖动（按钮按下状态下的移动）
+                        if ((_isLeftButtonPressed || _isRightButtonPressed) &&
+                            (mousePosition.X != _lastMousePosition.X || mousePosition.Y != _lastMousePosition.Y))
+                        {
+                            // 标记为拖动状态
+                            _isDragging = true;
+                            
+                            // 创建一个基本的MouseEventArgs
+                            MouseEventArgs e = new MouseEventArgs(Mouse.PrimaryDevice, 0);
 
-                    MouseMoved?.Invoke(this, e);
-                }
+                            MouseMoved?.Invoke(this, e);
+                        }
+                        else if (!_isLeftButtonPressed && !_isRightButtonPressed)
+                        {
+                            // 普通移动，不做特殊处理但仍然触发事件
+                            MouseEventArgs e = new MouseEventArgs(Mouse.PrimaryDevice, 0);
+                            MouseMoved?.Invoke(this, e);
+                        }
+
+                        // 更新最后鼠标位置
+                        _lastMousePosition = mousePosition;
+                    }
                 // 处理鼠标滚轮事件
                 else if (wParam == (IntPtr)WM_MOUSEWHEEL)
                 {
                     // 获取滚轮增量
                     int delta = Marshal.ReadInt32(lParam, 8);
+                    string direction = delta > 0 ? "向上" : "向下";
 
+                    // 已取消鼠标滚轮日志打印
+                    // LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                    //     $"鼠标监控 - 滚轮{direction}: 增量={delta}");
+                    
                     // 创建一个包含滚轮增量的MouseWheelEventArgs
                     MouseWheelEventArgs e = new MouseWheelEventArgs(Mouse.PrimaryDevice, 0, delta);
                     e.RoutedEvent = UIElement.MouseWheelEvent;
@@ -361,8 +459,11 @@ namespace ImageRecognitionApp.Utils
                     MouseWheel?.Invoke(this, e);
                 }
 
-                // 检测Windows组件点击
-                DetectComponentClick(mousePosition);
+                // 只有在启用组件点击监控时才检测组件点击
+                if (IsComponentClickMonitoringEnabled)
+                {
+                    DetectComponentClick(mousePosition);
+                }
             }
 
             return CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
@@ -385,7 +486,14 @@ namespace ImageRecognitionApp.Utils
                 {
                     string componentName = element.GetType().Name;
                     string componentId = GetElementName(element);
+                    
+                    // 获取组件的Windows属性名称
+                    string windowsProperties = GetWindowsProperties(element);
 
+                    // 记录Windows组件点击日志
+                    LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
+                        $"系统组件监控 - 组件点击: 类型={componentName}, ID={componentId}, Windows属性={windowsProperties}, 位置=({mousePosition.X},{mousePosition.Y})");
+                    
                     // 触发组件点击事件
                     ComponentClicked?.Invoke(this, new ComponentClickedEventArgs(element, componentName, componentId, mousePosition));
                 }
@@ -431,6 +539,42 @@ namespace ImageRecognitionApp.Utils
             catch { }
 
             return "Unknown";
+        }
+
+        /// <summary>
+        /// 获取组件的Windows属性名称
+        /// </summary>
+        private string GetWindowsProperties(object element)
+        {
+            try
+            {
+                if (element is FrameworkElement frameworkElement)
+                {
+                    // 获取FrameworkElement的主要属性
+                    List<string> properties = new List<string>();
+                    
+                    // 添加一些常见的Windows属性
+                    if (!string.IsNullOrEmpty(frameworkElement.Name))
+                        properties.Add($"Name={frameworkElement.Name}");
+                    
+                    if (!string.IsNullOrEmpty(frameworkElement.Uid))
+                        properties.Add($"Uid={frameworkElement.Uid}");
+                    
+                    properties.Add($"Visibility={frameworkElement.Visibility}");
+                    properties.Add($"IsEnabled={frameworkElement.IsEnabled}");
+                    properties.Add($"Width={frameworkElement.Width}");
+                    properties.Add($"Height={frameworkElement.Height}");
+                    
+                    // 检查是否有Tag属性
+                    if (frameworkElement.Tag != null)
+                        properties.Add($"Tag={frameworkElement.Tag}");
+                    
+                    return string.Join(", ", properties);
+                }
+            }
+            catch { }
+
+            return "No Windows properties";
         }
 
         #endregion

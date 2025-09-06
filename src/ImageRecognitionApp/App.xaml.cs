@@ -81,10 +81,9 @@ public partial class App : Application
         // 初始化性能管理器
         PerformanceManager = new PerformanceManager();
         
-        // 初始化用户输入监控器
+        // 初始化用户输入监控器但暂时不启动监控
         UserInputMonitor = UserInputMonitor.Instance;
-        UserInputMonitor.StartAllMonitoring();
-        LogMessage("用户输入监控器已初始化并启动");
+        LogMessage("用户输入监控器已初始化，但等待主界面加载后再启动");
         
         // 初始化系统资源监控
         InitializeSystemResourceMonitoring();
@@ -292,11 +291,15 @@ public partial class App : Application
         // 启动键盘和鼠标钩子来检测用户活动
         PerformanceManager.StartUserActivityMonitoring();
         
-        // 注册UserInputMonitor的事件处理程序以更新用户活动时间
-        UserInputMonitor.KeyPressed += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
-        UserInputMonitor.MouseClicked += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
-        UserInputMonitor.MouseMoved += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
-        UserInputMonitor.MouseWheel += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+        // 注册MainWindowLoaded事件处理程序，确保在主界面加载完成后才注册UserInputMonitor的事件处理程序
+        MainWindowLoaded += (sender, e) =>
+        {
+            // 注册UserInputMonitor的事件处理程序以更新用户活动时间
+            UserInputMonitor.KeyPressed += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+            UserInputMonitor.MouseClicked += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+            UserInputMonitor.MouseMoved += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+            UserInputMonitor.MouseWheel += (sender, e) => PerformanceManager.UpdateLastUserActivityTime();
+        };
     }
     
     /// <summary>
