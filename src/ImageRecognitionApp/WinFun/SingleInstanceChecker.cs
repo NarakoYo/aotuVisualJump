@@ -103,7 +103,8 @@ namespace ImageRecognitionApp.WinFun
                     ResizeMode = ResizeMode.NoResize,
                     ShowInTaskbar = true,
                     WindowStyle = WindowStyle.None, // 无边框窗口，取消关闭按钮
-                    Background = Brushes.White
+                    Background = System.Windows.Media.Brushes.Transparent, // 透明背景，用于实现圆角效果
+                    AllowsTransparency = true // 允许透明
                 };
 
                 // 确保主窗口存在且不是当前窗口
@@ -117,11 +118,21 @@ namespace ImageRecognitionApp.WinFun
                 mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                 mainGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
+                // 添加主内容容器，并设置圆角效果
+                Border mainBorder = new Border
+                {
+                    CornerRadius = new CornerRadius(10),
+                    Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30)),
+                    BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60)),
+                    BorderThickness = new Thickness(1)
+                };
+
                 // 添加标题栏
                 Border titleBorder = new Border
                 {
-                    Background = Brushes.LightGray,
-                    Height = 30
+                    Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(40, 40, 40)),
+                    Height = 30,
+                    CornerRadius = new CornerRadius(10, 10, 0, 0)
                 };
 
                 TextBlock titleText = new TextBlock
@@ -129,7 +140,10 @@ namespace ImageRecognitionApp.WinFun
                     Text = windowTitle,
                     VerticalAlignment = VerticalAlignment.Center,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(5)
+                    Margin = new Thickness(5),
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontSize = 14,
+                    FontWeight = FontWeights.SemiBold
                 };
 
                 titleBorder.Child = titleText;
@@ -155,7 +169,10 @@ namespace ImageRecognitionApp.WinFun
                     Text = warningMessage,
                     TextWrapping = TextWrapping.Wrap,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Bottom
+                    VerticalAlignment = VerticalAlignment.Bottom,
+                    Foreground = System.Windows.Media.Brushes.White,
+                    FontSize = 14,
+                    TextAlignment = TextAlignment.Center
                 };
 
                 // 获取确认按钮文本
@@ -165,14 +182,18 @@ namespace ImageRecognitionApp.WinFun
                     okButtonText = "确定";
                 }
 
-                // 添加确认按钮
+                // 添加确认按钮并设置暗色系样式
                 Button okButton = new Button
                 {
                     Content = okButtonText,
                     Width = 80,
                     Height = 30,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Top
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(50, 50, 50)),
+                    Foreground = System.Windows.Media.Brushes.White,
+                    BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80)),
+                    BorderThickness = new Thickness(1)
                 };
 
                 okButton.Click += (sender, e) => _warningWindow.Close();
@@ -189,8 +210,11 @@ namespace ImageRecognitionApp.WinFun
                 Grid.SetRow(contentGrid, 1);
                 mainGrid.Children.Add(contentGrid);
 
+                // 将mainGrid添加到mainBorder
+                mainBorder.Child = mainGrid;
+                
                 // 设置窗口内容
-                _warningWindow.Content = mainGrid;
+                _warningWindow.Content = mainBorder;
 
                 // 显示模态窗口
                 _warningWindow.ShowDialog();
@@ -273,21 +297,45 @@ namespace ImageRecognitionApp.WinFun
             _warningWindow.Topmost = false;
             _warningWindow.Topmost = true;
 
-            // 改变弹窗背景色以吸引注意
-            Color originalColor = ((SolidColorBrush)_warningWindow.Background).Color;
-            _warningWindow.Background = new SolidColorBrush(Color.FromArgb(255, 255, 240, 240)); // 浅红色
+            // 改变弹窗边框色以吸引注意
+            Border mainBorder = _warningWindow.Content as Border;
+            if (mainBorder != null)
+            {
+                // 保存原始边框颜色
+                Brush originalBorderBrush = mainBorder.BorderBrush;
+                
+                // 设置警告边框颜色
+                mainBorder.BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 255, 100, 100)); // 红色边框
+
+                // 恢复原始边框颜色
+                System.Timers.Timer timer = new System.Timers.Timer(500);
+                timer.Elapsed += (sender, e) =>
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        mainBorder.BorderBrush = originalBorderBrush;
+                    });
+                    timer.Dispose();
+                };
+                timer.Start();
+                return;
+            }
+            
+            // 如果mainBorder为空，则使用原来的背景色变化方案作为后备
+            System.Windows.Media.Color originalColor = ((System.Windows.Media.SolidColorBrush)_warningWindow.Background).Color;
+            _warningWindow.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(255, 255, 100, 100)); // 红色背景
 
             // 恢复原始背景色
-            System.Timers.Timer timer = new System.Timers.Timer(500);
-            timer.Elapsed += (sender, e) =>
+            System.Timers.Timer fallbackTimer = new System.Timers.Timer(500);
+            fallbackTimer.Elapsed += (sender, e) =>
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     _warningWindow.Background = new SolidColorBrush(originalColor);
                 });
-                timer.Dispose();
+                fallbackTimer.Dispose();
             };
-            timer.Start();
+            fallbackTimer.Start();
         }
 
         /// <summary>

@@ -18,7 +18,7 @@
     
     <Window.Resources>
         <!-- 高度转换器：将窗口高度转换为指定比例的高度 -->
-        <local:HeightConverter x:Key="HeightConverter"/>
+        <converters:HeightConverter x:Key="HeightConverter"/>
         
         <!-- 矩形转换器：用于动态创建背景图片的裁切区域 -->
         <converters:RectConverter x:Key="RectConverter"/>

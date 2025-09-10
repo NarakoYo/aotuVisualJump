@@ -1,84 +1,22 @@
 using System;
-using System.Globalization;
+using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Data;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using ImageRecognitionApp.Assets.UICode;
+using ImageRecognitionApp.Converters;
 using ImageRecognitionApp.Utils;
 using ImageRecognitionApp.WinFun;
 using TaskbarProgressState = ImageRecognitionApp.WinFun.TaskbarManager.TaskbarProgressState;
 
 namespace ImageRecognitionApp.Assets.UI
 {
-    /// <summary>
-    /// 高度转换器：根据参数将窗口高度转换为指定比例的高度，可以选择性地添加偏移量
-    /// </summary>
-    /// <remarks>
-    /// 参数格式："ratio[+offset]"，例如："0.8"表示高度的80%，"0.8+4"表示高度的80%再加上4像素
-    /// </remarks>
-    public class HeightConverter : IValueConverter
-    {
-        /// <summary>
-        /// 将源值转换为目标值
-        /// </summary>
-        /// <param name="value">要转换的源值</param>
-        /// <param name="targetType">目标类型</param>
-        /// <param name="parameter">转换参数</param>
-        /// <param name="culture">文化信息</param>
-        /// <returns>转换后的目标值</returns>
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is double height)
-            {
-                // 默认返回窗口高度的4/5
-                double ratio = 0.8;
-                double offset = 0;
-                
-                // 如果提供了参数，尝试解析比例值和可选的偏移量
-                if (parameter != null)
-                {
-                    string paramStr = parameter.ToString();
-                    // 检查是否包含偏移量
-                    if (paramStr.Contains('+'))
-                    {
-                        string[] parts = paramStr.Split('+');
-                        if (parts.Length > 0 && double.TryParse(parts[0], NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedRatio))
-                        {
-                            ratio = parsedRatio;
-                        }
-                        if (parts.Length > 1 && double.TryParse(parts[1], NumberStyles.Any, CultureInfo.InvariantCulture, out double parsedOffset))
-                        {
-                            offset = parsedOffset;
-                        }
-                    }
-                    // 只有比例值
-                    else if (double.TryParse(paramStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double parameterRatio))
-                    {
-                        ratio = parameterRatio;
-                    }
-                }
-                
-                return height * ratio + offset;
-            }
-            return value;
-        }
 
-        /// <summary>
-        /// 将目标值转换回源值（未实现）
-        /// </summary>
-        /// <param name="value">要转换的目标值</param>
-        /// <param name="targetType">源类型</param>
-        /// <param name="parameter">转换参数</param>
-        /// <param name="culture">文化信息</param>
-        /// <returns>转换后的源值</returns>
-        /// <exception cref="NotImplementedException">此方法未实现</exception>
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
 
     /// <summary>
     /// 应用程序的初始启动窗口
@@ -88,10 +26,22 @@ namespace ImageRecognitionApp.Assets.UI
     /// </remarks>
     public partial class InitialStartupWindow : Window
     {
-        private readonly InitialStartupManager _initializationManager;
+        private InitialStartupManager _initializationManager;
         private readonly InitialStartupAnimation _animationManager;
         private const int TotalInitializationSteps = 5;
         private TaskbarManager _taskbarManager;
+        
+        // Windows API常量
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_APPWINDOW = 0x00040000;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+        
+        // Windows API导入
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hwnd, int index);
+        
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
 
         /// <summary>
         /// 构造函数，初始化窗口组件和资源
@@ -112,68 +62,74 @@ namespace ImageRecognitionApp.Assets.UI
         }
 
         /// <summary>
-        /// 初始化UI资源，包括本地化文本和图片资源
+        /// 初始化UI资源
         /// </summary>
         private void InitializeUIResources()
         {
-            try
-            {
-                // 初始化本地化文本资源
-                InitializeLocalization();
-                
-                // 初始化图片资源
-                InitializeImageResources();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"初始化UI资源时发生错误: {ex.Message}");
-                // 即使发生错误也继续执行，因为这些资源不是应用程序运行的关键
+            InitializeLocalization();
+            InitializeImageResources();
+        }
+
+        /// <summary>
+        /// 记录日志信息
+        /// </summary>
+        /// <param name="message">日志消息</param>
+        private void LogMessage(string message)
+        {
+            if (App.Current is App app) {
+                app.LogMessage(message);
+            } else {
+                System.Diagnostics.Debug.WriteLine(message);
             }
         }
 
         /// <summary>
-        /// 初始化本地化文本资源
+        /// 记录错误日志
+        /// </summary>
+        /// <param name="message">错误消息</param>
+        /// <param name="ex">异常对象</param>
+        private void LogError(string message, Exception ex)
+        {
+            LogMessage($"{message}: {ex.Message}");
+        }
+
+        /// <summary>
+        /// 初始化本地化文本
         /// </summary>
         private void InitializeLocalization()
         {
-            // 设置应用标题文本
             try
             {
-                // 获取本地化助手实例
+                // 获取JsonLocalizationHelper实例
                 var localizationHelper = JsonLocalizationHelper.Instance;
-                
-                // 确保本地化助手已初始化（虽然App.xaml.cs中应该已经初始化过）
-                localizationHelper.Initialize();
-                
-                // 获取sign_id为10001的本地化内容
-                string localizedTitle = localizationHelper.GetString(10001);
-                
-                // 设置应用标题文本
-                if (!string.IsNullOrEmpty(localizedTitle))
+                if (localizationHelper != null)
                 {
-                    AppTitle.Text = localizedTitle;
-                }
-                
-                // 设置窗口标题
-                try
-                {
-                    string windowTitle = localizationHelper.GetString(20000);
-                    if (!string.IsNullOrEmpty(windowTitle))
+                    // 设置应用标题
+                    if (AppTitle != null)
                     {
-                        this.Title = windowTitle;
+                        AppTitle.Text = localizationHelper.GetString(10001);
                     }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"获取窗口本地化标题失败: {ex.Message}");
+
+                    // 设置窗口标题
+                    try
+                    {
+                        string windowTitle = localizationHelper.GetString(20000);
+                        if (!string.IsNullOrEmpty(windowTitle))
+                        {
+                            this.Title = windowTitle;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("获取窗口本地化标题失败", ex);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                // 如果获取失败，保留默认标题
-                System.Diagnostics.Debug.WriteLine($"获取本地化标题失败: {ex.Message}");
+                LogError("初始化本地化资源失败", ex);
             }
-            
+
             // 获取并设置当前版本号
             try
             {
@@ -182,12 +138,14 @@ namespace ImageRecognitionApp.Assets.UI
                 // 获取版本信息
                 Version version = assembly.GetName().Version;
                 // 设置版本号文本
-                VersionInfo.Text = $"v{version.Major}.{version.Minor}.{version.Build}";
+                if (VersionInfo != null)
+                {
+                    VersionInfo.Text = $"v{version.Major}.{version.Minor}.{version.Build}";
+                }
             }
             catch (Exception ex)
             {
-                // 如果获取失败，保留默认版本号
-                System.Diagnostics.Debug.WriteLine($"获取版本号失败: {ex.Message}");
+                LogError("获取版本号失败", ex);
             }
         }
 
@@ -199,40 +157,45 @@ namespace ImageRecognitionApp.Assets.UI
             try
             {
                 var assetHelper = AssetHelper.Instance;
-                
-                // 设置Logo图片资源
-                if (AppLogo != null)
+                if (assetHelper == null)
                 {
-                    // 假设Logo的sign_id为10001（与MainWindow中的设置保持一致）
-                    var logoImage = assetHelper.GetImageAsset(10001);
-                    if (logoImage != null)
-                    {
-                        AppLogo.Source = logoImage;
-                    }
+                    (App.Current as App)?.LogMessage("AssetHelper获取失败，无法初始化图像资源");
+                    return;
                 }
-                
-                // 设置背景图片资源
-                if (BackgroundImage != null)
+
+                // 设置背景图片
+                SetBackgroundImage(assetHelper);
+            }
+            catch (Exception ex)
+            {
+                (App.Current as App)?.LogMessage($"初始化图像资源时发生错误: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 设置背景图片
+        /// </summary>
+        /// <param name="assetHelper">资源助手实例</param>
+        private void SetBackgroundImage(AssetHelper assetHelper)
+        {
+            try
+            {
+                // 背景图片的sign_id为10015
+                var backgroundImage = assetHelper.GetImageAsset(10015);
+                if (backgroundImage != null)
                 {
-                    // 背景图片的sign_id为10015
-                    var backgroundImage = assetHelper.GetImageAsset(10015);
-                    if (backgroundImage != null)
+                    BackgroundImage.Source = backgroundImage;
+                    
+                    // 设置背景图片来源文本
+                    if (BackgroundImageSource != null)
                     {
-                        BackgroundImage.Source = backgroundImage;
-                        
-                        // 设置背景图片来源文本
-                        if (BackgroundImageSource != null)
-                        {
-                            // 这里可以根据实际情况获取真实的图片来源信息
-                            // 目前设置为静态文本
-                            BackgroundImageSource.Text = "Created by ComfyUI-XL.Wai";
-                        }
+                        BackgroundImageSource.Text = "Created by ComfyUI-XL.Wai";
                     }
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"初始化图片资源失败: {ex.Message}");
+                LogError("设置背景图片失败", ex);
             }
         }
 
@@ -247,56 +210,144 @@ namespace ImageRecognitionApp.Assets.UI
             await _animationManager.PlayWindowFadeInAsync();
             await PerformInitializationAsync();
         }
+        
+
 
         /// <summary>
         /// 执行应用程序初始化流程
         /// </summary>
-        /// <returns>表示异步操作的任务</returns>
+        /// <returns>异步任务</returns>
         private async Task PerformInitializationAsync()
         {
             try
             {
-                // 使用ConfigureAwait(false)避免不必要的UI上下文切换，提高性能
-                // Step 1: Checking system environment
-                await UpdateStatusAsync("Checking system environment...", 0);
-                await _initializationManager.CheckSystemEnvironmentAsync().ConfigureAwait(false);
-                await Task.Delay(300).ConfigureAwait(false); // Simulate time-consuming operation
-
-                // Step 2: Loading configuration files
-                await UpdateStatusAsync("Loading configuration files...", 20);
-                await _initializationManager.LoadConfigurationAsync().ConfigureAwait(false);
-                await Task.Delay(300).ConfigureAwait(false);
-
-                // Step 3: Initializing resources
-                await UpdateStatusAsync("Initializing resources...", 40);
-                await _initializationManager.InitializeResourcesAsync().ConfigureAwait(false);
-                await Task.Delay(300).ConfigureAwait(false);
-
-                // Step 4: Preparing main window data
-                await UpdateStatusAsync("Preparing main window data...", 60);
-                await _initializationManager.PrepareMainWindowDataAsync().ConfigureAwait(false);
-                await Task.Delay(100).ConfigureAwait(false);
-
-                // Step 5: Initialization completed
-                await UpdateStatusAsync("Initialization completed, starting application...", 99);
-                await Task.Delay(2000).ConfigureAwait(false); // Simulate time-consuming operation
-                // Initialization completed
-                await UpdateStatusAsync("Initialization completed, starting application...", 100);
-
-                // 切换到主窗口
-                SwitchToMainWindow();
+                InitializeInitializationManager();
+                
+                // 依次执行各个初始化步骤
+                if (!await CheckSystemEnvironmentAsync()) return;
+                if (!await LoadApplicationConfigurationAsync()) return;
+                if (!await InitializeApplicationResourcesAsync()) return;
+                if (!await PrepareMainWindowDataAsync()) return;
+                
+                // 初始化完成，跳转到主窗口
+                await FinalizeInitializationAsync();
             }
             catch (Exception ex)
             {
-                // 处理初始化过程中的异常
-                await UpdateStatusAsync($"初始化失败：{ex.Message}", 0);
-                // 在UI线程上显示错误消息
-                this.Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show($"应用初始化失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                    this.Close();
-                });
+                // 捕获所有异常，显示友好的错误信息
+                await UpdateStatusAsync("初始化过程中发生错误：" + ex.Message, 0);
+                LogError("初始化过程中发生错误", ex);
             }
+        }
+        
+        /// <summary>
+        /// 初始化初始化管理器
+        /// </summary>
+        private void InitializeInitializationManager()
+        {
+            if (_initializationManager == null)
+            {
+                LogMessage("初始化管理器未初始化，正在创建...");
+                _initializationManager = new InitialStartupManager();
+            }
+        }
+        
+        /// <summary>
+        /// 检查系统环境
+        /// </summary>
+        /// <returns>是否检查通过</returns>
+        private async Task<bool> CheckSystemEnvironmentAsync()
+        {
+            await UpdateStatusAsync("Checking system environment...", 0);
+            try
+            {
+                await _initializationManager.CheckSystemEnvironmentAsync().ConfigureAwait(false);
+                await Task.Delay(300).ConfigureAwait(false); // Simulate time-consuming operation
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await UpdateStatusAsync($"系统环境检查失败：{ex.Message}", 0);
+                LogError("系统环境检查失败", ex);
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// 加载应用配置
+        /// </summary>
+        /// <returns>是否加载成功</returns>
+        private async Task<bool> LoadApplicationConfigurationAsync()
+        {
+            await UpdateStatusAsync("Loading configuration files...", 20);
+            try
+            {
+                await _initializationManager.LoadConfigurationAsync().ConfigureAwait(false);
+                await Task.Delay(300).ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await UpdateStatusAsync($"配置文件加载失败：{ex.Message}", 0);
+                LogError("配置文件加载失败", ex);
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// 初始化应用资源
+        /// </summary>
+        /// <returns>是否初始化成功</returns>
+        private async Task<bool> InitializeApplicationResourcesAsync()
+        {
+            await UpdateStatusAsync("Initializing resources...", 40);
+            try
+            {
+                await _initializationManager.InitializeResourcesAsync().ConfigureAwait(false);
+                await Task.Delay(300).ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await UpdateStatusAsync($"资源初始化失败：{ex.Message}", 0);
+                LogError("资源初始化失败", ex);
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// 准备主窗口数据
+        /// </summary>
+        /// <returns>是否准备成功</returns>
+        private async Task<bool> PrepareMainWindowDataAsync()
+        {
+            await UpdateStatusAsync("Preparing main window data...", 60);
+            try
+            {
+                await _initializationManager.PrepareMainWindowDataAsync().ConfigureAwait(false);
+                await Task.Delay(100).ConfigureAwait(false);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await UpdateStatusAsync($"主窗口数据准备失败：{ex.Message}", 0);
+                LogError("主窗口数据准备失败", ex);
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// 完成初始化并跳转到主窗口
+        /// </summary>
+        /// <returns>异步任务</returns>
+        private async Task FinalizeInitializationAsync()
+        {
+            await UpdateStatusAsync("Initialization completed, starting application...", 99);
+            await Task.Delay(2000).ConfigureAwait(false); // Simulate time-consuming operation
+            await UpdateStatusAsync("Initialization completed, starting application...", 100);
+            
+            // 跳转到主窗口
+            SwitchToMainWindow();
         }
 
         /// <summary>
@@ -309,73 +360,16 @@ namespace ImageRecognitionApp.Assets.UI
             // 立即执行UI更新
             this.Dispatcher.Invoke(async () =>
             {
-                if (StatusText != null)
-                {
-                    StatusText.Text = statusText;
-                }
-                
-                if (ProgressPercentage != null)
-                {
-                    ProgressPercentage.Text = $"{progressValue}%";
-                }
+                UpdateStatusTextAndProgress(statusText, progressValue);
                 
                 // 使用动画平滑更新进度条值
-                // 将异步操作包装在同步方法中执行
                 if (InitializationProgress != null && _animationManager != null)
                 {
                     await _animationManager.AnimateProgressBarAsync(InitializationProgress, progressValue);
                 }
                 
                 // 更新任务栏进度条
-                if (_taskbarManager != null)
-                {
-                    try
-                    {
-                        // 根据不同的进度值设置不同的任务栏进度条状态
-                        if (progressValue == 0 && statusText.Contains("失败"))
-                        {
-                            // 加载错误中断卡住：红色进度条
-                            _taskbarManager.SetProgressState(TaskbarProgressState.Error);
-                        }
-                        else if (progressValue > 0 && progressValue < 100)
-                        {
-                            // 根据进度值选择不同的进度模式
-                            if (progressValue % 20 == 0)
-                            {
-                                // 偶数进度点使用正常进度模式
-                                _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
-                            }
-                            else if (progressValue % 15 == 0)
-                            {
-                                // 特定条件下使用暂停模式
-                                _taskbarManager.SetProgressState(TaskbarProgressState.Paused);
-                            }
-                            else if (progressValue % 25 == 0)
-                            {
-                                // 特定条件下使用走马灯模式
-                                _taskbarManager.SetProgressState(TaskbarProgressState.Indeterminate);
-                            }
-                            else
-                            {
-                                // 其他情况使用正常进度模式
-                                _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
-                            }
-                            
-                            // 更新进度值
-                            _taskbarManager.SetProgressValue((ulong)progressValue, 100);
-                        }
-                        else if (progressValue == 100)
-                        {
-                            // 初始化完成，设置正常状态并显示100%进度
-                            _taskbarManager.SetProgressState(TaskbarProgressState.Normal);
-                            _taskbarManager.SetProgressValue(100, 100);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine("更新任务栏进度条失败: " + ex.Message);
-                    }
-                }
+                UpdateTaskbarProgress(statusText, progressValue);
             }, System.Windows.Threading.DispatcherPriority.Background);
         }
         
@@ -390,15 +384,7 @@ namespace ImageRecognitionApp.Assets.UI
             // 在UI线程上更新状态文本和百分比显示
             this.Dispatcher.Invoke(() =>
             {
-                if (StatusText != null)
-                {
-                    StatusText.Text = statusText;
-                }
-                
-                if (ProgressPercentage != null)
-                {
-                    ProgressPercentage.Text = $"{progressValue}%";
-                }
+                UpdateStatusTextAndProgress(statusText, progressValue);
             }, System.Windows.Threading.DispatcherPriority.Background);
             
             // 使用动画平滑更新进度条值
@@ -408,6 +394,34 @@ namespace ImageRecognitionApp.Assets.UI
             }
             
             // 更新任务栏进度条
+            UpdateTaskbarProgress(statusText, progressValue);
+        }
+        
+        /// <summary>
+        /// 更新状态文本和百分比显示
+        /// </summary>
+        /// <param name="statusText">状态文本</param>
+        /// <param name="progressValue">进度值(0-100)</param>
+        private void UpdateStatusTextAndProgress(string statusText, int progressValue)
+        {
+            if (StatusText != null)
+            {
+                StatusText.Text = statusText;
+            }
+            
+            if (ProgressPercentage != null)
+            {
+                ProgressPercentage.Text = $"{progressValue}%";
+            }
+        }
+        
+        /// <summary>
+        /// 更新任务栏进度条
+        /// </summary>
+        /// <param name="statusText">状态文本</param>
+        /// <param name="progressValue">进度值(0-100)</param>
+        private void UpdateTaskbarProgress(string statusText, int progressValue)
+        {
             if (_taskbarManager != null)
             {
                 try
@@ -454,7 +468,7 @@ namespace ImageRecognitionApp.Assets.UI
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine("更新任务栏进度条失败: " + ex.Message);
+                    LogError("更新任务栏进度条失败", ex);
                 }
             }
         }
@@ -489,7 +503,7 @@ namespace ImageRecognitionApp.Assets.UI
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"切换到主窗口失败: {ex.Message}");
+                    LogError("切换到主窗口失败", ex);
                     this.Dispatcher.Invoke(() =>
                     {
                         MessageBox.Show($"切换到主窗口失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -506,12 +520,19 @@ namespace ImageRecognitionApp.Assets.UI
         /// <param name="e">鼠标事件参数</param>
         private void Window_MouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
         {
-            // try
-            // {
-            //     // 允许通过鼠标拖动窗口
-            //     this.DragMove();
-            // }
-            // catch { /* 忽略拖动过程中可能出现的异常 */ }
+            // 暂时禁用窗口拖动功能
+            // 如需启用，取消以下注释
+            /*
+            try
+            {
+                // 允许通过鼠标拖动窗口
+                this.DragMove();
+            }
+            catch (Exception ex)
+            {
+                LogError("窗口拖动失败", ex);
+            }
+            */
         }
     }
 }

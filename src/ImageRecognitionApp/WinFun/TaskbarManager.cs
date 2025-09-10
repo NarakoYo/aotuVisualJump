@@ -31,6 +31,7 @@ namespace ImageRecognitionApp.WinFun
         private IntPtr _iconHandle = IntPtr.Zero;    // 图标句柄，用于资源释放
         private TaskbarAnimation? _taskbarAnimation; // 任务栏动画处理对象
         private ContextMenu? _contextMenu;           // 右键上下文菜单
+        private TrayContextMenu? _trayContextMenu;   // 托盘上下文菜单管理类
         private HwndSource? _hwndSource;             // 窗口源对象，用于消息处理
         private bool _isTrayIconVisible = false;     // 托盘图标可见状态
         // 不再使用此字段，而是直接基于窗口状态判断
@@ -398,6 +399,11 @@ namespace ImageRecognitionApp.WinFun
                     LogMessage("TaskbarManager: 无法初始化，窗口句柄无效");
                     return;
                 }
+                
+                // 初始化托盘上下文菜单
+                _trayContextMenu = new TrayContextMenu(LogMessage);
+                _trayContextMenu.ExitMenuItemClick += OnExitApplicationMenuItemClick;
+                _contextMenu = _trayContextMenu.ContextMenu; // 保留引用以兼容现有代码
 
                 // 初始化任务栏动画对象
                 InitializeTaskbarAnimation();
@@ -790,14 +796,14 @@ namespace ImageRecognitionApp.WinFun
                     if (mainWindow.IsVisible && mainWindow.IsActive)
                     {
                         // 窗口已经可见且被选中，当用户点击任务栏活动窗口栏时，触发最小化
-                        LogMessage("TaskbarManager: 窗口已选中且可见，触发最小化");
+                        LogMessage("TaskbarManager: 窗口已选中且可见，触发Windows原生最小化功能");
                         LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
-                            $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 窗口已处于活动状态且可见，用户点击了任务栏活动窗口栏，触发最小化");
+                            $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 窗口已处于活动状态且可见，用户点击了任务栏活动窗口栏，触发Windows原生最小化功能");
                         
-                        // 最小化窗口
-                        mainWindow.WindowState = WindowState.Minimized;
+                        // 使用Windows原生最小化API
+                        MinimizeToTaskbar();
                         LogManager.Instance.WriteLog(LogManager.LogLevel.Info, 
-                            $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 窗口已最小化");
+                            $"[TaskbarActivity] [{timestamp}] [Thread:{threadId}] 已调用MinimizeToTaskbar方法");
                     }
                     else
                     {
@@ -1203,57 +1209,47 @@ namespace ImageRecognitionApp.WinFun
         {
             try
             {
-                LogMessage("TaskbarManager: 初始化上下文菜单");
-                _contextMenu = new ContextMenu();
-
-                // 添加显示/隐藏窗口菜单项
-                MenuItem showHideMenuItem = new MenuItem
+                LogMessage("TaskbarManager: 初始化上下文菜单（使用TrayContextMenu类）");
+                // 初始化TrayContextMenu类
+                if (_trayContextMenu == null)
                 {
-                    Header = "显示窗口",
-                    Tag = "ShowHideWindow"
-                };
-                showHideMenuItem.Click += OnShowHideWindowMenuItemClick;
-                _contextMenu.Items.Add(showHideMenuItem);
-
-                // 添加分隔符
-                _contextMenu.Items.Add(new Separator());
-
-                // 添加最小化窗口菜单项
-                MenuItem minimizeMenuItem = new MenuItem
-                {
-                    Header = "最小化窗口",
-                    Tag = "MinimizeWindow"
-                };
-                minimizeMenuItem.Click += OnMinimizeWindowMenuItemClick;
-                _contextMenu.Items.Add(minimizeMenuItem);
-
-                // 添加隐藏到托盘菜单项
-                MenuItem hideToTrayMenuItem = new MenuItem
-                {
-                    Header = "隐藏到托盘",
-                    Tag = "HideToTray"
-                };
-                hideToTrayMenuItem.Click += OnHideToTrayMenuItemClick;
-                _contextMenu.Items.Add(hideToTrayMenuItem);
-
-                // 添加分隔符
-                _contextMenu.Items.Add(new Separator());
-
-                // 添加退出应用菜单项
-                MenuItem exitMenuItem = new MenuItem
-                {
-                    Header = "退出",
-                    Tag = "ExitApplication"
-                };
-                exitMenuItem.Click += OnExitApplicationMenuItemClick;
-                _contextMenu.Items.Add(exitMenuItem);
-
-                LogMessage("TaskbarManager: 上下文菜单已创建");
+                    _trayContextMenu = new TrayContextMenu(LogMessage);
+                    _trayContextMenu.ExitMenuItemClick += OnExitApplicationMenuItemClick;
+                    _contextMenu = _trayContextMenu.ContextMenu;
+                }
             }
             catch (Exception ex)
             {
                 LogMessage($"TaskbarManager: 初始化上下文菜单错误: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// 创建菜单项样式，用于设置鼠标悬停效果
+        /// </summary>
+        /// <returns>菜单项样式</returns>
+        private Style CreateMenuItemStyle()
+        {
+            try
+            {
+                LogMessage("TaskbarManager: 创建菜单项样式（使用TrayContextMenu类中的样式）");
+                // 使用TrayContextMenu类中的样式
+                if (_trayContextMenu != null && _trayContextMenu.ContextMenu != null && _trayContextMenu.ContextMenu.Items.Count > 0)
+                {
+                    var firstItem = _trayContextMenu.ContextMenu.Items[0] as MenuItem;
+                    if (firstItem != null)
+                    {
+                        return firstItem.Style;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogMessage($"TaskbarManager: 创建菜单项样式错误: {ex.Message}");
+            }
+            
+            // 返回默认样式
+            return new Style(typeof(MenuItem));
         }
 
         /// <summary>
@@ -1264,21 +1260,16 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 LogMessage("TaskbarManager: 显示上下文菜单");
-                var mainWindow = System.Windows.Application.Current.MainWindow;
-                if (mainWindow != null && _contextMenu != null)
+                if (_trayContextMenu != null)
                 {
-                    // 确保上下文菜单已初始化
-                    if (_contextMenu.Items.Count == 0)
-                    {
-                        InitializeContextMenu();
-                    }
-
-                    // 更新菜单状态
-                    UpdateContextMenuState();
-
-                    // 显示菜单
+                    // 使用TrayContextMenu类显示菜单
+                    _trayContextMenu.Show();
+                }
+                else if (_contextMenu != null)
+                {
+                    // 兼容旧代码路径
                     _contextMenu.IsOpen = true;
-                    LogMessage("TaskbarManager: 上下文菜单已显示");
+                    LogMessage("TaskbarManager: 使用旧方式显示上下文菜单");
                 }
             }
             catch (Exception ex)
@@ -1303,34 +1294,7 @@ namespace ImageRecognitionApp.WinFun
             try
             {
                 LogMessage("TaskbarManager: 更新上下文菜单状态");
-                var mainWindow = System.Windows.Application.Current.MainWindow;
-                if (mainWindow != null && _contextMenu != null)
-                {
-                    // 根据窗口状态更新菜单文本和可用性
-                    foreach (var item in _contextMenu.Items)
-                    {
-                        if (item is MenuItem menuItem && menuItem.Tag != null)
-                        {
-                            switch (menuItem.Tag.ToString())
-                            {
-                                case "ShowHideWindow":
-                                    // 根据窗口是否可见更新菜单文本
-                                    menuItem.Header = mainWindow.IsVisible ? "隐藏窗口" : "显示窗口";
-                                    break;
-                                case "MinimizeWindow":
-                                    // 根据窗口状态更新最小化菜单项可用性
-                                    menuItem.IsEnabled = mainWindow.IsVisible && mainWindow.WindowState != WindowState.Minimized;
-                                    break;
-                                case "HideToTray":
-                                    // 隐藏到托盘菜单项始终可用
-                                    break;
-                                case "ExitApplication":
-                                    // 退出应用菜单项始终可用
-                                    break;
-                            }
-                        }
-                    }
-                }
+                // 此方法已由TrayContextMenu类处理
             }
             catch (Exception ex)
             {
@@ -1445,7 +1409,7 @@ namespace ImageRecognitionApp.WinFun
         /// <summary>
         /// 退出应用菜单项点击处理
         /// </summary>
-        private void OnExitApplicationMenuItemClick(object? sender, RoutedEventArgs e)
+        private void OnExitApplicationMenuItemClick(object? sender, EventArgs e)
         {
             try
             {
@@ -1754,6 +1718,14 @@ namespace ImageRecognitionApp.WinFun
                     LogMessage("TaskbarManager: 图标句柄已销毁");
                 }
 
+                // 释放托盘上下文菜单
+                if (_trayContextMenu != null)
+                {
+                    _trayContextMenu.ExitMenuItemClick -= OnExitApplicationMenuItemClick;
+                    _trayContextMenu = null;
+                    LogMessage("TaskbarManager: 托盘上下文菜单已释放");
+                }
+                
                 // 释放上下文菜单
                 if (_contextMenu != null)
                 {

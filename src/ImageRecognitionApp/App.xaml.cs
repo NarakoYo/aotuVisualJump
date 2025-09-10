@@ -58,6 +58,38 @@ public partial class App : Application
             // LogException(ex);
         }
 
+        // 初始化资产工具类，确保任务栏图标能在应用启动时就显示
+        try
+        {
+            var assetHelper = AssetHelper.Instance;
+            LogMessage("资产工具类已初始化");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"资产工具类初始化失败: {ex.Message}");
+            LogMessage($"资产工具类初始化失败: {ex.Message}");
+        }
+
+        // 设置应用程序图标，确保初始化界面也能显示图标
+        try
+        {
+            string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "logo", "logo.ico");
+            if (File.Exists(iconPath))
+            {
+                this.MainWindow = null; // 确保尚未设置主窗口
+                this.Properties["IconPath"] = iconPath;
+                LogMessage($"应用程序图标已设置: {iconPath}");
+            }
+            else
+            {
+                LogMessage($"未找到图标文件: {iconPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogMessage($"设置应用程序图标时出错: {ex.Message}");
+        }
+
         // 记录程序启动标记
         LogManager.Instance.WriteStartupShutdownLog(true);
 
@@ -231,14 +263,37 @@ public partial class App : Application
             // 检查内存状态并执行优化
             float availableMemory = _memoryCounter.NextValue();
             const float LOW_MEMORY_THRESHOLD_MB = 1024; // 1GB
-            if (availableMemory < LOW_MEMORY_THRESHOLD_MB)
+            
+            // 检查是否还在启动宽限期内
+            bool isInStartupGracePeriod = DateTime.Now - _appStartupTime < TimeSpan.FromSeconds(STARTUP_GRACE_PERIOD_SECONDS);
+            _initialStartupPeriod = isInStartupGracePeriod;
+            
+            if (isInStartupGracePeriod)
             {
-                LogMessage($"系统内存较低({availableMemory:F2} MB)，应用严格内存优化策略");
-                PerformanceManager.EnterLowPowerMode();
+                LogMessage($"应用程序仍在启动宽限期内({STARTUP_GRACE_PERIOD_SECONDS}秒)，延迟严格的内存优化策略");
                 
-                // 执行垃圾回收
-                GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
-                GC.WaitForPendingFinalizers();
+                // 在启动宽限期内，只有在内存严重不足时才执行低功耗模式
+                if (availableMemory < CRITICAL_MEMORY_THRESHOLD_MB)
+                {
+                    LogMessage($"在启动宽限期内发现内存严重不足({availableMemory:F2} MB)，需要执行最低限度的内存优化");
+                    // 只执行轻度内存优化，不清理图标资源
+                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Optimized);
+                }
+            }
+            else
+            {
+                _initialStartupPeriod = false;
+                LogMessage("应用程序已完成启动宽限期，现在开始正常执行内存优化策略");
+                // 正常执行内存优化策略
+                if (availableMemory < LOW_MEMORY_THRESHOLD_MB)
+                {
+                    LogMessage($"系统内存较低({availableMemory:F2} MB)，应用严格内存优化策略");
+                    PerformanceManager.EnterLowPowerMode();
+                    
+                    // 执行垃圾回收
+                    GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+                    GC.WaitForPendingFinalizers();
+                }
             }
             
             // 配置进程内存限制
@@ -410,6 +465,12 @@ public partial class App : Application
     
     // 标记应用程序是否正在关闭
     private bool IsShuttingDown { get; set; } = false;
+    
+    // 应用启动宽限期相关字段
+    private static bool _initialStartupPeriod = true;
+    private static DateTime _appStartupTime = DateTime.Now;
+    private const int STARTUP_GRACE_PERIOD_SECONDS = 10; // 启动宽限期为10秒
+    private const float CRITICAL_MEMORY_THRESHOLD_MB = 512; // 512MB，只有在严重内存不足时才在启动初期进入低功耗模式
     
     // 重写Shutdown方法，设置关闭标记
     public new void Shutdown()

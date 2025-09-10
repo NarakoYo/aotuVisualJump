@@ -259,7 +259,7 @@ namespace ImageRecognitionApp.Assets.UICode
             try
             {
                 // 定义关键资源目录或文件类型
-                string[] criticalDirectories = { "Icons", "SplashScreen" };
+                string[] criticalDirectories = { "Icons", "SplashScreen", "logo" };
                 string[] criticalExtensions = { ".ico", ".png", ".jpg", ".svg" };
                 
                 // 只加载关键资源

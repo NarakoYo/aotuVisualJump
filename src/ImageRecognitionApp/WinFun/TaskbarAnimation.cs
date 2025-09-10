@@ -54,7 +54,7 @@ namespace ImageRecognitionApp.WinFun
 
         #endregion
 
-    private readonly IntPtr _windowHandle;
+    private IntPtr _windowHandle;
     // 移除不再需要的动画状态管理变量，简化类结构以优化性能
     
     // 移除不再需要的获取屏幕刷新率方法，简化类结构以优化性能
@@ -244,23 +244,45 @@ namespace ImageRecognitionApp.WinFun
     }
 
     /// <summary>
-        /// 最小化动画：使用Windows原生动画效果
+        /// 最小化动画：使用Windows原生动画效果，增强任务栏交互体验
         /// </summary>
         public void MinimizeAnimation()
         {
             try
             {
-                // 直接设置窗口为最小化，使用Windows原生动画
-                Application.Current.Dispatcher.Invoke(() =>
+                // 验证窗口句柄是否有效
+                if (_windowHandle == IntPtr.Zero)
                 {
+                    // 如果句柄无效，尝试重新获取
                     var window = Application.Current.MainWindow;
-                    if (window == null)
-                        return;
+                    if (window != null)
+                    {
+                        _windowHandle = new WindowInteropHelper(window).Handle;
+                        (App.Current as App)?.LogMessage("MinimizeAnimation: 重新获取窗口句柄");
+                    }
+                }
 
-                    // 直接设置窗口状态为最小化，使用Windows原生动画
-                    window.WindowState = WindowState.Minimized;
-                    (App.Current as App)?.LogMessage("MinimizeAnimation: 使用Windows原生动画最小化窗口");
-                });
+                if (_windowHandle != IntPtr.Zero)
+                {
+                    // 直接设置窗口为最小化，使用Windows原生动画效果
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        var window = Application.Current.MainWindow;
+                        if (window == null)
+                            return;
+
+                        // 确保窗口在任务栏显示
+                        window.ShowInTaskbar = true;
+                        
+                        // 直接设置窗口状态为最小化，让Windows触发原生的向下跳动动画
+                        window.WindowState = WindowState.Minimized;
+                        (App.Current as App)?.LogMessage("MinimizeAnimation: 触发Windows原生的向下跳动动画效果");
+                    });
+                }
+                else
+                {
+                    (App.Current as App)?.LogMessage("MinimizeAnimation: 窗口句柄无效，无法触发动画");
+                }
             }
             catch (Exception ex)
             {
@@ -279,66 +301,88 @@ namespace ImageRecognitionApp.WinFun
     }
 
     /// <summary>
-    /// 恢复动画：使用Windows原生动画效果
+    /// 恢复动画：使用Windows原生动画效果，增强任务栏交互体验
     /// </summary>
     public void RestoreAnimation()
     {
         try
         {
-            // 直接使用Windows原生动画恢复窗口
-            Application.Current.Dispatcher.Invoke(() =>
+            // 验证窗口句柄是否有效
+            if (_windowHandle == IntPtr.Zero)
             {
+                // 如果句柄无效，尝试重新获取
                 var window = Application.Current.MainWindow;
-                if (window == null)
-                    return;
-
-                // 确保窗口在任务栏显示
-                window.ShowInTaskbar = true;
-                // 确保窗口可见 - 这是解决隐藏到托盘后无法还原问题的关键
-                window.Visibility = Visibility.Visible;
-                // 额外调用Show()方法确保窗口被显示
-                window.Show();
-
-                // 通过TaskbarManager单例访问保存的窗口位置和大小
-                var taskbarManager = TaskbarManager.Instance;
-                if (taskbarManager != null)
+                if (window != null)
                 {
-                    // 正确恢复窗口位置和大小
-                    window.Left = taskbarManager.LastWindowLeft;
-                    window.Top = taskbarManager.LastWindowTop;
-                    window.Width = taskbarManager.LastWindowWidth;
-                    window.Height = taskbarManager.LastWindowHeight;
-                       
-                    // 如果上次是最大化状态，则恢复最大化
-                    if (taskbarManager.LastWindowState == WindowState.Maximized)
+                    _windowHandle = new WindowInteropHelper(window).Handle;
+                    (App.Current as App)?.LogMessage("RestoreAnimation: 重新获取窗口句柄");
+                }
+            }
+
+            if (_windowHandle != IntPtr.Zero)
+            {
+                // 直接恢复窗口，不使用闪烁动画
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var window = Application.Current.MainWindow;
+                    if (window == null)
+                        return;
+
+                    // 确保窗口在任务栏显示
+                    window.ShowInTaskbar = true;
+                    // 确保窗口可见 - 这是解决隐藏到托盘后无法还原问题的关键
+                    window.Visibility = Visibility.Visible;
+                    // 额外调用Show()方法确保窗口被显示
+                    window.Show();
+
+                    // 通过TaskbarManager单例访问保存的窗口位置和大小
+                    var taskbarManager = TaskbarManager.Instance;
+                    if (taskbarManager != null)
                     {
-                        window.WindowState = WindowState.Maximized;
+                        // 正确恢复窗口位置和大小
+                        window.Left = taskbarManager.LastWindowLeft;
+                        window.Top = taskbarManager.LastWindowTop;
+                        window.Width = taskbarManager.LastWindowWidth;
+                        window.Height = taskbarManager.LastWindowHeight;
+                             
+                        // 如果上次是最大化状态，则恢复最大化
+                        if (taskbarManager.LastWindowState == WindowState.Maximized)
+                        {
+                            window.WindowState = WindowState.Maximized;
+                        }
+                        else
+                        {
+                            // 使用Windows原生动画恢复到普通状态
+                            window.WindowState = WindowState.Normal;
+                        }
                     }
                     else
                     {
-                        // 使用Windows原生动画恢复到普通状态
+                        // 备用方案：直接恢复到普通状态
                         window.WindowState = WindowState.Normal;
                     }
-                }
-                else
-                {
-                    // 备用方案：直接恢复到普通状态
-                    window.WindowState = WindowState.Normal;
-                }
 
-                // 确保窗口在屏幕内（防止窗口位置超出屏幕范围）
-                EnsureWindowInScreen(window);
-                
-                // 确保窗口正确激活
-                window.Activate();
-                window.Focus();
-                
-                // 临时设置为Topmost然后立即取消，确保窗口能被用户看到
-                window.Topmost = true;
-                window.Topmost = false;
-                
-                (App.Current as App)?.LogMessage("RestoreAnimation: 使用Windows原生动画恢复窗口");
-            });
+                    // 确保窗口在屏幕内（防止窗口位置超出屏幕范围）
+                    EnsureWindowInScreen(window);
+                    
+                    // 使用Windows API设置窗口到前台，增强原生体验
+                    SetForegroundWindow(new WindowInteropHelper(window).Handle);
+                    
+                    // 确保窗口正确激活
+                    window.Activate();
+                    window.Focus();
+                    
+                    // 临时设置为Topmost然后立即取消，确保窗口能被用户看到
+                    window.Topmost = true;
+                    window.Topmost = false;
+                    
+                    (App.Current as App)?.LogMessage("RestoreAnimation: 使用Windows原生任务栏动画恢复窗口完成");
+                });
+            }
+            else
+            {
+                (App.Current as App)?.LogMessage("RestoreAnimation: 窗口句柄无效，无法执行闪烁动画");
+            }
         }
         catch (Exception ex)
         {
